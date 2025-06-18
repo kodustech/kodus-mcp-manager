@@ -75,6 +75,20 @@ export class ComposioService {
       redirectUri: this.configService.get('redirectUri', undefined),
     };
 
+    const integration = await this.getIntegration(integrationId);
+    if (integration.authScheme === 'API_KEY') {
+      if (!body.apiKey) {
+        throw new BadRequestException('API key is required');
+      }
+
+      params.connectionParams = {
+        apiKey: body.apiKey,
+      };
+    }
+
+    params.appName = integration.appName;
+    params.authMode = integration.authScheme as any;
+
     const entity = await this.toolset.getEntity(entityId);
     const connectionRequest = await entity.initiateConnection(params);
 

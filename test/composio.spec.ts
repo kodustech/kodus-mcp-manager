@@ -9,40 +9,46 @@ import * as axios from 'axios';
 jest.mock('axios');
 
 // Mock composio-core
+const mockIntegration = {
+  id: 'test-integration-id',
+  name: 'Test Integration',
+  description: 'Test Description',
+  requiredParams: ['param1', 'param2'],
+  authScheme: 'OAUTH',
+  appName: 'test-app',
+};
+
+const mockComposioInstance = {
+  integrations: {
+    list: jest.fn().mockResolvedValue({
+      data: [
+        {
+          id: 'test-integration-id',
+          name: 'Test Integration',
+          description: 'Test Description',
+        },
+      ],
+      total: 1,
+    }),
+    get: jest.fn().mockResolvedValue(mockIntegration),
+    getRequiredParams: jest.fn().mockResolvedValue(['param1', 'param2']),
+  },
+  connectedAccounts: {
+    list: jest.fn().mockResolvedValue({
+      data: [
+        {
+          id: 'test-connection-id',
+          integrationId: 'test-integration-id',
+          status: 'active',
+        },
+      ],
+      total: 1,
+    }),
+  },
+};
+
 jest.mock('composio-core', () => ({
-  Composio: jest.fn().mockImplementation(() => ({
-    integrations: {
-      list: jest.fn().mockResolvedValue({
-        data: [
-          {
-            id: 'test-integration-id',
-            name: 'Test Integration',
-            description: 'Test Description',
-          },
-        ],
-        total: 1,
-      }),
-      get: jest.fn().mockResolvedValue({
-        id: 'test-integration-id',
-        name: 'Test Integration',
-        description: 'Test Description',
-        requiredParams: ['param1', 'param2'],
-      }),
-      getRequiredParams: jest.fn().mockResolvedValue(['param1', 'param2']),
-    },
-    connectedAccounts: {
-      list: jest.fn().mockResolvedValue({
-        data: [
-          {
-            id: 'test-connection-id',
-            integrationId: 'test-integration-id',
-            status: 'active',
-          },
-        ],
-        total: 1,
-      }),
-    },
-  })),
+  Composio: jest.fn().mockImplementation(() => mockComposioInstance),
   OpenAIToolSet: jest.fn().mockImplementation(() => ({
     getEntity: jest.fn().mockResolvedValue({
       initiateConnection: jest.fn().mockResolvedValue({
@@ -198,7 +204,7 @@ describe('ComposioController (e2e)', () => {
   });
 
   describe('POST /composio/initiate-connection', () => {
-    it('should initiate connection', () => {
+    it('should initiate connection with OAuth', () => {
       const initiateConnectionDto = {
         integrationId: 'test-integration-id',
         entityId: 'test-entity-id',
@@ -214,6 +220,53 @@ describe('ComposioController (e2e)', () => {
             'url',
             'https://test-connection-url.com',
           );
+        });
+    });
+
+    it('should initiate connection with API_KEY', () => {
+      const initiateConnectionDto = {
+        integrationId: 'test-integration-id',
+        entityId: 'test-entity-id',
+        apiKey: 'test-api-key',
+      };
+
+      // Update mock integration for API_KEY test
+      mockComposioInstance.integrations.get.mockResolvedValueOnce({
+        ...mockIntegration,
+        authScheme: 'API_KEY',
+      });
+
+      return request(app.getHttpServer())
+        .post('/composio/initiate-connection')
+        .send(initiateConnectionDto)
+        .expect(201)
+        .expect((res) => {
+          expect(res.body).toHaveProperty('id', 'test-connection-request-id');
+          expect(res.body).toHaveProperty(
+            'url',
+            'https://test-connection-url.com',
+          );
+        });
+    });
+
+    it('should throw error when API_KEY is required but not provided', () => {
+      const initiateConnectionDto = {
+        integrationId: 'test-integration-id',
+        entityId: 'test-entity-id',
+      };
+
+      // Update mock integration for API_KEY test
+      mockComposioInstance.integrations.get.mockResolvedValueOnce({
+        ...mockIntegration,
+        authScheme: 'API_KEY',
+      });
+
+      return request(app.getHttpServer())
+        .post('/composio/initiate-connection')
+        .send(initiateConnectionDto)
+        .expect(400)
+        .expect((res) => {
+          expect(res.body.message).toBe('API key is required');
         });
     });
   });

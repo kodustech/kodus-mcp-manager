@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class InitiateConnectionDto {
   @IsString()
@@ -8,4 +8,8 @@ export class InitiateConnectionDto {
   @IsString()
   @IsNotEmpty()
   entityId: string;
+
+  @IsString()
+  @IsOptional()
+  apiKey?: string;
 }
