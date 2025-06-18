@@ -52,6 +52,7 @@ yarn start:prod
 
 - `GET /composio/integrations/:integrationId` - Get integration details
 - `GET /composio/integrations/:integrationId/required-params` - Get required parameters for integration
+- `GET /composio/integrations/:integrationId/tools` - Get tools for integration
 
 ### MCP Servers
 
@@ -60,7 +61,8 @@ yarn start:prod
   {
     "entityId": "string",
     "appName": "string",
-    "authConfigId": "string"
+    "authConfigId": "string",
+    "allowedTools": ["string"]
   }
   ```
 
