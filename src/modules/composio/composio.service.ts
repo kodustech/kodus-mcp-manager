@@ -95,14 +95,19 @@ export class ComposioService {
     return connectionRequest;
   }
 
+  getIntegrationTools(integrationId: string) {
+    return this.toolset.getTools({ integrationId });
+  }
+
   async createMCPServer(body: CreateMCPServerDto) {
-    const { entityId, appName, authConfigId } = body;
+    const { entityId, appName, authConfigId, allowedTools } = body;
 
     const client = new ComposioClient(this.configService);
     const mcpServer = await client.createMCPServer(
       entityId,
       appName,
       authConfigId,
+      allowedTools,
     );
 
     return mcpServer;

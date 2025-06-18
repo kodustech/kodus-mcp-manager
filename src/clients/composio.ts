@@ -22,11 +22,13 @@ export class ComposioClient {
     entityId: string,
     appName: string,
     authConfigId: string,
+    allowedTools?: string[],
   ) {
     const name = `${appName}_${entityId.trim().replace(/ /g, '_').substring(0, 25)}`;
     const { data } = await this.client.post('/mcp/servers', {
       name,
       auth_config_ids: [authConfigId],
+      allowed_tools: allowedTools?.length ? allowedTools : undefined,
     });
 
     return { ...data, mcp_url: this.getMCPUrl(data.id, authConfigId) };

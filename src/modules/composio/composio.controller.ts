@@ -24,6 +24,11 @@ export class ComposioController {
     return this.composioService.getIntegrationRequiredParams(integrationId);
   }
 
+  @Get('integrations/:integrationId/tools')
+  getIntegrationTools(@Param('integrationId') integrationId: string) {
+    return this.composioService.getIntegrationTools(integrationId);
+  }
+
   @Post('initiate-connection')
   initiateConnection(@Body() body: InitiateConnectionDto) {
     return this.composioService.initiateConnection(body);
