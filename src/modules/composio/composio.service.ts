@@ -102,13 +102,17 @@ export class ComposioService {
   }
 
   async createMCPServer(body: CreateMCPServerDto) {
-    const { entityId, appName, authConfigId, allowedTools } = body;
+    const { entityId, appName, connectedAccountId, allowedTools } = body;
+
+    const accountConnection: any = await this.composio.connectedAccounts.get({
+      connectedAccountId,
+    });
 
     const client = new ComposioClient(this.configService);
     const mcpServer = await client.createMCPServer(
       entityId,
       appName,
-      authConfigId,
+      accountConnection.authConfig.id,
       allowedTools,
     );
 

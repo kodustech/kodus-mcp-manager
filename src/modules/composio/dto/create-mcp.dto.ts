@@ -11,7 +11,7 @@ export class CreateMCPServerDto {
 
   @IsString()
   @IsNotEmpty()
-  authConfigId: string;
+  connectedAccountId: string;
 
   @IsArray()
   @IsString({ each: true })

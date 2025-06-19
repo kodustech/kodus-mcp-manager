@@ -52,6 +52,14 @@ const mockComposioInstance = {
       ],
       total: 1,
     }),
+    get: jest.fn().mockResolvedValue({
+      id: 'test-connection-id',
+      integrationId: 'test-integration-id',
+      status: 'active',
+      authConfig: {
+        id: 'test-auth-config',
+      },
+    }),
   },
 };
 
@@ -292,7 +300,7 @@ describe('ComposioController (e2e)', () => {
       const createMCPServerDto = {
         entityId: 'test-entity-id',
         appName: 'test-app',
-        authConfigId: 'test-auth-config',
+        connectedAccountId: 'test-connection-id',
         allowedTools: ['tool1', 'tool2'],
       };
 
@@ -327,10 +335,10 @@ describe('ComposioController (e2e)', () => {
       const createMCPServerDto = {
         entityId: 'test-entity-id',
         appName: 'test-app',
-        authConfigId: 'test-auth-config',
+        connectedAccountId: 'test-connection-id',
       };
 
-      const mcpUrl = `https://mcp.composio.dev/composio/server/test-mcp-server-id/mcp?connected_account_id=${createMCPServerDto.authConfigId}`;
+      const mcpUrl = `https://mcp.composio.dev/composio/server/test-mcp-server-id/mcp?connected_account_id=test-auth-config`;
 
       return request(app.getHttpServer())
         .post('/composio/mcp-servers')
@@ -346,7 +354,7 @@ describe('ComposioController (e2e)', () => {
     it('should throw validation error when required fields are missing', async () => {
       const createMCPServerDto = {
         entityId: 'test-entity-id',
-        // Missing appName and authConfigId
+        // Missing appName and connectedAccountId
       };
 
       const response = await request(app.getHttpServer())
@@ -355,14 +363,16 @@ describe('ComposioController (e2e)', () => {
         .expect(400);
 
       expect(response.body.message).toContain('appName must be a string');
-      expect(response.body.message).toContain('authConfigId must be a string');
+      expect(response.body.message).toContain(
+        'connectedAccountId must be a string',
+      );
     });
 
     it('should throw validation error when allowedTools contains non-string values', async () => {
       const createMCPServerDto = {
         entityId: 'test-entity-id',
         appName: 'test-app',
-        authConfigId: 'test-auth-config',
+        connectedAccountId: 'test-connection-id',
         allowedTools: [123, 'tool2'],
       };
 
