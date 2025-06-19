@@ -7,7 +7,7 @@ export class InitiateConnectionDto {
 
   @IsString()
   @IsNotEmpty()
-  entityId: string;
+  organizationId: string;
 
   @IsString()
   @IsOptional()

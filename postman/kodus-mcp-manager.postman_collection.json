@@ -1,0 +1,337 @@
+{
+	"info": {
+		"_postman_id": "0805baee-5179-4be5-83cd-cdb71353eee2",
+		"name": "Kodus MCP Manager",
+		"description": "API collection for MCP (Multi-Cloud Platform) management",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "20931878"
+	},
+	"item": [
+		{
+			"name": "Connections",
+			"item": [
+				{
+					"name": "Get Connections",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/mcp/connections?page=1&pageSize=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"mcp",
+								"connections"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number (default: 1)"
+								},
+								{
+									"key": "pageSize",
+									"value": "10",
+									"description": "Items per page (default: 10, max: 100)"
+								}
+							]
+						},
+						"description": "Get list of connections for the organization"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Connection by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/mcp/connections/:connectionId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"mcp",
+								"connections",
+								":connectionId"
+							],
+							"variable": [
+								{
+									"key": "connectionId",
+									"value": "891abb68-1745-48d1-a19c-c4b432dce9ad"
+								}
+							]
+						},
+						"description": "Get details of a specific connection"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Integrations",
+			"item": [
+				{
+					"name": "Get Integrations",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/mcp/integrations?page=1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"mcp",
+								"integrations"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number (default: 1)"
+								},
+								{
+									"key": "pageSize",
+									"value": "10",
+									"description": "Items per page (default: 10, max: 100)",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get list of integrations with pagination"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Integration by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/mcp/{{provider}}/integrations/:integrationId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"mcp",
+								"{{provider}}",
+								"integrations",
+								":integrationId"
+							],
+							"variable": [
+								{
+									"key": "integrationId",
+									"value": "2890ccc5-5e22-441d-bb2f-6d8941582589"
+								}
+							]
+						},
+						"description": "Get details of a specific integration"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Integration Required Params",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/mcp/{{provider}}/integrations/:integrationId/required-params",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"mcp",
+								"{{provider}}",
+								"integrations",
+								":integrationId",
+								"required-params"
+							],
+							"variable": [
+								{
+									"key": "integrationId",
+									"value": "xx"
+								}
+							]
+						},
+						"description": "Get required parameters for an integration"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Integration Tools",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/mcp/{{provider}}/integrations/:integrationId/tools",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"mcp",
+								"{{provider}}",
+								"integrations",
+								":integrationId",
+								"tools"
+							],
+							"variable": [
+								{
+									"key": "integrationId",
+									"value": "76a6ebf1-62d9-4651-b4ae-b3449983ee55"
+								}
+							]
+						},
+						"description": "Get available tools for an integration"
+					},
+					"response": []
+				},
+				{
+					"name": "Install Integration",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "/* {\n  \"apiKey\": \"your-api-key\",\n  \"token\": \"your-token\",\n  \"generic_api_key\": \"generic-key\",\n  \"allowedTools\": [\"tool1\", \"tool2\"]\n} */",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/mcp/{{provider}}/integrations/:integrationId/install",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"mcp",
+								"{{provider}}",
+								"integrations",
+								":integrationId",
+								"install"
+							],
+							"variable": [
+								{
+									"key": "integrationId",
+									"value": "2890ccc5-5e22-441d-bb2f-6d8941582589"
+								}
+							]
+						},
+						"description": "Install an integration for the organization"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Integration",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"integrationId\": \"{{integrationId}}\",\n  \"status\": \"success\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/mcp/integrations",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"mcp",
+								"integrations"
+							]
+						},
+						"description": "Update integration details"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Add organization ID from JWT token if available",
+					"if (pm.request.headers.has('Authorization')) {",
+					"    const token = pm.request.headers.get('Authorization').replace('Bearer ', '');",
+					"    try {",
+					"        const payload = JSON.parse(atob(token.split('.')[1]));",
+					"        if (payload.organizationId) {",
+					"            pm.collectionVariables.set('organizationId', payload.organizationId);",
+					"        }",
+					"    } catch (e) {",
+					"        console.log('Could not decode JWT token');",
+					"    }",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000",
+			"type": "string"
+		},
+		{
+			"key": "provider",
+			"value": "composio",
+			"type": "string"
+		},
+		{
+			"key": "organizationId",
+			"value": "your-organization-id",
+			"type": "string",
+			"disabled": true
+		},
+		{
+			"key": "integrationId",
+			"value": "your-integration-id",
+			"type": "string",
+			"disabled": true
+		},
+		{
+			"key": "connectionId",
+			"value": "your-connection-id",
+			"type": "string",
+			"disabled": true
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
