@@ -21,9 +21,11 @@ export class ComposioService {
   constructor(private configService: ConfigService) {
     this.composio = new Composio({
       apiKey: this.configService.get('composio.apiKey'),
+      baseUrl: 'https://backend.composio.dev',
     });
     this.toolset = new OpenAIToolSet({
       apiKey: this.configService.get('composio.apiKey'),
+      baseUrl: 'https://backend.composio.dev',
     });
   }
 

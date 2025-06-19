@@ -76,7 +76,7 @@ describe('ComposioController (e2e)', () => {
       post: jest.fn().mockResolvedValue({
         data: {
           id: 'test-mcp-server-id',
-          name: 'test-app_test-entity-id',
+          name: 'test-app-test-entity-id',
           auth_config_ids: ['test-auth-config'],
         },
       }),
@@ -85,7 +85,7 @@ describe('ComposioController (e2e)', () => {
           items: [
             {
               id: 'test-mcp-server-id',
-              name: 'test-app_test-entity-id',
+              name: 'test-app-test-entity-id',
               auth_config_ids: ['test-auth-config'],
             },
           ],
@@ -300,7 +300,7 @@ describe('ComposioController (e2e)', () => {
         post: jest.fn().mockResolvedValue({
           data: {
             id: 'test-mcp-server-id',
-            name: 'test-app_test-entity-id',
+            name: 'test-app-test-entity-id',
             auth_config_ids: ['test-auth-config'],
           },
         }),
@@ -317,7 +317,7 @@ describe('ComposioController (e2e)', () => {
 
       // Verify axios was called with correct parameters (based on actual implementation)
       expect(mockAxiosInstance.post).toHaveBeenCalledWith('/mcp/servers', {
-        name: 'test-app_test-entity-id',
+        name: 'test-app-test-entity-id',
         auth_config_ids: ['test-auth-config'],
         allowed_tools: ['tool1', 'tool2'],
       });
@@ -387,7 +387,7 @@ describe('ComposioController (e2e)', () => {
             items: [
               {
                 id: 'test-mcp-server-id',
-                name: 'test-app_test-entity-id',
+                name: 'test-app-test-entity-id',
                 auth_config_ids: ['test-auth-config'],
               },
             ],

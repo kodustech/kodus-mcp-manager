@@ -24,7 +24,7 @@ export class ComposioClient {
     authConfigId: string,
     allowedTools?: string[],
   ) {
-    const name = `${appName}_${entityId.trim().replace(/ /g, '_').substring(0, 25)}`;
+    const name = `${appName}-${entityId.trim().replace(/ /g, '_').substring(0, 25)}`;
     const { data } = await this.client.post('/mcp/servers', {
       name,
       auth_config_ids: [authConfigId],
@@ -42,7 +42,7 @@ export class ComposioClient {
     const items = data.items.map((server) => {
       return {
         ...server,
-        mcp_url: this.getMCPUrl(server.id, authConfigId),
+        mcp_url: this.getMCPUrl(server.id, server.auth_config_ids[0]),
       };
     });
 
