@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, IsString, Min, Max } from 'class-validator';
+import { IsNumber, IsOptional, IsString, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class QueryDto {
@@ -17,15 +17,19 @@ export class QueryDto {
     message:
       'pageSize must be a number conforming to the specified constraints',
   })
-  @Max(100, {
-    message:
-      'pageSize must be a number conforming to the specified constraints',
-  })
-  pageSize = 10;
+  pageSize = 50;
 
   @IsString()
   @IsOptional()
-  integrationName: string;
+  provider: string;
+
+  @IsString()
+  @IsOptional()
+  appName: string;
+
+  @IsString()
+  @IsOptional()
+  organizationId: string;
 
   @IsString()
   @IsOptional()
@@ -33,5 +37,5 @@ export class QueryDto {
 
   @IsString()
   @IsOptional()
-  entityId: string;
+  status: string;
 }

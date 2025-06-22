@@ -5,4 +5,5 @@ export default () => ({
     baseUrl: process.env.COMPOSIO_BASE_URL,
   },
   redirectUri: process.env.REDIRECT_URI,
+  providers: process.env.MCP_PROVIDERS,
 });

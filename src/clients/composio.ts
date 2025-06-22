@@ -19,12 +19,12 @@ export class ComposioClient {
   }
 
   async createMCPServer(
-    entityId: string,
+    organizationId: string,
     appName: string,
     authConfigId: string,
     allowedTools?: string[],
   ) {
-    const name = `${appName}-${entityId.trim().replace(/ /g, '_').substring(0, 25)}`;
+    const name = `${appName}-${organizationId.trim().replace(/ /g, '_').substring(0, 25)}`;
     const { data } = await this.client.post('/mcp/servers', {
       name,
       auth_config_ids: [authConfigId],
