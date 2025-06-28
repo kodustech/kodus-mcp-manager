@@ -66,8 +66,13 @@ export class McpController {
   getIntegrationTools(
     @Param('integrationId') integrationId: string,
     @Param('provider') provider: string,
+    @Req() request: Request,
   ) {
-    return this.mcpService.getIntegrationTools(integrationId, provider);
+    return this.mcpService.getIntegrationTools(
+      integrationId,
+      request.organizationId,
+      provider,
+    );
   }
 
   @Post(':provider/integrations/:integrationId/install')

@@ -34,7 +34,7 @@ export class McpService {
   async getIntegrations(query: QueryDto, organizationId: string) {
     const promises = this.providerFactory.getProviders().map((provider) => {
       const { page, pageSize, appName } = query;
-      return provider.getIntegrations(page, pageSize, { appName });
+      return provider.getIntegrations(String(page), pageSize, { appName });
     });
 
     const integrations = (await Promise.all(promises)).flat();
@@ -83,9 +83,13 @@ export class McpService {
     return provider.getIntegrationRequiredParams(integrationId);
   }
 
-  getIntegrationTools(integrationId: string, providerType: string) {
+  getIntegrationTools(
+    integrationId: string,
+    organizationId: string,
+    providerType: string,
+  ) {
     const provider = this.providerFactory.getProvider(providerType);
-    return provider.getIntegrationTools(integrationId);
+    return provider.getIntegrationTools(integrationId, organizationId);
   }
 
   async installIntegration(

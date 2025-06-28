@@ -259,6 +259,7 @@ describe('MCP Controller (e2e)', () => {
 
       expect(mockProvider.getIntegrationTools).toHaveBeenCalledWith(
         INTEGRATION_ID,
+        ORGANIZATION_ID,
       );
     });
   });

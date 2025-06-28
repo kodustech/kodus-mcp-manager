@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { MCPProvider } from './interfaces/provider.interface';
-import { ComposioProvider } from './composio.provider';
+import { ComposioProvider } from './composio/composio.provider';
 
 export type ProviderType = string;
 
@@ -33,6 +33,7 @@ export class ProviderFactory {
       composio: ComposioProvider,
     };
 
+    console.log("🚀 ~ ProviderFactory ~ createProvider ~ this.configService:", this.configService)
     return new strategies[type](this.configService);
   }
 }

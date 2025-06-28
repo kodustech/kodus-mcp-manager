@@ -1,8 +1,8 @@
 import {
+  AuthScheme,
   Composio,
-  OpenAIToolSet,
-  SingleConnectedAccountResponse,
-} from 'composio-core';
+  ConnectedAccountRetrieveResponse,
+} from '@composio/core';
 import axios, { AxiosInstance } from 'axios';
 import {
   MCPConnection,
@@ -14,15 +14,14 @@ import {
   MCPRequiredParam,
   MCPInstallIntegration,
   MCPInstallIntegrationResponse,
-} from './interfaces/provider.interface';
-import { BaseProvider } from './base.provider';
+} from '../interfaces/provider.interface';
+import { BaseProvider } from '../base.provider';
 import { ConfigService } from '@nestjs/config';
-import { MCPConnectionStatus } from '../mcp/entities/mcp-connection.entity';
+import { MCPConnectionStatus } from '../../mcp/entities/mcp-connection.entity';
 import { BadRequestException } from '@nestjs/common';
 
 export class ComposioProvider extends BaseProvider {
   private readonly composio: Composio;
-  private readonly toolset: OpenAIToolSet;
   private readonly client: AxiosInstance;
   private readonly config: MCPProviderConfig;
 
@@ -39,6 +38,19 @@ export class ComposioProvider extends BaseProvider {
     error: MCPConnectionStatus.FAILED,
   };
 
+  public readonly authSchemaMap = {
+    OAUTH2: AuthScheme.OAuth2,
+    OAUTH1: AuthScheme.OAuth1,
+    API_KEY: AuthScheme.APIKey,
+    BASIC: AuthScheme.Basic,
+    BEARER_TOKEN: AuthScheme.BearerToken,
+    GOOGLE_SERVICE_ACCOUNT: AuthScheme.GoogleServiceAccount,
+    NO_AUTH: AuthScheme.NoAuth,
+    BASIC_WITH_JWT: AuthScheme.BasicWithJWT,
+    COMPOSIO_LINK: AuthScheme.ComposioLink,
+    CALCOM_AUTH: AuthScheme.CalcomAuth,
+  };
+
   constructor(configService: ConfigService) {
     super();
 
@@ -48,13 +60,11 @@ export class ComposioProvider extends BaseProvider {
       redirectUri: configService.get('redirectUri'),
     };
 
+    console.log(this.config);
+
     this.composio = new Composio({
       apiKey: this.config.apiKey,
-      baseUrl: 'https://backend.composio.dev',
-    });
-    this.toolset = new OpenAIToolSet({
-      apiKey: this.config.apiKey,
-      baseUrl: 'https://backend.composio.dev',
+      baseURL: 'https://backend.composio.dev',
     });
     this.client = axios.create({
       baseURL: this.config.baseUrl,
@@ -102,39 +112,37 @@ export class ComposioProvider extends BaseProvider {
   }
 
   async getIntegrations(
-    page = 1,
-    pageSize = 50,
+    cursor: string = '',
+    limit = 50,
     filters?: Record<string, any>,
   ): Promise<MCPIntegration[]> {
-    const result: any = await this.composio.integrations.list({
-      page,
-      pageSize,
-      appName: filters?.appName,
+    const result = await this.composio.authConfigs.list({
+      limit,
+      cursor,
+      toolkit: filters?.toolkit,
     });
 
-    return result.items.map((integration: any) => ({
+    return result.items.map((integration) => ({
       id: integration.id,
       name: integration.name,
-      description: integration.description,
+      description: '',
       authScheme: integration.authScheme,
-      appName: integration.appName,
-      logo: integration.logo,
+      appName: integration.toolkit.slug,
+      logo: integration.toolkit.logo,
       provider: 'composio',
     }));
   }
 
   async getIntegration(integrationId: string): Promise<MCPIntegration> {
     this.validateId(integrationId, 'Integration');
-    const integration: any = await this.composio.integrations.get({
-      integrationId,
-    });
+    const integration = await this.composio.authConfigs.get(integrationId);
     return {
       id: integration.id,
       name: integration.name,
-      description: integration.description,
+      description: '',
       authScheme: integration.authScheme,
-      appName: integration.appName,
-      logo: integration.logo,
+      appName: integration.toolkit.slug,
+      logo: integration.toolkit.logo,
       provider: 'composio',
     };
   }
@@ -143,20 +151,42 @@ export class ComposioProvider extends BaseProvider {
     integrationId: string,
   ): Promise<MCPRequiredParam[]> {
     this.validateId(integrationId, 'Integration');
-    const params = await this.composio.integrations.getRequiredParams({
-      integrationId,
-    });
-    return params.map((param) => ({
+    const integration = await this.composio.authConfigs.get(integrationId);
+    return integration.expectedInputFields.map((param: any) => ({
       name: param.name,
+      displayName: param.displayName,
       description: param.description,
       type: param.type,
       required: param.required,
     }));
   }
 
-  async getIntegrationTools(integrationId: string): Promise<any[]> {
+  async getIntegrationTools(
+    integrationId: string,
+    organizationId: string,
+  ): Promise<any[]> {
     this.validateId(integrationId, 'Integration');
-    return this.toolset.getTools({ integrationId });
+    const integration = await this.composio.authConfigs.get(integrationId);
+
+    const restrictTools = integration.restrictToFollowingTools || [];
+    let tools = [];
+    if (restrictTools.length) {
+      tools = await this.composio.tools.get(organizationId, {
+        toolkits: [integration.toolkit.slug],
+        limit: restrictTools.length + 1,
+      });
+    } else {
+      tools = await this.composio.tools.get(organizationId, {
+        tools: restrictTools,
+      });
+    }
+
+    return tools.map((tool) => ({
+      type: tool.type,
+      name: tool[tool.type].name,
+      description: tool[tool.type].description,
+      provider: 'composio',
+    }));
   }
 
   async initiateConnection(
@@ -168,52 +198,46 @@ export class ComposioProvider extends BaseProvider {
       config.integrationId,
     );
 
-    if (requiredParams.length > 0) {
+    if (requiredParams.length > 0)
       this.validateRequiredParams(requiredParams, config.params);
-    }
+
     const { integrationId, organizationId } = config;
 
-    const redirectUri = this.buildRedirectUri(this.config.redirectUri, {
+    const redirectUrl = this.buildRedirectUri(this.config.redirectUri, {
       provider: 'composio',
       integrationId,
     });
 
-    const params: any = {
-      integrationId,
-      redirectUri,
-    };
-
     const integration = await this.getIntegration(integrationId);
 
-    if (!integration.authScheme.includes('OAUTH')) {
-      params.connectionParams = {
-        ...config.params,
-      };
-    }
+    const schema = this.authSchemaMap[integration.authScheme]({
+      ...config.params,
+      redirectUrl,
+    });
 
-    params.appName = integration.appName;
-    // params.authMode = integration.authScheme;
-
-    const entity = await this.toolset.getEntity(organizationId);
-    const connectionRequest = await entity.initiateConnection(params);
+    const connectionRequest = await this.composio.connectedAccounts.initiate(
+      organizationId,
+      integration.id,
+      { config: schema },
+    );
 
     return {
-      id: connectionRequest.connectedAccountId,
+      id: connectionRequest.id,
       url: connectionRequest.redirectUrl || '',
-      status: this.statusMap[connectionRequest.connectionStatus],
+      status: this.statusMap[connectionRequest.status],
     };
   }
 
   async getConnections(
-    page = 1,
-    pageSize = 10,
+    cursor = 1,
+    limit = 10,
     filters?: Record<string, any>,
   ): Promise<{ data: MCPConnection[]; total: number }> {
     const result: any = await this.composio.connectedAccounts.list({
-      page,
-      pageSize,
-      integrationId: filters?.integrationId,
-      entityId: filters?.organizationId,
+      limit,
+      cursor,
+      authConfigIds: filters?.integrationId,
+      userIds: filters?.organizationId,
     });
 
     return {
@@ -227,10 +251,8 @@ export class ComposioProvider extends BaseProvider {
 
   async getConnection(
     connectedAccountId: string,
-  ): Promise<SingleConnectedAccountResponse> {
-    return this.composio.connectedAccounts.get({
-      connectedAccountId,
-    });
+  ): Promise<ConnectedAccountRetrieveResponse> {
+    return this.composio.connectedAccounts.get(connectedAccountId);
   }
 
   async createMCPServer(config: MCPServerConfig): Promise<MCPServer> {

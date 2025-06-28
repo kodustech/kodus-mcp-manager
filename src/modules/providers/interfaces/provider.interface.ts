@@ -48,6 +48,7 @@ export interface MCPIntegration {
 
 export interface MCPRequiredParam {
   name: string;
+  displayName: string;
   description: string;
   type: string;
   required: boolean;
@@ -66,15 +67,18 @@ export interface MCPInstallIntegrationResponse {
 export interface MCPProvider {
   statusMap: Record<string, MCPConnectionStatus>;
   getIntegrations(
-    page?: number,
-    pageSize?: number,
+    cursor?: string,
+    limit?: number,
     filters?: Record<string, any>,
   ): Promise<MCPIntegration[]>;
   getIntegration(integrationId: string): Promise<MCPIntegration>;
   getIntegrationRequiredParams(
     integrationId: string,
   ): Promise<MCPRequiredParam[]>;
-  getIntegrationTools(integrationId: string): Promise<any[]>;
+  getIntegrationTools(
+    integrationId: string,
+    organizationId: string,
+  ): Promise<any[]>;
   installIntegration(
     integrationId: string,
     organizationId: string,

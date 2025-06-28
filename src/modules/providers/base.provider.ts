@@ -13,8 +13,8 @@ import { MCPConnectionStatus } from '../mcp/entities/mcp-connection.entity';
 export abstract class BaseProvider implements MCPProvider {
   abstract statusMap: Record<string, MCPConnectionStatus>;
   abstract getIntegrations(
-    page?: number,
-    pageSize?: number,
+    cursor?: string,
+    limit?: number,
     filters?: Record<string, any>,
   ): Promise<MCPIntegration[]>;
 
@@ -24,7 +24,10 @@ export abstract class BaseProvider implements MCPProvider {
     integrationId: string,
   ): Promise<MCPRequiredParam[]>;
 
-  abstract getIntegrationTools(integrationId: string): Promise<any[]>;
+  abstract getIntegrationTools(
+    integrationId: string,
+    organizationId: string,
+  ): Promise<any[]>;
 
   abstract initiateConnection(
     config: MCPConnectionConfig,
