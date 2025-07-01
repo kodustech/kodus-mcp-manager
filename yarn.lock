@@ -318,13 +318,13 @@
   resolved "https://registry.yarnpkg.com/@composio/client/-/client-0.1.0-alpha.25.tgz#8181d9bb856364f642ba3b68303ac077d4e3c156"
   integrity sha512-5zbqn3zxSoIs4MtfuEKZ3p+xE6Is/PPh77ldoIT9iBYvZrw9RsqA7Xlyw5PgbIiG3QPoeRSpEAnjwBoVwU8ehQ==
 
-"@composio/core@^0.1.36-next.0":
-  version "0.1.36-next.0"
-  resolved "https://registry.yarnpkg.com/@composio/core/-/core-0.1.36-next.0.tgz#570e7663ca9c08ec13f1f8f4c700614f83e0db54"
-  integrity sha512-Gt5JLC6Y6P+8T6GVeyWnGRmTVg5Kr94TZYZmJX1JxsB5VoiBlEVeXg5TA6o/BxTvAp6NwasXhJFrwaL/lmrCrw==
+"@composio/core@^0.1.36-next.2":
+  version "0.1.36-next.2"
+  resolved "https://registry.yarnpkg.com/@composio/core/-/core-0.1.36-next.2.tgz#5e96f4cf3d2b8f74c82ce39d744fc7878665f82a"
+  integrity sha512-NakigPsWuc6DOZGdfXG/WxwmPQadWVgyRzUUM54c0J8eZ7AYFfFglxCC27JwwB6VwD5A30aS+tgEAbpCpeS/eQ==
   dependencies:
     "@composio/client" "0.1.0-alpha.25"
-    "@composio/json-schema-to-zod" "0.1.9"
+    "@composio/json-schema-to-zod" "0.1.10-next.1"
     "@types/json-schema" "^7.0.15"
     chalk "^5.4.1"
     openai "^4.94.0"
@@ -334,10 +334,10 @@
     zod "^3.24.2"
     zod-to-json-schema "^3.24.5"
 
-"@composio/json-schema-to-zod@0.1.9":
-  version "0.1.9"
-  resolved "https://registry.yarnpkg.com/@composio/json-schema-to-zod/-/json-schema-to-zod-0.1.9.tgz#6823ff9897886d112dbfca2d374c18ff60034983"
-  integrity sha512-uDOAPPkaMWM2DJLCFCW6/rxTgair6EmQ4Ojo6RDayzIl2BRUro0wGkpof4Za8sJPrmdTfSqteRMDy46xPnOYhw==
+"@composio/json-schema-to-zod@0.1.10-next.1":
+  version "0.1.10-next.1"
+  resolved "https://registry.yarnpkg.com/@composio/json-schema-to-zod/-/json-schema-to-zod-0.1.10-next.1.tgz#62c8caf07fc6ad451fed600ccd41056a90906be9"
+  integrity sha512-z43S9sHq0A86bDh/zjpRiBQ4blIFOWX6HS1d4awEok2bGkoEVTnnByyH+DmpkmH52GNhvcZrEXkoAszBdW2XxA==
   dependencies:
     "@types/json-schema" "^7.0.15"
     zod "^3.24.2"
@@ -1066,9 +1066,9 @@
     undici-types "~7.8.0"
 
 "@types/node@^18.11.18":
-  version "18.19.112"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-18.19.112.tgz#cd2aee9c075402e0e1942a44101428881dbeb110"
-  integrity sha512-i+Vukt9POdS/MBI7YrrkkI5fMfwFtOjphSmt4WXYLfwqsfr6z/HdCx7LqT9M7JktGob8WNgj8nFB4TbGNE4Cog==
+  version "18.19.113"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-18.19.113.tgz#f48df552584e47fb4a8bc0b39e1377112be105de"
+  integrity sha512-TmSTE9vyebJ9vSEiU+P+0Sp4F5tMgjiEOZaQUW6wA3ODvi6uBgkHQ+EsIu0pbiKvf9QHEvyRCiaz03rV0b+IaA==
   dependencies:
     undici-types "~5.26.4"
 
@@ -1804,18 +1804,13 @@ caniuse-lite@^1.0.30001726:
   resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001726.tgz#a15bd87d5a4bf01f6b6f70ae7c97fdfd28b5ae47"
   integrity sha512-VQAUIUzBiZ/UnlM28fSp2CRF3ivUn1BWEvxMcVTNwpw91Py1pGbPIyIKtd+tzct9C3ouceCVdGAXxZOpZAsgdw==
 
-chalk@4.1.2, chalk@^4.0.0, chalk@^4.0.2, chalk@^4.1.0, chalk@^4.1.1, chalk@^4.1.2:
+chalk@4.1.2, chalk@^4.0.0, chalk@^4.0.2, chalk@^4.1.0, chalk@^4.1.1, chalk@^4.1.2, chalk@^5.3.0, chalk@^5.4.1:
   version "4.1.2"
   resolved "https://registry.yarnpkg.com/chalk/-/chalk-4.1.2.tgz#aac4e2b7734a740867aeb16bf02aad556a1e7a01"
   integrity sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA==
   dependencies:
     ansi-styles "^4.1.0"
     supports-color "^7.1.0"
-
-chalk@^5.3.0, chalk@^5.4.1:
-  version "5.4.1"
-  resolved "https://registry.yarnpkg.com/chalk/-/chalk-5.4.1.tgz#1b48bf0963ec158dce2aacf69c093ae2dd2092d8"
-  integrity sha512-zgVZuo2WcZgfUEmsn6eO3kINexW8RAE4maiQ8QNs8CtpPCSyMiYsULR3HQYkm3w8FIA3SberyMJMSldGsW+U3w==
 
 char-regex@^1.0.2:
   version "1.0.2"

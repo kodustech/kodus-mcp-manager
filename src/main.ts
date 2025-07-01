@@ -3,9 +3,7 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
-  console.log('🚀 ~ ');
   const app = await NestFactory.create(AppModule);
-  console.log('🚀 ~ 2');
 
   app.enableCors({
     origin: '*',
@@ -26,7 +24,6 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
-  console.log('🚀 ~ 3');
   console.log(`Server is running on port ${port}`);
 }
 bootstrap();

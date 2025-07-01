@@ -9,6 +9,7 @@ export interface MCPProviderConfig {
 export interface MCPServerConfig {
   organizationId: string;
   appName: string;
+  integrationId: string;
   connectedAccountId?: string;
   authConfigId?: string;
   allowedTools?: string[];

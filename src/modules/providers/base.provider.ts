@@ -34,8 +34,8 @@ export abstract class BaseProvider implements MCPProvider {
   ): Promise<MCPConnection>;
 
   abstract getConnections(
-    page?: number,
-    pageSize?: number,
+    cursor?: string,
+    limit?: number,
     filters?: Record<string, any>,
   ): Promise<{ data: MCPConnection[]; total: number }>;
 

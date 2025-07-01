@@ -33,7 +33,6 @@ export class ProviderFactory {
       composio: ComposioProvider,
     };
 
-    console.log("🚀 ~ ProviderFactory ~ createProvider ~ this.configService:", this.configService)
     return new strategies[type](this.configService);
   }
 }
