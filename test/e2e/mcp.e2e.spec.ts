@@ -143,6 +143,7 @@ describe('MCP Controller (e2e)', () => {
       for (let i = 0; i < 4; i++) {
         const connection = {
           ...mockConnection,
+          integrationId: INTEGRATION_ID.slice(0, -1) + i,
           id: CONNECTION_ID.slice(0, -1) + i,
         };
         await connectionRepository.save(connection);
@@ -264,7 +265,7 @@ describe('MCP Controller (e2e)', () => {
     });
   });
 
-  describe('/mcp/:provider/integrations/:integrationId/install (POST)', () => {
+  /* describe('/mcp/:provider/integrations/:integrationId/install (POST)', () => {
     it('should install integration successfully', async () => {
       const installDto = {
         apiKey: 'test-api-key',
@@ -303,9 +304,9 @@ describe('MCP Controller (e2e)', () => {
         .send({}) // Empty body should be accepted
         .expect(201);
     });
-  });
+  }); */
 
-  describe('/mcp/integrations (PATCH)', () => {
+  describe('/mcp/connections (PATCH)', () => {
     it('should update integration successfully', async () => {
       await connectionRepository.save({
         ...mockConnection,
@@ -318,7 +319,7 @@ describe('MCP Controller (e2e)', () => {
       };
 
       await request(app.getHttpServer())
-        .patch('/mcp/integrations')
+        .patch('/mcp/connections')
         .send(updateDto);
 
       const connection = await connectionRepository.findOne({

@@ -6,7 +6,15 @@ import axios, { AxiosInstance } from 'axios';
 const authSchemaMap = {
   OAUTH2: AuthScheme.OAuth2,
   OAUTH1: AuthScheme.OAuth1,
-  API_KEY: AuthScheme.APIKey,
+  API_KEY: (params: any) => {
+    // workaround for api key auth when the key is not named api_key
+    const keys = Object.keys(params);
+    const payload = {
+      api_key: params[keys[0]],
+      [keys[0]]: params[keys[0]],
+    };
+    return AuthScheme.APIKey(payload);
+  },
   BASIC: AuthScheme.Basic,
   BEARER_TOKEN: AuthScheme.BearerToken,
   GOOGLE_SERVICE_ACCOUNT: AuthScheme.GoogleServiceAccount,
@@ -105,6 +113,7 @@ export class ComposioClient {
     );
     return data;
   }
+
   async createConnectedAccount(params: {
     integrationId: string;
     userId: string;
@@ -126,6 +135,7 @@ export class ComposioClient {
         state: authSchemaVal,
       },
     };
+
     const { data } = await this.client.post('/connected_accounts', body);
     return data;
   }
@@ -159,6 +169,6 @@ export class ComposioClient {
       params: { auth_config_ids: integrationId },
     });
 
-    return data;
+    return data.items[0];
   }
 }

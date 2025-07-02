@@ -32,8 +32,9 @@ export interface MCPServer {
 
 export interface MCPConnection {
   id: string;
-  authId?: string;
-  url?: string;
+  appName: string;
+  authUrl?: string;
+  mcpUrl?: string;
   status: string;
 }
 
@@ -80,9 +81,5 @@ export interface MCPProvider {
     integrationId: string,
     organizationId: string,
   ): Promise<any[]>;
-  installIntegration(
-    integrationId: string,
-    organizationId: string,
-    data: MCPInstallIntegration,
-  ): Promise<MCPInstallIntegrationResponse>;
+  initiateConnection(config: MCPConnectionConfig): Promise<MCPConnection>;
 }

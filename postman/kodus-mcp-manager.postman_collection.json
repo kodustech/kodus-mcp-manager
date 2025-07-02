@@ -14,9 +14,16 @@
 					"name": "Get Connections",
 					"request": {
 						"method": "GET",
-						"header": [],
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text",
+								"description": "JWT token for authentication"
+							}
+						],
 						"url": {
-							"raw": "{{baseUrl}}/mcp/connections?page=1&pageSize=10",
+							"raw": "{{baseUrl}}/mcp/connections?page=1&pageSize=10&provider={{provider}}&status=active",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -33,7 +40,23 @@
 								{
 									"key": "pageSize",
 									"value": "10",
-									"description": "Items per page (default: 10, max: 100)"
+									"description": "Items per page (default: 50, max: 100)"
+								},
+								{
+									"key": "provider",
+									"value": "{{provider}}",
+									"description": "Filter by provider (optional)"
+								},
+								{
+									"key": "integrationId",
+									"value": "",
+									"description": "Filter by integration ID (optional)",
+									"disabled": true
+								},
+								{
+									"key": "status",
+									"value": "active",
+									"description": "Filter by status (optional)"
 								}
 							]
 						},
@@ -45,7 +68,14 @@
 					"name": "Get Connection by ID",
 					"request": {
 						"method": "GET",
-						"header": [],
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text",
+								"description": "JWT token for authentication"
+							}
+						],
 						"url": {
 							"raw": "{{baseUrl}}/mcp/connections/:connectionId",
 							"host": [
@@ -59,11 +89,51 @@
 							"variable": [
 								{
 									"key": "connectionId",
-									"value": "891abb68-1745-48d1-a19c-c4b432dce9ad"
+									"value": "{{connectionId}}"
 								}
 							]
 						},
 						"description": "Get details of a specific connection"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Connection",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text",
+								"description": "JWT token for authentication"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"integrationId\": \"{{integrationId}}\",\n  \"status\": \"active\",\n  \"metadata\": {\n    \"lastUpdated\": \"{{$timestamp}}\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/mcp/connections",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"mcp",
+								"connections"
+							]
+						},
+						"description": "Update connection details"
 					},
 					"response": []
 				}
@@ -76,9 +146,16 @@
 					"name": "Get Integrations",
 					"request": {
 						"method": "GET",
-						"header": [],
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text",
+								"description": "JWT token for authentication"
+							}
+						],
 						"url": {
-							"raw": "{{baseUrl}}/mcp/integrations?page=1",
+							"raw": "{{baseUrl}}/mcp/integrations?page=1&pageSize=10&provider={{provider}}",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -95,12 +172,22 @@
 								{
 									"key": "pageSize",
 									"value": "10",
-									"description": "Items per page (default: 10, max: 100)",
+									"description": "Items per page (default: 50, max: 100)"
+								},
+								{
+									"key": "provider",
+									"value": "{{provider}}",
+									"description": "Filter by provider (optional)"
+								},
+								{
+									"key": "appName",
+									"value": "",
+									"description": "Filter by app name (optional)",
 									"disabled": true
 								}
 							]
 						},
-						"description": "Get list of integrations with pagination"
+						"description": "Get list of integrations with pagination and connection status"
 					},
 					"response": []
 				},
@@ -108,7 +195,14 @@
 					"name": "Get Integration by ID",
 					"request": {
 						"method": "GET",
-						"header": [],
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text",
+								"description": "JWT token for authentication"
+							}
+						],
 						"url": {
 							"raw": "{{baseUrl}}/mcp/{{provider}}/integrations/:integrationId",
 							"host": [
@@ -123,11 +217,11 @@
 							"variable": [
 								{
 									"key": "integrationId",
-									"value": "2890ccc5-5e22-441d-bb2f-6d8941582589"
+									"value": "{{integrationId}}"
 								}
 							]
 						},
-						"description": "Get details of a specific integration"
+						"description": "Get details of a specific integration with connection status"
 					},
 					"response": []
 				},
@@ -151,11 +245,11 @@
 							"variable": [
 								{
 									"key": "integrationId",
-									"value": "xx"
+									"value": "{{integrationId}}"
 								}
 							]
 						},
-						"description": "Get required parameters for an integration"
+						"description": "Get required parameters for an integration (no auth required)"
 					},
 					"response": []
 				},
@@ -163,7 +257,14 @@
 					"name": "Get Integration Tools",
 					"request": {
 						"method": "GET",
-						"header": [],
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text",
+								"description": "JWT token for authentication"
+							}
+						],
 						"url": {
 							"raw": "{{baseUrl}}/mcp/{{provider}}/integrations/:integrationId/tools",
 							"host": [
@@ -179,7 +280,7 @@
 							"variable": [
 								{
 									"key": "integrationId",
-									"value": "76a6ebf1-62d9-4651-b4ae-b3449983ee55"
+									"value": "{{integrationId}}"
 								}
 							]
 						},
@@ -188,7 +289,7 @@
 					"response": []
 				},
 				{
-					"name": "Install Integration",
+					"name": "Connect Integration",
 					"request": {
 						"method": "POST",
 						"header": [
@@ -196,11 +297,17 @@
 								"key": "Content-Type",
 								"value": "application/json",
 								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text",
+								"description": "JWT token for authentication"
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "/* {\n  \"apiKey\": \"your-api-key\",\n  \"token\": \"your-token\",\n  \"generic_api_key\": \"generic-key\",\n  \"allowedTools\": [\"tool1\", \"tool2\"]\n} */",
+							"raw": "{\n  \"integrationId\": \"{{integrationId}}\",\n  \"allowedTools\": [\"tool1\", \"tool2\"],\n  \"authParams\": {\n    \"apiKey\": \"your-api-key\",\n    \"token\": \"your-token\"\n  }\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -208,97 +315,33 @@
 							}
 						},
 						"url": {
-							"raw": "{{baseUrl}}/mcp/{{provider}}/integrations/:integrationId/install",
+							"raw": "{{baseUrl}}/mcp/{{provider}}/connect",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"mcp",
 								"{{provider}}",
-								"integrations",
-								":integrationId",
-								"install"
-							],
-							"variable": [
-								{
-									"key": "integrationId",
-									"value": "2890ccc5-5e22-441d-bb2f-6d8941582589"
-								}
+								"connect"
 							]
 						},
-						"description": "Install an integration for the organization"
-					},
-					"response": []
-				},
-				{
-					"name": "Update Integration",
-					"request": {
-						"method": "PATCH",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"integrationId\": \"{{integrationId}}\",\n  \"status\": \"success\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{baseUrl}}/mcp/integrations",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"mcp",
-								"integrations"
-							]
-						},
-						"description": "Update integration details"
+						"description": "Initiate a connection for an integration"
 					},
 					"response": []
 				}
 			]
 		}
 	],
-	"event": [
-		{
-			"listen": "prerequest",
-			"script": {
-				"type": "text/javascript",
-				"exec": [
-					"// Add organization ID from JWT token if available",
-					"if (pm.request.headers.has('Authorization')) {",
-					"    const token = pm.request.headers.get('Authorization').replace('Bearer ', '');",
-					"    try {",
-					"        const payload = JSON.parse(atob(token.split('.')[1]));",
-					"        if (payload.organizationId) {",
-					"            pm.collectionVariables.set('organizationId', payload.organizationId);",
-					"        }",
-					"    } catch (e) {",
-					"        console.log('Could not decode JWT token');",
-					"    }",
-					"}"
-				]
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{token}}",
+				"type": "string"
 			}
-		},
-		{
-			"listen": "test",
-			"script": {
-				"type": "text/javascript",
-				"packages": {},
-				"exec": [
-					""
-				]
-			}
-		}
-	],
+		]
+	},
 	"variable": [
 		{
 			"key": "baseUrl",
@@ -311,27 +354,20 @@
 			"type": "string"
 		},
 		{
-			"key": "organizationId",
-			"value": "your-organization-id",
-			"type": "string",
-			"disabled": true
-		},
-		{
 			"key": "integrationId",
 			"value": "your-integration-id",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
 			"key": "connectionId",
 			"value": "your-connection-id",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
 			"key": "token",
-			"value": "",
-			"type": "string"
+			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvcmdhbml6YXRpb25JZCI6ImFkODE0ZGZmLWUxY2EtNDdmYS05ZGI2LTJkYzQ1M2NhNzlkMiJ9.hCkZsZdQMPQAQcwYpH-nGovQH_rv-CcOsiHauN_hYvE",
+			"type": "string",
+			"description": "JWT token for authentication"
 		}
 	]
 }

@@ -9,12 +9,13 @@ export class CreateTableMcpConnections1750542560106
 
         CREATE TABLE public.mcp_connections (
             id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-            "organizationId" character varying NOT NULL,
+            "organizationId" uuid NOT NULL,
             "integrationId" character varying(50) NULL,
             status character varying(30) NOT NULL DEFAULT 'pending',
             provider character varying(30) NOT NULL,
             "appName" character varying(30) NOT NULL,
             "mcpUrl" character varying(255),
+            "allowedTools" jsonb NOT NULL DEFAULT '[]'::jsonb,
             metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
             "createdAt" timestamp DEFAULT now(),
             "updatedAt" timestamp DEFAULT now(),
@@ -23,7 +24,7 @@ export class CreateTableMcpConnections1750542560106
 
         CREATE INDEX idx_mcp_connections_organization_id ON public.mcp_connections ("organizationId");
         CREATE INDEX idx_mcp_connections_integration_id ON public.mcp_connections ("integrationId");
-        CREATE INDEX idx_mcp_connections_org_integration ON public.mcp_connections ("organizationId", "integrationId");
+        CREATE UNIQUE INDEX idx_mcp_connections_org_integration ON public.mcp_connections ("organizationId", "integrationId");
     `);
   }
 

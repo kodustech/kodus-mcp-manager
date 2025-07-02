@@ -7,13 +7,12 @@ import {
   MCPServerConfig,
   MCPRequiredParam,
   MCPInstallIntegration,
-  MCPInstallIntegrationResponse,
 } from '../interfaces/provider.interface';
 import { BaseProvider } from '../base.provider';
 import { ConfigService } from '@nestjs/config';
 import { MCPConnectionStatus } from '../../mcp/entities/mcp-connection.entity';
 import { BadRequestException } from '@nestjs/common';
-import { ComposioClient } from 'src/clients/composio';
+import { ComposioClient } from '../../../clients/composio';
 
 export class ComposioProvider extends BaseProvider {
   private readonly client: ComposioClient;
@@ -41,10 +40,6 @@ export class ComposioProvider extends BaseProvider {
       redirectUri: configService.get('redirectUri'),
     };
 
-    /* this.composio = new Composio({
-      apiKey: this.config.apiKey,
-      baseURL: 'https://backend.composio.dev',
-    }); */
     this.client = new ComposioClient(configService);
   }
 
@@ -52,36 +47,34 @@ export class ComposioProvider extends BaseProvider {
     return `https://mcp.composio.dev/composio/server/${serverId}/mcp?connected_account_id=${authConfigId}`;
   }
 
-  private validateConfig(
-    config: MCPServerConfig | MCPConnectionConfig | MCPInstallIntegration,
-  ): void {
-    Object.entries(config).forEach(([key, value]) => {
-      if (
-        value === undefined &&
-        key !== 'allowedTools' &&
-        key !== 'apiKey' &&
-        key !== 'token'
-      ) {
-        throw new BadRequestException(`${key} is required`);
-      }
-    });
-  }
-
   private validateRequiredParams(
     requiredParams: MCPRequiredParam[],
     params: MCPInstallIntegration,
   ): void {
+    if (requiredParams.length === 0) return;
+
+    if (!params) {
+      throw new BadRequestException(
+        `Missing required params: ${requiredParams.map((param) => param.name).join(', ')}`,
+      );
+    }
+
+    const missingParams = [];
     requiredParams.forEach((param) => {
       if (
         params[param.name] === undefined &&
         param.required &&
         param.type === 'string'
       ) {
-        throw new BadRequestException(
-          `Required parameter "${param.name}" is required`,
-        );
+        missingParams.push(param.name);
       }
     });
+
+    if (missingParams.length > 0) {
+      throw new BadRequestException(
+        `Missing required params: ${missingParams.join(', ')}`,
+      );
+    }
   }
 
   async getIntegrations(
@@ -156,7 +149,7 @@ export class ComposioProvider extends BaseProvider {
   async initiateConnection(
     config: MCPConnectionConfig,
   ): Promise<MCPConnection> {
-    this.validateConfig(config);
+    //this.validateConfig(config);
 
     const requiredParams = await this.getIntegrationRequiredParams(
       config.integrationId,
@@ -181,15 +174,15 @@ export class ComposioProvider extends BaseProvider {
       callbackUrl: redirectUrl,
       params: config.params,
     });
-    console.log(
-      '🚀 ~ ComposioProvider ~ connectionRequest:',
-      connectionRequest,
-    );
+
+    const mcp = await this.client.getMCPServer(integrationId);
 
     return {
       id: connectionRequest.id,
-      url: connectionRequest.redirect_url || '',
+      appName: integration.appName,
+      authUrl: connectionRequest.redirect_url || '',
       status: this.statusMap[connectionRequest.status],
+      mcpUrl: this.getMCPUrl(mcp.id, connectionRequest.id),
     };
   }
 
@@ -219,7 +212,7 @@ export class ComposioProvider extends BaseProvider {
   }
 
   async createMCPServer(config: MCPServerConfig): Promise<MCPServer> {
-    this.validateConfig(config);
+    // this.validateConfig(config);
     const {
       organizationId,
       appName,
@@ -244,48 +237,11 @@ export class ComposioProvider extends BaseProvider {
     } as any;
   }
 
-  async getMCPServer(authConfigId: string): Promise<{ items: MCPServer[] }> {
-    this.validateId(authConfigId, 'Auth Config');
+  async getMCPServer(integrationId: string): Promise<{ items: MCPServer[] }> {
+    this.validateId(integrationId, 'Integration');
 
-    const data = await this.client.getMCPServer(authConfigId);
+    const data = await this.client.getMCPServer(integrationId);
 
     return { items: [data] } as any;
-  }
-
-  async installIntegration(
-    integrationId: string,
-    organizationId: string,
-    data: MCPInstallIntegration,
-  ): Promise<MCPInstallIntegrationResponse> {
-    this.validateConfig(data);
-
-    const { allowedTools, ...rest } = data;
-    const initiateConnection = await this.initiateConnection({
-      integrationId,
-      organizationId: organizationId,
-      params: { ...rest },
-    });
-
-    const integration = await this.getIntegration(integrationId);
-
-    const server = await this.createMCPServer({
-      organizationId,
-      appName: integration.appName,
-      integrationId,
-      authConfigId: initiateConnection.id,
-      allowedTools: allowedTools,
-    });
-
-    return {
-      server: {
-        ...server,
-        appName: integration.appName,
-      },
-      connection: {
-        id: initiateConnection.id,
-        status: initiateConnection.status,
-        url: initiateConnection.url,
-      },
-    };
   }
 }
