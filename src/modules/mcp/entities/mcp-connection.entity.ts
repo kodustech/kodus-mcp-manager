@@ -38,6 +38,9 @@ export class MCPConnectionEntity {
   @Column({ name: 'mcpUrl', nullable: true })
   mcpUrl?: string;
 
+  @Column({ name: 'allowedTools', type: 'jsonb', nullable: false, default: [] })
+  allowedTools: string[];
+
   @Column({ type: 'jsonb', nullable: true })
   metadata?: Record<string, any>;
 

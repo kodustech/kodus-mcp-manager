@@ -1,15 +1,22 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsNotEmpty,
+  IsObject,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class InitiateConnectionDto {
   @IsString()
   @IsNotEmpty()
   integrationId: string;
 
-  @IsString()
-  @IsNotEmpty()
-  organizationId: string;
-
-  @IsString()
+  @IsArray()
+  @IsString({ each: true })
   @IsOptional()
-  apiKey?: string;
+  allowedTools?: string[];
+
+  @IsObject()
+  @IsOptional()
+  authParams?: Record<string, any>;
 }

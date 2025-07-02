@@ -11,9 +11,7 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
+    AppConfigModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: getTypeOrmConfig,
@@ -23,7 +21,6 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
       global: true,
       secret: process.env.JWT_SECRET || 'ad814dff-e1ca-47fa-9db6-2dc453ca79d2',
     }),
-    AppConfigModule,
     McpModule,
   ],
   controllers: [],

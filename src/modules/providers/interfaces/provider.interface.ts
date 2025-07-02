@@ -9,6 +9,7 @@ export interface MCPProviderConfig {
 export interface MCPServerConfig {
   organizationId: string;
   appName: string;
+  integrationId: string;
   connectedAccountId?: string;
   authConfigId?: string;
   allowedTools?: string[];
@@ -31,8 +32,9 @@ export interface MCPServer {
 
 export interface MCPConnection {
   id: string;
-  authId?: string;
-  url?: string;
+  appName: string;
+  authUrl?: string;
+  mcpUrl?: string;
   status: string;
 }
 
@@ -48,6 +50,7 @@ export interface MCPIntegration {
 
 export interface MCPRequiredParam {
   name: string;
+  displayName: string;
   description: string;
   type: string;
   required: boolean;
@@ -66,18 +69,17 @@ export interface MCPInstallIntegrationResponse {
 export interface MCPProvider {
   statusMap: Record<string, MCPConnectionStatus>;
   getIntegrations(
-    page?: number,
-    pageSize?: number,
+    cursor?: string,
+    limit?: number,
     filters?: Record<string, any>,
   ): Promise<MCPIntegration[]>;
   getIntegration(integrationId: string): Promise<MCPIntegration>;
   getIntegrationRequiredParams(
     integrationId: string,
   ): Promise<MCPRequiredParam[]>;
-  getIntegrationTools(integrationId: string): Promise<any[]>;
-  installIntegration(
+  getIntegrationTools(
     integrationId: string,
     organizationId: string,
-    data: MCPInstallIntegration,
-  ): Promise<MCPInstallIntegrationResponse>;
+  ): Promise<any[]>;
+  initiateConnection(config: MCPConnectionConfig): Promise<MCPConnection>;
 }

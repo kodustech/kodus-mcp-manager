@@ -1,11 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ProviderFactory } from '../providers/provider.factory';
 import { QueryDto } from './dto/query.dto';
-// import { InitiateConnectionDto } from './dto/initiate-connection.dto';
 import { MCPConnectionEntity } from './entities/mcp-connection.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { MCPInstallIntegrationDto } from './dto/mcp-install.dto';
+import { InitiateConnectionDto } from './dto/initiate-connection.dto';
+import { UpdateConnectionDto } from './dto/update-connection.dto';
 
 @Injectable()
 export class McpService {
@@ -34,7 +34,7 @@ export class McpService {
   async getIntegrations(query: QueryDto, organizationId: string) {
     const promises = this.providerFactory.getProviders().map((provider) => {
       const { page, pageSize, appName } = query;
-      return provider.getIntegrations(page, pageSize, { appName });
+      return provider.getIntegrations(String(page), pageSize, { appName });
     });
 
     const integrations = (await Promise.all(promises)).flat();
@@ -83,49 +83,47 @@ export class McpService {
     return provider.getIntegrationRequiredParams(integrationId);
   }
 
-  getIntegrationTools(integrationId: string, providerType: string) {
-    const provider = this.providerFactory.getProvider(providerType);
-    return provider.getIntegrationTools(integrationId);
-  }
-
-  async installIntegration(
+  getIntegrationTools(
     integrationId: string,
     organizationId: string,
     providerType: string,
-    body: MCPInstallIntegrationDto & { [key: string]: any },
   ) {
     const provider = this.providerFactory.getProvider(providerType);
-    const response = await provider.installIntegration(
-      integrationId,
-      organizationId,
-      body,
-    );
-
-    const connection = await this.connectionRepository.findOne({
-      where: { integrationId, organizationId },
-    });
-
-    const newConnection = Object.assign(connection || {}, {
-      integrationId,
-      organizationId,
-      status: response.connection.status,
-      provider: providerType,
-      mcpUrl: response.server.mcpUrl,
-      appName: response.server.appName,
-      metadata: response,
-    });
-
-    this.connectionRepository.save(newConnection);
-
-    return {
-      provider: providerType,
-      status: response.connection.status,
-      authUrl: response.connection.url,
-      mcpUrl: response.server.mcpUrl,
-    };
+    return provider.getIntegrationTools(integrationId, organizationId);
   }
 
-  async updateIntegration(body: any, organizationId: string) {
+  async initiateConnection(
+    organizationId: string,
+    providerType: string,
+    body: InitiateConnectionDto,
+  ) {
+    const provider = this.providerFactory.getProvider(providerType);
+
+    const data = {
+      integrationId: body.integrationId,
+      organizationId,
+      params: body.authParams,
+    };
+
+    const connection = await provider.initiateConnection(data);
+
+    const newConnection = {
+      integrationId: body.integrationId,
+      organizationId,
+      status: connection.status,
+      provider: providerType,
+      mcpUrl: connection.mcpUrl,
+      appName: connection.appName,
+      allowedTools: body.allowedTools,
+      metadata: {
+        connection,
+      },
+    };
+
+    return this.connectionRepository.save(newConnection);
+  }
+
+  async updateConnection(body: UpdateConnectionDto, organizationId: string) {
     const { integrationId } = body;
     const connection = await this.connectionRepository.findOne({
       where: { integrationId, organizationId },
@@ -141,6 +139,7 @@ export class McpService {
       status: provider.statusMap[body.status],
       metadata: {
         ...connection.metadata,
+        ...body.metadata,
         connection: {
           ...connection.metadata.connection,
           status: provider.statusMap[body.status],
