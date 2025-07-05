@@ -18,6 +18,7 @@ export interface MCPServerConfig {
 export interface MCPConnectionConfig {
   integrationId: string;
   organizationId: string;
+  allowedTools?: string[];
   //redirectUri?: string;
   params?: { [key: string]: any };
 }
@@ -36,6 +37,7 @@ export interface MCPConnection {
   authUrl?: string;
   mcpUrl?: string;
   status: string;
+  allowedTools?: string[];
 }
 
 export interface MCPIntegration {
@@ -46,6 +48,7 @@ export interface MCPIntegration {
   appName: string;
   provider: string;
   logo?: string;
+  allowedTools?: string[];
 }
 
 export interface MCPRequiredParam {

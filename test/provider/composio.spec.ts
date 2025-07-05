@@ -345,12 +345,28 @@ describe('ComposioProvider', () => {
       mcp_url: 'https://mcp.composio.dev/composio/server/server-1/mcp',
     };
 
+    const mockTools = {
+      items: [
+        {
+          slug: 'tool1',
+          name: 'Tool 1',
+          description: 'Tool 1 description',
+        },
+        {
+          slug: 'tool2',
+          name: 'Tool 2',
+          description: 'Tool 2 description',
+        },
+      ],
+    };
+
     beforeEach(() => {
       mockComposioClient.getIntegration.mockResolvedValue(mockIntegration);
       mockComposioClient.createConnectedAccount.mockResolvedValue(
         mockConnectionRequest,
       );
       mockComposioClient.getMCPServer.mockResolvedValue(mockMCPServer);
+      mockComposioClient.getTools.mockResolvedValue(mockTools);
     });
 
     it('should initiate connection successfully', async () => {
@@ -375,6 +391,7 @@ describe('ComposioProvider', () => {
         appName: 'test-app',
         mcpUrl:
           'https://mcp.composio.dev/composio/server/server-1/mcp?connected_account_id=conn-1',
+        allowedTools: ['tool1', 'tool2'],
       });
     });
 

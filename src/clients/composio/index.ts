@@ -6,15 +6,7 @@ import axios, { AxiosInstance } from 'axios';
 const authSchemaMap = {
   OAUTH2: AuthScheme.OAuth2,
   OAUTH1: AuthScheme.OAuth1,
-  API_KEY: (params: any) => {
-    // workaround for api key auth when the key is not named api_key
-    const keys = Object.keys(params);
-    const payload = {
-      api_key: params[keys[0]],
-      [keys[0]]: params[keys[0]],
-    };
-    return AuthScheme.APIKey(payload);
-  },
+  API_KEY: AuthScheme.APIKey,
   BASIC: AuthScheme.Basic,
   BEARER_TOKEN: AuthScheme.BearerToken,
   GOOGLE_SERVICE_ACCOUNT: AuthScheme.GoogleServiceAccount,

@@ -103,9 +103,14 @@ export class McpService {
       integrationId: body.integrationId,
       organizationId,
       params: body.authParams,
+      allowedTools: body.allowedTools,
     };
 
     const connection = await provider.initiateConnection(data);
+
+    const existingConnection = await this.connectionRepository.findOne({
+      where: { integrationId: body.integrationId, organizationId },
+    });
 
     const newConnection = {
       integrationId: body.integrationId,
@@ -114,13 +119,15 @@ export class McpService {
       provider: providerType,
       mcpUrl: connection.mcpUrl,
       appName: connection.appName,
-      allowedTools: body.allowedTools,
+      allowedTools: connection.allowedTools,
       metadata: {
         connection,
       },
     };
 
-    return this.connectionRepository.save(newConnection);
+    const updatedConnection = Object.assign(existingConnection, newConnection);
+
+    return this.connectionRepository.save(updatedConnection);
   }
 
   async updateConnection(body: UpdateConnectionDto, organizationId: string) {

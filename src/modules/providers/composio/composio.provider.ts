@@ -61,11 +61,7 @@ export class ComposioProvider extends BaseProvider {
 
     const missingParams = [];
     requiredParams.forEach((param) => {
-      if (
-        params[param.name] === undefined &&
-        param.required &&
-        param.type === 'string'
-      ) {
+      if (params[param.name] === undefined && param.required) {
         missingParams.push(param.name);
       }
     });
@@ -110,6 +106,7 @@ export class ComposioProvider extends BaseProvider {
       appName: integration.toolkit.slug,
       logo: integration.toolkit.logo,
       provider: 'composio',
+      allowedTools: integration.restrict_to_following_tools,
     };
   }
 
@@ -167,6 +164,8 @@ export class ComposioProvider extends BaseProvider {
 
     const integration = await this.getIntegration(integrationId);
 
+    // TODO: UPSERT CONNECTED ACCOUNT
+
     const connectionRequest = await this.client.createConnectedAccount({
       integrationId: integration.id,
       userId: organizationId,
@@ -177,12 +176,22 @@ export class ComposioProvider extends BaseProvider {
 
     const mcp = await this.client.getMCPServer(integrationId);
 
+    let allowedTools = config.allowedTools;
+
+    if (!allowedTools?.length) allowedTools = integration.allowedTools;
+
+    if (!allowedTools?.length)
+      allowedTools = (await this.getIntegrationTools(integrationId)).map(
+        (tool) => tool.slug,
+      );
+
     return {
       id: connectionRequest.id,
       appName: integration.appName,
       authUrl: connectionRequest.redirect_url || '',
       status: this.statusMap[connectionRequest.status],
       mcpUrl: this.getMCPUrl(mcp.id, connectionRequest.id),
+      allowedTools: allowedTools,
     };
   }
 
