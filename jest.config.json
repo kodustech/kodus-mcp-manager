@@ -17,8 +17,5 @@
   "coveragePathIgnorePatterns": ["dist", "node_modules", "test", "src/main.ts", ".eslintrc.js"],
   "transformIgnorePatterns": [
     "node_modules/(?!(@composio/core|chalk|ansi-styles)/)"
-  ],
-  "moduleNameMapper": {
-    "^@composio/core$": "<rootDir>/test/__mocks__/@composio/core.js"
-  }
+  ]
 }
