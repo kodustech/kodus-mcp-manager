@@ -1,37 +1,41 @@
 import {
   Injectable,
-  NestMiddleware,
+  CanActivate,
+  ExecutionContext,
   UnauthorizedException,
 } from '@nestjs/common';
-import { Request, Response, NextFunction } from 'express';
 import { JwtService } from '@nestjs/jwt';
+import { FastifyRequest } from 'fastify';
 
-declare module 'express' {
-  interface Request {
+declare module 'fastify' {
+  interface FastifyRequest {
     organizationId?: string;
   }
 }
 
 @Injectable()
-export class AuthMiddleware implements NestMiddleware {
+export class AuthGuard implements CanActivate {
   constructor(private readonly jwtService: JwtService) {}
 
-  use(req: Request, res: Response, next: NextFunction) {
+  canActivate(context: ExecutionContext): boolean {
+    const request = context.switchToHttp().getRequest<FastifyRequest>();
+
     try {
-      const token = this.extractTokenFromHeader(req);
+      const token = this.extractTokenFromHeader(request.headers);
 
       if (!token) {
         throw new UnauthorizedException('No token provided');
       }
 
       const decoded = this.jwtService.decode(token);
+
       if (
         decoded &&
         typeof decoded === 'object' &&
         'organizationId' in decoded
       ) {
-        req.organizationId = decoded.organizationId;
-        return next();
+        request.organizationId = decoded.organizationId;
+        return true;
       }
 
       throw new UnauthorizedException('Invalid token');
@@ -40,8 +44,11 @@ export class AuthMiddleware implements NestMiddleware {
     }
   }
 
-  private extractTokenFromHeader(request: Request): string | undefined {
-    const [type, token] = request.headers.authorization?.split(' ') ?? [];
+  private extractTokenFromHeader(
+    headers: FastifyRequest['headers'],
+  ): string | undefined {
+    const authHeader = headers.authorization;
+    const [type, token] = authHeader?.split(' ') ?? [];
     return type === 'Bearer' ? token : undefined;
   }
 }

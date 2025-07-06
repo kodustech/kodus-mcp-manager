@@ -1,19 +1,24 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MCPConnectionEntity } from '../../src/modules/mcp/entities/mcp-connection.entity';
 import { ProviderFactory } from '../../src/modules/providers/provider.factory';
 import { AppModule } from '../../src/app.module';
-import { AuthMiddleware } from '../../src/common/middlewares/auth.middleware';
+
+import {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from '@nestjs/platform-fastify';
+import { AuthGuard } from '../../src/common/guards/auth.guard';
+import { ValidationPipe } from '@nestjs/common';
 
 const ORGANIZATION_ID = '35f64196-1720-41db-824c-6d856a89a2c6';
 const INTEGRATION_ID = '3617df61-f016-4064-b0b2-a4c11d3d3c97';
 const CONNECTION_ID = '442719b5-c729-483c-830c-e43ccfefbe57';
 
 describe('MCP Controller (e2e)', () => {
-  let app: INestApplication;
+  let app: NestFastifyApplication;
   let connectionRepository: Repository<MCPConnectionEntity>;
 
   const mockConnection = {
@@ -85,14 +90,15 @@ describe('MCP Controller (e2e)', () => {
   };
 
   const mockAuthMiddleware = {
-    use: jest.fn().mockImplementation((req, res, next) => {
-      req.organizationId = ORGANIZATION_ID;
-      next();
+    canActivate: jest.fn().mockImplementation((context) => {
+      const request = context.switchToHttp().getRequest();
+      request.organizationId = ORGANIZATION_ID;
+      return true;
     }),
   };
 
   beforeAll(async () => {
-    AuthMiddleware.prototype.use = mockAuthMiddleware.use;
+    AuthGuard.prototype.canActivate = mockAuthMiddleware.canActivate;
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -101,13 +107,27 @@ describe('MCP Controller (e2e)', () => {
       .useValue(mockProviderFactory)
       .compile();
 
-    app = moduleFixture.createNestApplication();
+    app = moduleFixture.createNestApplication<NestFastifyApplication>(
+      new FastifyAdapter(),
+    );
 
     connectionRepository = moduleFixture.get<Repository<MCPConnectionEntity>>(
       getRepositoryToken(MCPConnectionEntity),
     );
 
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        transform: true,
+        forbidNonWhitelisted: true,
+        transformOptions: {
+          enableImplicitConversion: true,
+        },
+      }),
+    );
+
     await app.init();
+    await app.getHttpAdapter().getInstance().ready();
   });
 
   afterAll(async () => {
@@ -202,7 +222,7 @@ describe('MCP Controller (e2e)', () => {
         total: 1,
         isConnected: false,
       });
-      expect(mockProvider.getIntegrations).toHaveBeenCalledWith('1', '10', {
+      expect(mockProvider.getIntegrations).toHaveBeenCalledWith('1', 10, {
         appName: undefined,
       });
     });
@@ -364,10 +384,7 @@ describe('MCP Controller (e2e)', () => {
         .spyOn(connectionRepository, 'findAndCount')
         .mockRejectedValue(new Error('Database error'));
 
-      await request(app.getHttpServer())
-        .get('/mcp/connections')
-        .query({ page: -1 }) // Invalid page
-        .expect(500); // Database error because of invalid pagination
+      await request(app.getHttpServer()).get('/mcp/connections').expect(500); // Database error because of invalid pagination
     });
   });
 });

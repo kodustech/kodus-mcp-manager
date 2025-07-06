@@ -6,17 +6,20 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import { Response } from 'express';
 import { QueryFailedError } from 'typeorm';
+import { FastifyRequest, FastifyReply } from 'fastify';
+import { HttpAdapterHost } from '@nestjs/core';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
+  constructor(private httpAdapterHost: HttpAdapterHost) {}
+
   private readonly logger = new Logger(HttpExceptionFilter.name);
 
   catch(exception: any, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
-    const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest();
+    const response = ctx.getResponse<FastifyReply>();
+    const request = ctx.getRequest<FastifyRequest>();
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'Internal server error';
@@ -52,15 +55,21 @@ export class HttpExceptionFilter implements ExceptionFilter {
       details = details || exception.stack || null;
     }
 
-    response.status(status).json({
+    const errorResponse = {
       statusCode: status,
       timestamp: new Date().toISOString(),
-      path: request.url,
+      url: request.originalUrl,
       method: request.method,
       message,
       code,
       details,
-    });
+    };
+
+    return this.httpAdapterHost.httpAdapter.reply(
+      response,
+      errorResponse,
+      status,
+    );
   }
 
   private getErrorCode(status: number): string {

@@ -1,13 +1,13 @@
-import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER } from '@nestjs/core';
 import { AppConfigModule } from './config/config.module';
 import { McpModule } from './modules/mcp/mcp.module';
-import { AuthMiddleware } from './common/middlewares/auth.middleware';
 import { getTypeOrmConfig } from './config/typeorm.config';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { HealthController } from './health/health.controller';
 
 @Module({
   imports: [
@@ -23,7 +23,7 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
     }),
     McpModule,
   ],
-  controllers: [],
+  controllers: [HealthController],
   providers: [
     {
       provide: APP_FILTER,
@@ -31,8 +31,4 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
     },
   ],
 })
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer.apply(AuthMiddleware).forRoutes('*');
-  }
-}
+export class AppModule {}

@@ -7,40 +7,40 @@ import {
   Param,
   Req,
   Patch,
-  Res,
+  UseGuards,
 } from '@nestjs/common';
-import { Request } from 'express';
+import { FastifyRequest } from 'fastify';
 import { McpService } from './mcp.service';
 import { QueryDto } from './dto/query.dto';
-import { Response } from 'express';
 import { UpdateConnectionDto } from './dto/update-connection.dto';
 import { InitiateConnectionDto } from './dto/initiate-connection.dto';
+import { AuthGuard } from '../../common/guards/auth.guard';
 
 @Controller('mcp')
+@UseGuards(AuthGuard)
 export class McpController {
   constructor(private readonly mcpService: McpService) {}
 
   @Get('connections')
-  getConnections(@Query() query: QueryDto, @Req() request: Request) {
+  getConnections(@Query() query: QueryDto, @Req() request: FastifyRequest) {
     return this.mcpService.getConnections(query, request.organizationId);
   }
 
   @Get('connections/:connectionId')
-  async getConnection(
-    @Param('connectionId') connectionId: string,
-    @Res() res: Response,
-  ) {
-    const connection = await this.mcpService.getConnection(connectionId);
-    return res.status(200).json(connection); // assim retorna null
+  async getConnection(@Param('connectionId') connectionId: string) {
+    return this.mcpService.getConnection(connectionId);
   }
 
   @Patch('connections')
-  updateConnection(@Body() body: UpdateConnectionDto, @Req() request: Request) {
+  updateConnection(
+    @Body() body: UpdateConnectionDto,
+    @Req() request: FastifyRequest,
+  ) {
     return this.mcpService.updateConnection(body, request.organizationId);
   }
 
   @Get('integrations')
-  getIntegrations(@Query() query: QueryDto, @Req() request: Request) {
+  getIntegrations(@Query() query: QueryDto, @Req() request: FastifyRequest) {
     return this.mcpService.getIntegrations(query, request.organizationId);
   }
 
@@ -48,7 +48,7 @@ export class McpController {
   getIntegration(
     @Param('integrationId') integrationId: string,
     @Param('provider') provider: string,
-    @Req() request: Request,
+    @Req() request: FastifyRequest,
   ) {
     return this.mcpService.getIntegration(
       integrationId,
@@ -72,7 +72,7 @@ export class McpController {
   getIntegrationTools(
     @Param('integrationId') integrationId: string,
     @Param('provider') provider: string,
-    @Req() request: Request,
+    @Req() request: FastifyRequest,
   ) {
     return this.mcpService.getIntegrationTools(
       integrationId,
@@ -85,7 +85,7 @@ export class McpController {
   initiateConnection(
     @Param('provider') provider: string,
     @Body() body: InitiateConnectionDto,
-    @Req() request: Request,
+    @Req() request: FastifyRequest,
   ) {
     return this.mcpService.initiateConnection(
       request.organizationId,

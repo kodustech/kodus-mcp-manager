@@ -125,7 +125,10 @@ export class McpService {
       },
     };
 
-    const updatedConnection = Object.assign(existingConnection, newConnection);
+    const updatedConnection = Object.assign(
+      existingConnection || {},
+      newConnection,
+    );
 
     return this.connectionRepository.save(updatedConnection);
   }
