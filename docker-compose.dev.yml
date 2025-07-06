@@ -1,0 +1,23 @@
+services:
+    kodus-service-mcp-manager:
+        image: kodus/service-mcp-manager:latest
+        container_name: ${CONTAINER_NAME}
+        build:
+            context: .
+            dockerfile: DockerFiles/Dockerfile.dev
+        ports:
+            - ${PORT}:${PORT}
+            - 5001:5001
+            - 9300:9300
+        env_file:
+            - .env
+        restart: unless-stopped
+        volumes:
+            - .:/usr/src/app
+            - /usr/src/app/node_modules
+        networks:
+            - kodus-backend-services
+
+networks:
+    kodus-backend-services:
+        external: true
