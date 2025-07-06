@@ -1,0 +1,21 @@
+FROM --platform=linux/amd64 node:22.14.0
+
+ENV NODE_ENV=development \
+    NODE_OPTIONS=--max-old-space-size=4096 \
+    PORT=3002 \
+    API_HEALTH_PORT=5001 \
+    TREE_SITTER_SKIP_PREBUILD_DOWNLOAD=1 \
+    npm_config_build_from_source=true
+
+WORKDIR /usr/src/app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      ca-certificates git python3 make g++ pkg-config \
+      && rm -rf /var/lib/apt/lists/*
+
+COPY package.json yarn.lock ./
+RUN yarn install --network-timeout 600000 \
+ && npx --yes node-gyp rebuild -C node_modules/tree-sitter
+
+EXPOSE ${PORT} ${API_HEALTH_PORT} 9300
+CMD ["yarn","start:dev"]
