@@ -29,10 +29,10 @@ jobs:
       - name: Build, tag, and push image to Amazon ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: kodus-service-billing-qa
+          ECR_REPOSITORY: kodus-mcp-manager-qa
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -f DockerFiles/Dockerfile.qa -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker build -f DockerFiles/Dockerfile.prod -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
       - name: Log out of Amazon ECR
@@ -66,7 +66,7 @@ jobs:
           username: ${{ secrets.AWS_QA_USERNAME }}
           key: ${{ secrets.AWS_QA_KEY_SSH }}
           script: |
-            cd ~/kodus-service-billing
+            cd ~/kodus-mcp-manager
             ./start-app.sh qa ${{ github.sha }} ${{ github.ref }}
 
       - name: Remove Github Actions IP from security group
@@ -84,5 +84,5 @@ jobs:
           webhook: ${{ secrets.DISCORD_WEBHOOK }}
           status: ${{ job.status }}
           content: ":clap: Build successful!"
-          title: "Deploy QA: kodus-service-billing"
+          title: "Deploy QA: kodus-mcp-manager"
           username: GitHub Actions

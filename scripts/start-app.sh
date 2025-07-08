@@ -6,8 +6,11 @@ GITHUB_SHA=$2
 GITHUB_REF=$3
 export CONTAINER_NAME="kodus-mcp-manager-${ENVIRONMENT}-${GITHUB_SHA}"
 
+# Configurar URL do ECR baseada no ambiente
+export ECR_URL="[url-do-ecr]/kodus-mcp-manager-${ENVIRONMENT}"
+
 # Autenticação do Docker com o ECR
-aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin [url-do-ecr]
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${ECR_URL}
 
 # Buscar variáveis de ambiente do AWS Parameter Store
 ./fetch-env.sh $ENVIRONMENT
@@ -15,10 +18,11 @@ aws ecr get-login-password --region us-east-1 | docker login --username AWS --pa
 export NODE_ENV=production
 # Exportar a imagem apropriada baseada no ambiente
 if [ "$ENVIRONMENT" == "qa" ]; then
-    export IMAGE_NAME="[url-do-ecr]/kodus-mcp-manager-qa:${GITHUB_SHA}"
+    export IMAGE_NAME="${ECR_URL}:${GITHUB_SHA}"
 elif [ "$ENVIRONMENT" == "prod" ]; then
+    # Extrai a tag do GITHUB_REF
     GITHUB_TAG=${GITHUB_REF/refs\/tags\//}
-    export IMAGE_NAME="[url-do-ecr]/kodus-mcp-manager-prod:${GITHUB_TAG}"
+    export IMAGE_NAME="${ECR_URL}:${GITHUB_TAG}"
 fi
 
 # Usar Docker Compose para iniciar o contêiner
