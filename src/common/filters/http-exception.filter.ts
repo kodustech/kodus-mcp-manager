@@ -46,7 +46,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       details = {
         message: exception.message,
         // Removing sensitive information in production
-        ...(process.env.NODE_ENV === 'development' && {
+        ...(process.env.API_MCP_MANAGER_NODE_ENV === 'development' && {
           query: exception.query,
         }),
       };

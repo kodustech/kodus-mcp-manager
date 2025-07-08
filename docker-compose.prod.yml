@@ -1,22 +1,21 @@
 services:
-    kodus-ast:
-        image: ${IMAGE_NAME_PROD}
-        container_name: ${CONTAINER_NAME}
-        logging:
-            options:
-                max-size: '200m'
-                max-file: '10'
-        ports:
-            - 3002:3002
-            - 5001:5001  # Porta para o health check HTTP
-        env_file:
-            - .env.prod
-        environment:
-            - ENV=production
-            - API_NODE_ENV=production
-        restart: unless-stopped
-        volumes:
-            - log_volume:/app/logs
+  kodus-mcp-manager:
+    image: ${IMAGE_NAME_PROD}
+    container_name: ${CONTAINER_NAME}
+    volumes:
+      - log_volume:/app/logs
+    logging:
+      options:
+        max-size: "200m"
+        max-file: "10"
+    ports:
+      - "3101:3101"
+    environment:
+      - NODE_ENV=production
+      - API_MCP_MANAGER_NODE_ENV=production
+    env_file:
+      - .env.prod
+    restart: unless-stopped
 
 volumes:
-    log_volume:
+  log_volume:

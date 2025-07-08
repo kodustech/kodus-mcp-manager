@@ -23,7 +23,7 @@ export class HealthController {
       status: 'ok',
       timestamp: new Date().toISOString(),
       uptime: Math.floor(process.uptime()) + 's',
-      environment: process.env.NODE_ENV || 'development',
+      environment: process.env.API_MCP_MANAGER_NODE_ENV || 'development',
       version: process.env.npm_package_version || '1.0.0',
       database: databaseStatus,
       memory: {

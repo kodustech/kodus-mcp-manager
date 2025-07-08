@@ -1,20 +1,27 @@
 services:
-  postgres:
-    image: postgres:15-alpine
-    container_name: kodus-mcp-postgres
-    environment:
-      POSTGRES_USER: kodus
-      POSTGRES_PASSWORD: kodus123
-      POSTGRES_DB: kodus_mcp
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U kodus"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    kodus-mcp-manager:
+        container_name: kodus-mcp-manager
+        build:
+            context: .
+            dockerfile: DockerFiles/Dockerfile.dev
+        ports:
+            - '3101:3101'
+            - '9140:9140'
+        restart: unless-stopped
+        volumes:
+            - .:/usr/src/app
+            - /usr/src/app/node_modules
+        environment:
+            - NODE_ENV=development
+            - API_MCP_MANAGER_NODE_ENV=development
+        env_file:
+            - .env
+        networks:
+            - kodus-backend-services
+            - shared-network
 
-volumes:
-  postgres_data:
+networks:
+    kodus-backend-services:
+        external: true
+    shared-network:
+        external: true

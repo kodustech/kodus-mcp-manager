@@ -12,7 +12,7 @@ async function bootstrap() {
     new FastifyAdapter(),
   );
 
-  const origin = process.env.CORS_ORIGINS?.split(',') || '*';
+  const origin = process.env.API_MCP_MANAGER_CORS_ORIGINS?.split(',') || '*';
   await app.register(import('@fastify/cors'), {
     origin,
     // methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -30,7 +30,7 @@ async function bootstrap() {
     }),
   );
 
-  const port = process.env.PORT || 3000;
+  const port = process.env.API_MCP_MANAGER_PORT || 3101;
   await app.listen(port, '0.0.0.0');
   console.log(`Server is running on port ${port}`);
 }

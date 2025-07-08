@@ -15,7 +15,7 @@ export enum MCPConnectionStatus {
   FAILED = 'FAILED',
 }
 
-@Entity('mcp_connections')
+@Entity({ name: 'mcp_connections', schema: 'mcp-manager' })
 export class MCPConnectionEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -38,7 +38,12 @@ export class MCPConnectionEntity {
   @Column({ name: 'mcpUrl', nullable: true })
   mcpUrl?: string;
 
-  @Column({ name: 'allowedTools', type: 'jsonb', nullable: false, default: [] })
+  @Column({
+    name: 'allowedTools',
+    type: 'jsonb',
+    nullable: false,
+    default: [],
+  })
   allowedTools: string[];
 
   @Column({ type: 'jsonb', nullable: true })

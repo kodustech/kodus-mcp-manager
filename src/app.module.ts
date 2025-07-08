@@ -19,7 +19,7 @@ import { HealthController } from './health/health.controller';
     }),
     JwtModule.register({
       global: true,
-      secret: process.env.JWT_SECRET || 'ad814dff-e1ca-47fa-9db6-2dc453ca79d2',
+      secret: process.env.API_MCP_MANAGER_JWT_SECRET,
     }),
     McpModule,
   ],
