@@ -15,7 +15,7 @@ async function bootstrap() {
   const origin = process.env.API_MCP_MANAGER_CORS_ORIGINS?.split(',') || '*';
   await app.register(import('@fastify/cors'), {
     origin,
-    // methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     // allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
