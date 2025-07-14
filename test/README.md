@@ -1,198 +1,198 @@
-# 🧪 Testes End-to-End (E2E)
+# 🧪 End-to-End (E2E) Testing
 
 ![Tests](https://img.shields.io/badge/Tests-Passing-brightgreen)
 ![Coverage](https://img.shields.io/badge/Coverage-73%25-yellow)
 ![Node](https://img.shields.io/badge/Node.js-v18+-blue)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)
 
-> Sistema de testes automatizados para o **Kodus MCP Manager** com PostgreSQL e mocks inteligentes.
+> Automated testing system for **Kodus MCP Manager** with PostgreSQL and smart mocks.
 
 ---
 
-## 📁 Estrutura do Projeto
+## 📁 Project Structure
 
 ```
 test/
 ├── 📂 e2e/
-│   └── mcp.e2e.spec.ts          # 🎯 Testes de integração do controller MCP
+│   └── mcp.e2e.spec.ts          # 🎯 MCP controller integration tests
 ├── 📂 provider/
-│   └── composio.spec.ts         # 🔌 Testes unitários do provider Composio
+│   └── composio.spec.ts         # 🔌 Composio provider unit tests
 ├── 📂 __mocks__/
-│   └── ...                     # 🎭 Mocks para testes
-├── 🚀 run-e2e.sh               # 📜 Script de execução dos testes
-└── 📚 README.md                # 📖 Esta documentação
+│   └── ...                     # 🎭 Test mocks
+├── 🚀 run-e2e.sh               # 📜 Test execution script
+└── 📚 README.md                # 📖 This documentation
 ```
 
 ---
 
-## 🚀 Execução Rápida
+## 🚀 Quick Start
 
 ```bash
-# Executar todos os testes
+# Run all tests
 yarn test
 
-# Executar apenas testes unitários
+# Run unit tests only
 npx jest test/provider/
 
-# Executar apenas testes E2E
+# Run E2E tests only
 npx jest test/e2e/
 ```
 
 ---
 
-## 🔄 Fluxo de Execução
+## 🔄 Execution Flow
 
-O comando `yarn test` executa automaticamente:
+The `yarn test` command automatically executes:
 
-| Etapa | Descrição | Status |
-|-------|-----------|--------|
-| 🐳 | Verificar/subir container PostgreSQL | ✅ |
-| ⏳ | Aguardar banco ficar disponível | ✅ |
-| 🗄️ | Criar banco de teste (`kodus_mcp_test`) | ✅ |
-| 🔄 | Executar migrations no banco de teste | ✅ |
-| 🧪 | Executar suite completa de testes | ✅ |
-| 🧹 | Limpar banco de teste | ✅ |
-
----
-
-## ⚙️ Configuração dos Testes
-
-### 🎭 Mocks Utilizados
-- **ProviderFactory**: Mock para gerenciamento de providers
-- **AuthMiddleware**: Mock para autenticação JWT
-- **ComposioClient**: Mock para API externa do Composio
-
-### 🗃️ Banco de Dados
-- **Container**: Mesmo PostgreSQL do desenvolvimento
-- **Banco**: `kodus_mcp_test` (isolado e temporário)
-- **Migrations**: Executadas automaticamente
-- **Limpeza**: Banco removido após os testes
+| Step | Description | Status |
+|------|-------------|--------|
+| 🐳 | Check/start PostgreSQL container | ✅ |
+| ⏳ | Wait for database to be ready | ✅ |
+| 🗄️ | Create test database (`kodus_mcp_test`) | ✅ |
+| 🔄 | Run migrations on test database | ✅ |
+| 🧪 | Execute complete test suite | ✅ |
+| 🧹 | Clean up test database | ✅ |
 
 ---
 
-## 🌍 Variáveis de Ambiente
+## ⚙️ Test Configuration
 
-| Variável | Valor | Descrição |
-|----------|-------|-----------|
-| `NODE_ENV` | `test` | Ambiente de execução |
-| `JWT_SECRET` | `test-secret-key` | Chave para JWT nos testes |
-| `MCP_PROVIDERS` | `composio` | Providers habilitados |
-| `DB_HOST` | `localhost` | Host do PostgreSQL |
-| `DB_PORT` | `5432` | Porta do PostgreSQL |
-| `DB_USERNAME` | `kodus` | Usuário do banco |
-| `DB_PASSWORD` | `kodus123` | Senha do banco |
-| `DB_DATABASE` | `kodus_mcp_test` | Nome do banco de teste |
+### 🎭 Mocks Used
+- **ProviderFactory**: Mock for provider management
+- **AuthMiddleware**: Mock for JWT authentication
+- **ComposioClient**: Mock for external Composio API
 
----
-
-## 📊 Cobertura de Testes
-
-### 🎯 Testes E2E (`mcp.e2e.spec.ts`)
-- ✅ **11 testes** - Endpoints do controller MCP
-- 🔗 Conexões: listagem, busca, atualização
-- 🔌 Integrações: listagem, detalhes, parâmetros, ferramentas
-- ⚠️ Tratamento de erros e validações
-
-### 🔌 Testes Unitários (`composio.spec.ts`)
-- ✅ **20 testes** - Provider Composio
-- 🏗️ Construtor e configuração
-- 📝 Mapeamento de status
-- 🔄 Métodos de integração
-- 🛠️ Ferramentas e conexões
-- 🖥️ Servidores MCP
+### 🗃️ Database
+- **Container**: Same PostgreSQL as development
+- **Database**: `kodus_mcp_test` (isolated and temporary)
+- **Migrations**: Executed automatically
+- **Cleanup**: Database removed after tests
 
 ---
 
-## 🛠️ Pré-requisitos
+## 🌍 Environment Variables
 
-| Ferramenta | Versão | Status |
-|------------|--------|--------|
-| 🐳 Docker | Latest | ✅ Obrigatório |
-| 🐳 Docker Compose | Latest | ✅ Obrigatório |
-| 📟 Node.js | v18+ | ✅ Obrigatório |
-| 📦 Yarn | Latest | ✅ Obrigatório |
+| Variable | Value | Description |
+|----------|-------|-------------|
+| `NODE_ENV` | `test` | Execution environment |
+| `JWT_SECRET` | `test-secret-key` | JWT key for tests |
+| `MCP_PROVIDERS` | `composio` | Enabled providers |
+| `DB_HOST` | `localhost` | PostgreSQL host |
+| `DB_PORT` | `5432` | PostgreSQL port |
+| `DB_USERNAME` | `kodus` | Database username |
+| `DB_PASSWORD` | `kodus123` | Database password |
+| `DB_DATABASE` | `kodus_mcp_test` | Test database name |
 
-### 📥 Instalação
+---
+
+## 📊 Test Coverage
+
+### 🎯 E2E Tests (`mcp.e2e.spec.ts`)
+- ✅ **11 tests** - MCP controller endpoints
+- 🔗 Connections: listing, searching, updating
+- 🔌 Integrations: listing, details, parameters, tools
+- ⚠️ Error handling and validation
+
+### 🔌 Unit Tests (`composio.spec.ts`)
+- ✅ **20 tests** - Composio provider
+- 🏗️ Constructor and configuration
+- 📝 Status mapping
+- 🔄 Integration methods
+- 🛠️ Tools and connections
+- 🖥️ MCP servers
+
+---
+
+## 🛠️ Prerequisites
+
+| Tool | Version | Status |
+|------|---------|--------|
+| 🐳 Docker | Latest | ✅ Required |
+| 🐳 Docker Compose | Latest | ✅ Required |
+| 📟 Node.js | v18+ | ✅ Required |
+| 📦 Yarn | Latest | ✅ Required |
+
+### 📥 Installation
 ```bash
-# Instalar dependências
+# Install dependencies
 yarn install
 
-# Verificar se Docker está rodando
+# Check if Docker is running
 docker --version
 docker-compose --version
 ```
 
 ---
 
-## 🏆 Vantagens da Abordagem
+## 🏆 Approach Benefits
 
-| Vantagem | Descrição |
-|----------|-----------|
-| 🎯 **Simplicidade** | Usa o mesmo container PostgreSQL do desenvolvimento |
-| ⚡ **Eficiência** | Não precisa subir containers adicionais |
-| 🔒 **Isolamento** | Banco de teste separado (`kodus_mcp_test`) |
-| 🧹 **Limpeza** | Banco criado e removido automaticamente |
-| 🔄 **Flexibilidade** | Pode rodar junto com o desenvolvimento |
-| 📊 **Cobertura** | Testes unitários + integração |
+| Benefit | Description |
+|---------|-------------|
+| 🎯 **Simplicity** | Uses the same PostgreSQL container as development |
+| ⚡ **Efficiency** | No need to start additional containers |
+| 🔒 **Isolation** | Separate test database (`kodus_mcp_test`) |
+| 🧹 **Cleanup** | Database created and removed automatically |
+| 🔄 **Flexibility** | Can run alongside development |
+| 📊 **Coverage** | Unit + integration tests |
 
 ---
 
 ## 🐛 Troubleshooting
 
-### ❌ Problemas Comuns
+### ❌ Common Issues
 
-**🔴 "Banco de dados não disponível"**
+**🔴 "Database not available"**
 ```bash
-# Verificar se PostgreSQL está rodando
+# Check if PostgreSQL is running
 docker-compose ps
 
-# Subir o banco se necessário
+# Start database if needed
 docker-compose up -d postgres
 ```
 
-**🔴 "Porta 5432 em uso"**
+**🔴 "Port 5432 in use"**
 ```bash
-# Verificar processos na porta
+# Check processes on port
 lsof -i :5432
 
-# Parar PostgreSQL local se necessário
+# Stop local PostgreSQL if needed
 sudo systemctl stop postgresql
 ```
 
-**🔴 "Migrations falharam"**
+**🔴 "Migrations failed"**
 ```bash
-# Limpar banco de teste manualmente
+# Clean test database manually
 docker-compose exec postgres psql -U kodus -c "DROP DATABASE IF EXISTS kodus_mcp_test;"
 ```
 
 ---
 
-## 📈 Estatísticas
+## 📈 Statistics
 
 ```
-📊 Resumo dos Testes
-├── 🎯 Total de Testes: 33
-├── ✅ Passando: 33
-├── ❌ Falhando: 0
-├── ⏱️ Tempo Médio: ~9s
-└── 📈 Cobertura: 73.24%
+📊 Test Summary
+├── 🎯 Total Tests: 33
+├── ✅ Passing: 33
+├── ❌ Failing: 0
+├── ⏱️ Average Time: ~9s
+└── 📈 Coverage: 73.24%
 ```
 
 ---
 
-## 🚀 Próximos Passos
+## 🚀 Next Steps
 
-- [ ] 📈 Aumentar cobertura para 90%+
-- [ ] 🧪 Adicionar testes de performance
-- [ ] 🔄 Testes de integração com APIs externas
-- [ ] 📱 Testes de API com diferentes payloads
-- [ ] 🛡️ Testes de segurança e validação
+- [ ] 📈 Increase coverage to 90%+
+- [ ] 🧪 Add performance tests
+- [ ] 🔄 Integration tests with external APIs
+- [ ] 📱 API tests with different payloads
+- [ ] 🛡️ Security and validation tests
 
 ---
 
 <div align="center">
 
-**🎉 Testes sempre atualizados e funcionando!**
+**🎉 Tests always up-to-date and working!**
 
 [![Run Tests](https://img.shields.io/badge/▶️-Run%20Tests-success?style=for-the-badge)](yarn test)
 

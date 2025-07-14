@@ -43,7 +43,7 @@ describe('MCP Controller (e2e)', () => {
     appName: 'test-app',
   };
 
-  // Mock do provider
+  // Provider mock
   const mockProvider = {
     statusMap: {
       pending: 'pending',
@@ -68,6 +68,7 @@ describe('MCP Controller (e2e)', () => {
       {
         name: 'test-tool',
         description: 'Test Tool',
+        warning: false,
       },
     ]),
     installIntegration: jest.fn().mockResolvedValue({
@@ -135,9 +136,9 @@ describe('MCP Controller (e2e)', () => {
   });
 
   beforeEach(async () => {
-    // Limpar dados de teste antes de cada teste
+    // Clear test data before each test
     await connectionRepository.clear();
-    // Limpar todos os mocks antes de cada teste
+    // Clear all mocks before each test
     jest.clearAllMocks();
   });
 
@@ -276,6 +277,7 @@ describe('MCP Controller (e2e)', () => {
       expect(response.body[0]).toMatchObject({
         name: 'test-tool',
         description: 'Test Tool',
+        warning: false,
       });
 
       expect(mockProvider.getIntegrationTools).toHaveBeenCalledWith(
@@ -362,7 +364,7 @@ describe('MCP Controller (e2e)', () => {
 
       await request(app.getHttpServer()).get('/mcp/integrations').expect(500);
 
-      // Restaurar o mock para outros testes
+      // Restore the mock for other tests
       mockProvider.getIntegrations.mockResolvedValue({
         data: [mockIntegration],
         total: 1,

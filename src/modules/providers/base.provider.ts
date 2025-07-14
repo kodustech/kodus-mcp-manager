@@ -5,6 +5,7 @@ import {
   MCPIntegration,
   MCPConnection,
   MCPRequiredParam,
+  MCPTool,
 } from './interfaces/provider.interface';
 import { MCPConnectionStatus } from '../mcp/entities/mcp-connection.entity';
 
@@ -25,7 +26,7 @@ export abstract class BaseProvider implements MCPProvider {
   abstract getIntegrationTools(
     integrationId: string,
     organizationId: string,
-  ): Promise<any[]>;
+  ): Promise<MCPTool[]>;
 
   abstract initiateConnection(
     config: MCPConnectionConfig,
