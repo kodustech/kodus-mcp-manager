@@ -2,37 +2,51 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { MCPProvider } from './interfaces/provider.interface';
 import { ComposioProvider } from './composio/composio.provider';
+import { IntegrationDescriptionService } from './services/integration-description.service';
 
 export type ProviderType = string;
 
 @Injectable()
 export class ProviderFactory {
-  private providers: Map<string, MCPProvider> = new Map();
+  private providers: Map<ProviderType, MCPProvider> = new Map();
 
-  constructor(private configService: ConfigService) {
-    const providersNames = this.configService.get('providers')?.split(',');
-    if (!providersNames || !providersNames.length) return;
+  constructor(
+    private configService: ConfigService,
+    private integrationDescriptionService: IntegrationDescriptionService,
+  ) {
+    this.initializeProviders();
+  }
 
-    providersNames.forEach((providerName: ProviderType) => {
-      if (this.providers.get(providerName)) return;
-      const providerInstance = this.createProvider(providerName);
-      this.providers.set(providerName, providerInstance);
-    });
+  private initializeProviders(): void {
+    const enabledProviders = this.configService
+      .get<string>('providers', 'composio')
+      .split(',')
+      .map((provider) => provider.trim())
+      .filter(Boolean);
+
+    for (const provider of enabledProviders) {
+      switch (provider) {
+        case 'composio':
+          this.providers.set(
+            'composio',
+            new ComposioProvider(this.configService, this.integrationDescriptionService),
+          );
+          break;
+        default:
+          throw new Error(`Provider ${provider} não suportado`);
+      }
+    }
   }
 
   getProvider(type: ProviderType): MCPProvider {
-    return this.providers.get(type);
+    const provider = this.providers.get(type);
+    if (!provider) {
+      throw new Error(`Provider ${type} não encontrado`);
+    }
+    return provider;
   }
 
   getProviders(): MCPProvider[] {
     return Array.from(this.providers.values());
-  }
-
-  private createProvider(type: ProviderType): MCPProvider {
-    const strategies = {
-      composio: ComposioProvider,
-    };
-
-    return new strategies[type](this.configService);
   }
 }

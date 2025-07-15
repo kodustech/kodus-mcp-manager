@@ -7,62 +7,62 @@
 ![Docker](https://img.shields.io/badge/Docker-Ready-blue)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
-> 🔌 **Multi-Cloud Platform Manager** - Sistema robusto para gerenciamento de integrações MCP com providers como Composio.
+> 🔌 **Multi-Cloud Platform Manager** - A robust system for managing MCP integrations with providers like Composio.
 
 ---
 
-## 📋 Índice
+## 📋 Table of Contents
 
-- [🏗️ Pré-requisitos](#️-pré-requisitos)
+- [🏗️ Prerequisites](#️-prerequisites)
 - [🔌 Providers](#-providers)
-- [⚙️ Configuração](#️-configuração)
-- [🚀 Instalação](#-instalação)
-- [🔥 Executando a Aplicação](#-executando-a-aplicação)
-- [🆕 Adicionando um Novo Provider](#-adicionando-um-novo-provider)
-- [🧪 Testes](#-testes)
+- [⚙️ Configuration](#️-configuration)
+- [🚀 Installation](#-installation)
+- [🔥 Running the Application](#-running-the-application)
+- [🆕 Adding a New Provider](#-adding-a-new-provider)
+- [🧪 Testing](#-testing)
 - [📫 Postman](#-postman)
 - [🐛 Troubleshooting](#-troubleshooting)
 
 ---
 
-## 🏗️ Pré-requisitos
+## 🏗️ Prerequisites
 
-| Ferramenta              | Versão Mínima | Status         | Descrição                  |
-| ----------------------- | ------------- | -------------- | -------------------------- |
-| 📟 **Node.js**          | v18+          | ✅ Obrigatório | Runtime JavaScript         |
-| 🐳 **Docker**           | Latest        | ✅ Obrigatório | Para PostgreSQL            |
-| 🐳 **Docker Compose**   | Latest        | ✅ Obrigatório | Orquestração de containers |
-| 🔑 **Composio API Key** | -             | ✅ Obrigatório | Para integração Composio   |
+| Tool                    | Minimum Version | Status         | Description                |
+| ----------------------- | --------------- | -------------- | -------------------------- |
+| 📟 **Node.js**          | v18+            | ✅ Required    | JavaScript runtime         |
+| 🐳 **Docker**           | Latest          | ✅ Required    | For PostgreSQL             |
+| 🐳 **Docker Compose**   | Latest          | ✅ Required    | Container orchestration    |
+| 🔑 **Composio API Key** | -               | ✅ Required    | For Composio integration   |
 
 ---
 
 ## 🔌 Providers
 
-### 📊 Providers Disponíveis
+### 📊 Available Providers
 
-| Provider             | Status                | Descrição                             | Documentação                           |
+| Provider             | Status                | Description                           | Documentation                          |
 | -------------------- | --------------------- | ------------------------------------- | -------------------------------------- |
-| 🎯 **Composio**      | ✅ Ativo              | Plataforma de automação e integrações | [Docs](https://docs.composio.dev)      |
-| ➕ **Novo Provider** | 🔄 Em desenvolvimento | Adicione seu próprio provider         | [Guia](#-adicionando-um-novo-provider) |
+| 🎯 **Composio**      | ✅ Active             | Automation and integration platform   | [Docs](https://docs.composio.dev)     |
+| ➕ **New Provider**  | 🔄 In Development     | Add your own provider                 | [Guide](#-adding-a-new-provider)      |
 
-### 🔧 Configuração do Composio
+### 🔧 Composio Setup
 
-Para usar o provider Composio, você precisa:
+To use the Composio provider, you need to:
 
-1. **🔑 Criar integração** para qualquer app na plataforma Composio
-2. **🖥️ Criar um MCP Server** para esta integração
-3. **📋 Configurar as variáveis** de ambiente necessárias
+1. **🔑 Create an integration** for any app on the Composio platform
+2. **🖥️ Set up an MCP Server** for this integration
+3. **📋 Configure the required** environment variables
 
 ---
 
-## ⚙️ Configuração
+## ⚙️ Configuration
 
-### 🌍 Variáveis de Ambiente
+### 🌍 Environment Variables
 
-No arquivo `.env.test` na raiz do projeto:
+In the `.env.test` file at the project root:
 
 ```bash
-# 🚀 Aplicação
+# 🚀 Application
 NODE_ENV=development
 PORT=3000
 
@@ -76,7 +76,7 @@ MCP_PROVIDERS=composio
 COMPOSIO_API_KEY=your-composio-api-key
 COMPOSIO_BASE_URL=https://backend.composio.dev
 
-# 🗄️ Banco de Dados
+# 🗄️ Database
 DB_HOST=localhost
 DB_PORT=5432
 DB_USERNAME=kodus
@@ -84,79 +84,79 @@ DB_PASSWORD=kodus123
 DB_DATABASE=kodus_mcp
 
 # 🔗 URLs
-# Usado como redirect depois do login com OAUTH2
+# Used as redirect after OAuth2 login
 REDIRECT_URI=http://localhost:3000/callback
 ```
 
 ---
 
-## 🗄️ Estrutura do Banco de Dados
+## 🗄️ Database Structure
 
 ### 📊 Schema: `mcp-manager`
 
-O projeto usa um schema dedicado para organizar todas as tabelas da aplicação:
+The project uses a dedicated schema to organize all application tables:
 
 ```sql
--- Schema principal
+-- Main schema
 CREATE SCHEMA IF NOT EXISTS "mcp-manager";
 ```
 
-### 📋 Tabelas
+### 📋 Tables
 
 #### 🔗 `mcp_connections`
 
-Tabela principal para armazenar conexões MCP:
+Main table for storing MCP connections:
 
-| Coluna           | Tipo      | Descrição                         |
+| Column           | Type      | Description                       |
 | ---------------- | --------- | --------------------------------- |
-| `id`             | UUID      | Chave primária (uuid_generate_v4) |
-| `organizationId` | VARCHAR   | ID da organização                 |
-| `integrationId`  | VARCHAR   | ID da integração                  |
-| `provider`       | VARCHAR   | Nome do provider (ex: composio)   |
-| `status`         | VARCHAR   | Status da conexão                 |
-| `appName`        | VARCHAR   | Nome da aplicação                 |
-| `mcpUrl`         | VARCHAR   | URL do servidor MCP               |
-| `allowedTools`   | JSONB     | Lista de ferramentas permitidas   |
-| `metadata`       | JSONB     | Dados adicionais da conexão       |
-| `createdAt`      | TIMESTAMP | Data de criação                   |
-| `updatedAt`      | TIMESTAMP | Data de atualização               |
-| `deletedAt`      | TIMESTAMP | Data de exclusão (soft delete)    |
+| `id`             | UUID      | Primary key (uuid_generate_v4)   |
+| `organizationId` | VARCHAR   | Organization ID                   |
+| `integrationId`  | VARCHAR   | Integration ID                    |
+| `provider`       | VARCHAR   | Provider name (e.g., composio)   |
+| `status`         | VARCHAR   | Connection status                 |
+| `appName`        | VARCHAR   | Application name                  |
+| `mcpUrl`         | VARCHAR   | MCP server URL                    |
+| `allowedTools`   | JSONB     | List of allowed tools             |
+| `metadata`       | JSONB     | Additional connection data        |
+| `createdAt`      | TIMESTAMP | Creation date                     |
+| `updatedAt`      | TIMESTAMP | Last update date                  |
+| `deletedAt`      | TIMESTAMP | Deletion date (soft delete)       |
 
 #### 📝 `migrations`
 
-Tabela de controle das migrations do TypeORM:
+TypeORM migration control table:
 
-| Coluna      | Tipo    | Descrição              |
-| ----------- | ------- | ---------------------- |
-| `id`        | SERIAL  | Chave primária         |
-| `timestamp` | BIGINT  | Timestamp da migration |
-| `name`      | VARCHAR | Nome da migration      |
+| Column      | Type    | Description        |
+| ----------- | ------- | ------------------ |
+| `id`        | SERIAL  | Primary key        |
+| `timestamp` | BIGINT  | Migration timestamp |
+| `name`      | VARCHAR | Migration name     |
 
-### 🔧 Comandos Úteis
+### 🔧 Useful Commands
 
 ```bash
-# Verificar estrutura do banco
+# Check database structure
 docker-compose exec kodus-mcp-manager psql -h db_postgres -U $API_PG_DB_USERNAME -d $API_PG_DB_DATABASE -c "\dt mcp-manager.*"
 
-# Verificar dados das conexões
+# Check connection data
 docker-compose exec kodus-mcp-manager psql -h db_postgres -U $API_PG_DB_USERNAME -d $API_PG_DB_DATABASE -c "SELECT * FROM \"mcp-manager\".mcp_connections;"
 
-# Verificar migrations executadas
+# Check executed migrations
 docker-compose exec kodus-mcp-manager psql -h db_postgres -U $API_PG_DB_USERNAME -d $API_PG_DB_DATABASE -c "SELECT * FROM \"mcp-manager\".migrations;"
 ```
 
 ---
 
-## 🚀 Instalação
+## 🚀 Installation
 
-### 📥 1. Clone o Repositório
+### 📥 1. Clone the Repository
 
 ```bash
 git clone https://github.com/kodustech/kodus-mcp-manager.git
 cd kodus-mcp-manager
 ```
 
-### 📦 2. Instale as Dependências
+### 📦 2. Install Dependencies
 
 ```bash
 yarn install
@@ -164,95 +164,95 @@ yarn install
 
 ---
 
-## 🔥 Executando a Aplicação
+## 🔥 Running the Application
 
-### 🛠️ Desenvolvimento Local
+### 🛠️ Local Development
 
-#### 📋 Pré-requisitos
+#### 📋 Prerequisites
 
 ```bash
-# 🐳 Subir banco de dados PostgreSQL
+# 🐳 Start PostgreSQL database
 docker-compose up -d
 
-# 📊 Verificar se o banco está rodando
+# 📊 Check if database is running
 docker-compose ps
 ```
 
-#### 🗄️ Configuração do Banco de Dados
+#### 🗄️ Database Setup
 
 ```bash
-# 🔄 Executar migrations (cria schema e tabelas automaticamente)
+# 🔄 Run migrations (creates schema and tables automatically)
 yarn migrate
 
-# Ou executar passos separadamente:
-# 1. Criar schema (se necessário)
+# Or run steps separately:
+# 1. Create schema (if needed)
 yarn pre:migrate
 
-# 2. Executar migrations
+# 2. Run migrations
 yarn migration:run
 ```
 
-#### 🚀 Iniciar Aplicação
+#### 🚀 Start Application
 
 ```bash
-# 🚀 Iniciar em modo desenvolvimento
+# 🚀 Start in development mode
 yarn start:dev
 
-# Ou usar Docker
+# Or use Docker
 docker-compose exec kodus-mcp-manager yarn start:dev
 ```
 
-A aplicação estará disponível em: **http://localhost:3101**
+The application will be available at: **http://localhost:3101**
 
-### 🏭 Produção
+### 🏭 Production
 
 ```bash
-# 🏗️ Build da aplicação
+# 🏗️ Build the application
 yarn build
 
-# 🚀 Executar em produção
+# 🚀 Run in production
 yarn start:prod
 ```
 
-### 🐳 Docker (Alternativa)
+### 🐳 Docker (Alternative)
 
 ```bash
-# 🚀 Subir tudo com Docker
+# 🚀 Start everything with Docker
 docker-compose up -d
 
-# 📊 Verificar status
+# 📊 Check status
 docker-compose ps
 
-# 🔄 Executar migrations no container
+# 🔄 Run migrations in container
 docker-compose exec kodus-mcp-manager yarn migrate
 ```
 
-### 📋 Scripts Disponíveis
+### 📋 Available Scripts
 
-| Comando                   | Descrição                                       |
-| ------------------------- | ----------------------------------------------- |
-| `yarn migrate`            | Executa migrations completas (schema + tabelas) |
-| `yarn pre:migrate`        | Cria schema se não existir                      |
-| `yarn migration:run`      | Executa migrations do TypeORM                   |
-| `yarn migration:generate` | Gera nova migration                             |
-| `yarn start:dev`          | Inicia aplicação em desenvolvimento             |
-| `yarn docker:up`          | Sobe containers Docker                          |
-| `yarn docker:down`        | Para containers Docker                          |
+| Command                   | Description                                    |
+| ------------------------- | ---------------------------------------------- |
+| `yarn migrate`            | Run complete migrations (schema + tables)     |
+| `yarn pre:migrate`        | Create schema if it doesn't exist             |
+| `yarn migration:run`      | Run TypeORM migrations                        |
+| `yarn migration:generate` | Generate new migration                         |
+| `yarn start:dev`          | Start application in development mode         |
+| `yarn docker:up`          | Start Docker containers                        |
+| `yarn docker:down`        | Stop Docker containers                         |
 
 ---
 
-## 🆕 Adicionando um Novo Provider
+## 🆕 Adding a New Provider
 
-### 📋 Passo a Passo
+### 📋 Step by Step
 
-#### 1️⃣ **Configurar Provider**
+#### 1️⃣ **Configure Provider**
 
 ```bash
-# Adicionar no arquivo .env
+# Add to .env file
 MCP_PROVIDERS=composio,new_provider
 ```
 
-#### 2️⃣ **Criar Classe do Provider**
+#### 2️⃣ **Create Provider Class**
 
 ```typescript
 // src/modules/providers/new_provider/new_provider.provider.ts
@@ -260,21 +260,21 @@ MCP_PROVIDERS=composio,new_provider
 import { BaseProvider } from '../base.provider';
 
 export class NewProviderProvider extends BaseProvider {
-  // 🔧 Implementação do provider
+  // 🔧 Provider implementation
 
   async getIntegrations() {
-    // Sua lógica aqui
+    // Your logic here
   }
 
   async initiateConnection() {
-    // Sua lógica aqui
+    // Your logic here
   }
 
-  // ... outros métodos obrigatórios
+  // ... other required methods
 }
 ```
 
-#### 3️⃣ **Criar Cliente (Se Necessário)**
+#### 3️⃣ **Create Client (If Needed)**
 
 ```typescript
 // src/clients/new_provider/index.ts
@@ -283,108 +283,108 @@ export class NewProviderClient {
   constructor(private config: any) {}
 
   async makeApiCall() {
-    // Chamadas para API externa
+    // External API calls
   }
 }
 ```
 
-#### 4️⃣ **Criar Testes**
+#### 4️⃣ **Create Tests**
 
 ```typescript
 // test/provider/new_provider.spec.ts
 
 describe('NewProviderProvider', () => {
-  // Seus testes aqui
+  // Your tests here
 });
 ```
 
 ---
 
-## 🧪 Testes
+## 🧪 Testing
 
 ```bash
-# 🧪 Executar todos os testes
+# 🧪 Run all tests
 yarn test
 ```
 
-📖 **[Ver documentação completa dos testes](./test/README.md)**
+📖 **[View complete testing documentation](./test/README.md)**
 
 ---
 
 ## 📫 Postman
 
-### 📥 Importar Collection
+### 📥 Import Collection
 
-1. **Abra o Postman**
+1. **Open Postman**
 2. **Import → File**
-3. **Selecione:** `postman/kodus-mcp-manager.postman_collection.json`
+3. **Select:** `postman/kodus-mcp-manager.postman_collection.json`
 
-### 🔧 Configurar Variáveis
+### 🔧 Configure Variables
 
-| Variável   | Valor                   | Descrição             |
+| Variable   | Value                   | Description           |
 | ---------- | ----------------------- | --------------------- |
-| `baseUrl`  | `http://localhost:3000` | URL base da API       |
-| `provider` | `composio`              | Provider padrão       |
-| `token`    | `seu-jwt-token`         | Token de autenticação |
+| `baseUrl`  | `http://localhost:3000` | API base URL          |
+| `provider` | `composio`              | Default provider      |
+| `token`    | `your-jwt-token`        | Authentication token  |
 
-### 🎯 Endpoints Disponíveis
+### 🎯 Available Endpoints
 
-- **🔗 Conexões**: Listar, buscar, atualizar
-- **🔌 Integrações**: Listar, detalhes, parâmetros, ferramentas
-- **🚀 Conectar**: Iniciar conexão com provider
+- **🔗 Connections**: List, search, update
+- **🔌 Integrations**: List, details, parameters, tools
+- **🚀 Connect**: Initiate connection with provider
 
 ---
 
 ## 🐛 Troubleshooting
 
-### ❌ Problemas Comuns
+### ❌ Common Issues
 
 **🔴 "Port 3101 already in use"**
 
 ```bash
-# Encontrar processo na porta 3101
+# Find process on port 3101
 lsof -i :3101
 
-# Matar processo
+# Kill process
 kill -9 <PID>
 
-# Ou usar porta diferente
+# Or use different port
 PORT=3102 yarn start:dev
 ```
 
 **🔴 "Database connection failed"**
 
 ```bash
-# Verificar se PostgreSQL está rodando
+# Check if PostgreSQL is running
 docker-compose ps
 
-# Reiniciar banco
+# Restart database
 docker-compose restart db_postgres
 
-# Verificar logs
+# Check logs
 docker-compose logs db_postgres
 ```
 
 **🔴 "Migration failed - schema does not exist"**
 
 ```bash
-# Criar schema manualmente
+# Create schema manually
 yarn pre:migrate
 
-# Ou executar migrations completas
+# Or run complete migrations
 yarn migrate
 ```
 
 **🔴 "Migration failed - table already exists"**
 
 ```bash
-# Verificar migrations executadas
+# Check executed migrations
 docker-compose exec kodus-mcp-manager npm run typeorm -- migration:show
 
-# Reverter última migration se necessário
+# Revert last migration if needed
 yarn migration:revert
 
-# Ou resetar banco completamente
+# Or reset database completely
 docker-compose down -v
 docker-compose up -d
 yarn migrate
@@ -393,63 +393,63 @@ yarn migrate
 **🔴 "Composio API Key invalid"**
 
 ```bash
-# Verificar variável de ambiente
+# Check environment variable
 echo $COMPOSIO_API_KEY
 
-# Testar API key
+# Test API key
 curl -H "x-api-key: $COMPOSIO_API_KEY" https://backend.composio.dev/api/v1/auth_configs
 ```
 
 **🔴 "Script create-schema.sh failed"**
 
 ```bash
-# Verificar se o container do banco está rodando
+# Check if database container is running
 docker ps | grep db_postgres
 
-# Verificar variáveis de ambiente
+# Check environment variables
 cat .env | grep API_PG_DB
 
-# Executar script manualmente
+# Run script manually
 ./scripts/create-schema.sh
 ```
 
 ---
 
-## 📚 Recursos Úteis
+## 📚 Useful Resources
 
-| Recurso                    | Link                                           | Descrição          |
+| Resource                   | Link                                           | Description        |
 | -------------------------- | ---------------------------------------------- | ------------------ |
-| 📖 **Documentação NestJS** | [nestjs.com](https://nestjs.com)               | Framework base     |
-| 🎯 **Composio Docs**       | [docs.composio.dev](https://docs.composio.dev) | Provider principal |
-| 🐳 **Docker Docs**         | [docs.docker.com](https://docs.docker.com)     | Containerização    |
-| 📫 **Postman**             | [postman.com](https://postman.com)             | Testes de API      |
+| 📖 **NestJS Documentation** | [nestjs.com](https://nestjs.com)               | Base framework     |
+| 🎯 **Composio Docs**       | [docs.composio.dev](https://docs.composio.dev) | Main provider      |
+| 🐳 **Docker Docs**         | [docs.docker.com](https://docs.docker.com)     | Containerization   |
+| 📫 **Postman**             | [postman.com](https://postman.com)             | API testing        |
 
 ---
 
-## 🤝 Contribuição
+## 🤝 Contributing
 
-1. **Fork** o projeto
-2. **Crie** uma branch para sua feature (`git checkout -b feature/nova-feature`)
-3. **Commit** suas mudanças (`git commit -m 'Adiciona nova feature'`)
-4. **Push** para a branch (`git push origin feature/nova-feature`)
-5. **Abra** um Pull Request
+1. **Fork** the project
+2. **Create** a feature branch (`git checkout -b feature/new-feature`)
+3. **Commit** your changes (`git commit -m 'Add new feature'`)
+4. **Push** to the branch (`git push origin feature/new-feature`)
+5. **Open** a Pull Request
 
 ---
 
-## 📄 Licença
+## 📄 License
 
-Este projeto está sob a licença **MIT**. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+This project is under the **MIT** license. See the [LICENSE](LICENSE) file for more details.
 
 ---
 
 <div align="center">
 
-**🎉 Projeto Kodus MCP Manager**
+**🎉 Kodus MCP Manager Project**
 
 [![🚀 Deploy](https://img.shields.io/badge/🚀-Deploy-success?style=for-the-badge)](yarn start:prod)
 [![🧪 Tests](https://img.shields.io/badge/🧪-Run%20Tests-blue?style=for-the-badge)](yarn test)
 [![📫 Postman](https://img.shields.io/badge/📫-Postman-orange?style=for-the-badge)](postman/kodus-mcp-manager.postman_collection.json)
 
-**Feito com ❤️ pela equipe Kodus**
+**Made with ❤️ by the Kodus team**
 
 </div>

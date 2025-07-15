@@ -59,6 +59,14 @@ export interface MCPRequiredParam {
   required: boolean;
 }
 
+export interface MCPTool {
+  slug: string;
+  name: string;
+  description: string;
+  provider: string;
+  warning: boolean;
+}
+
 export interface MCPInstallIntegration {
   allowedTools?: string[];
   [key: string]: any;
@@ -83,6 +91,6 @@ export interface MCPProvider {
   getIntegrationTools(
     integrationId: string,
     organizationId: string,
-  ): Promise<any[]>;
+  ): Promise<MCPTool[]>;
   initiateConnection(config: MCPConnectionConfig): Promise<MCPConnection>;
 }

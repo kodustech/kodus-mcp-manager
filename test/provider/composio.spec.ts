@@ -2,6 +2,8 @@ import { ComposioProvider } from '../../src/modules/providers/composio/composio.
 import { ConfigService } from '@nestjs/config';
 import { ComposioClient } from '../../src/clients/composio';
 import { MCPConnectionStatus } from '../../src/modules/mcp/entities/mcp-connection.entity';
+import { Test, TestingModule } from '@nestjs/testing';
+import { IntegrationDescriptionService } from '../../src/modules/providers/services/integration-description.service';
 
 // Mock das dependências
 jest.mock('../../src/clients/composio', () => ({
@@ -19,29 +21,61 @@ jest.mock('../../src/clients/composio', () => ({
 
 describe('ComposioProvider', () => {
   let provider: ComposioProvider;
-  let mockConfigService: jest.Mocked<ConfigService>;
-  let mockComposioClient: jest.Mocked<ComposioClient>;
+  let configService: ConfigService;
+  let integrationDescriptionService: IntegrationDescriptionService;
 
-  beforeEach(() => {
-    // Mock ConfigService
-    mockConfigService = {
-      get: jest.fn(),
-    } as any;
+  const mockComposioClient = {
+    getIntegrations: jest.fn(),
+    getIntegration: jest.fn(),
+    getIntegrationRequiredParams: jest.fn(),
+    getTools: jest.fn(),
+    createConnectedAccount: jest.fn(),
+    getMCPServer: jest.fn(),
+    createMCPServer: jest.fn(),
+    getConnectedAccounts: jest.fn(),
+    getConnectedAccount: jest.fn(),
+  };
 
-    mockConfigService.get.mockImplementation((key: string) => {
-      const config = {
-        'composio.apiKey': 'test-api-key',
-        'composio.baseUrl': 'https://backend.composio.dev',
-        redirectUri: 'https://test.com/callback',
-      };
-      return config[key];
-    });
+  const mockIntegrationDescriptionService = {
+    getDescription: jest.fn(),
+  };
 
-    // Create provider instance
-    provider = new ComposioProvider(mockConfigService);
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        ComposioProvider,
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn().mockImplementation((key: string) => {
+              switch (key) {
+                case 'composio.apiKey':
+                  return 'test-api-key';
+                case 'composio.baseUrl':
+                  return 'https://backend.composio.dev';
+                case 'redirectUri':
+                  return 'http://localhost:3000/callback';
+                default:
+                  return undefined;
+              }
+            }),
+          },
+        },
+        {
+          provide: IntegrationDescriptionService,
+          useValue: mockIntegrationDescriptionService,
+        },
+      ],
+    }).compile();
 
-    // Get the mocked ComposioClient instance
-    mockComposioClient = (provider as any).client;
+    provider = module.get<ComposioProvider>(ComposioProvider);
+    configService = module.get<ConfigService>(ConfigService);
+    integrationDescriptionService = module.get<IntegrationDescriptionService>(
+      IntegrationDescriptionService,
+    );
+
+    // Mock the client
+    (provider as any).client = mockComposioClient;
   });
 
   afterEach(() => {
@@ -50,10 +84,10 @@ describe('ComposioProvider', () => {
 
   describe('constructor', () => {
     it('should initialize with correct configuration', () => {
-      expect(mockConfigService.get).toHaveBeenCalledWith('composio.apiKey');
-      expect(mockConfigService.get).toHaveBeenCalledWith('composio.baseUrl');
-      expect(mockConfigService.get).toHaveBeenCalledWith('redirectUri');
-      expect(ComposioClient).toHaveBeenCalledWith(mockConfigService);
+      expect(configService.get).toHaveBeenCalledWith('composio.apiKey');
+      expect(configService.get).toHaveBeenCalledWith('composio.baseUrl');
+      expect(configService.get).toHaveBeenCalledWith('redirectUri');
+      expect(ComposioClient).toHaveBeenCalledWith(configService);
     });
   });
 
@@ -73,91 +107,59 @@ describe('ComposioProvider', () => {
   });
 
   describe('getIntegrations', () => {
-    const mockIntegrationsResponse = {
-      items: [
-        {
-          id: 'auth-config-1',
-          name: 'Test Integration',
-          auth_scheme: 'OAUTH2',
-          toolkit: {
-            slug: 'test-app',
-            logo: 'https://logo.url',
+    it('should return list of integrations', async () => {
+      const mockIntegrations = {
+        items: [
+          {
+            id: 'auth-config-1',
+            name: 'Test App',
+            auth_scheme: 'OAUTH',
+            toolkit: { slug: 'test-app', logo: 'test-logo.png' },
           },
-        },
-        {
-          id: 'auth-config-2',
-          name: 'Another Integration',
-          auth_scheme: 'API_KEY',
-          toolkit: {
-            slug: 'another-app',
-            logo: 'https://another-logo.url',
-          },
-        },
-      ],
-    };
+        ],
+      };
 
-    it('should return formatted integrations list', async () => {
-      mockComposioClient.getIntegrations.mockResolvedValue(
-        mockIntegrationsResponse,
-      );
+      mockComposioClient.getIntegrations.mockResolvedValue(mockIntegrations);
+      mockIntegrationDescriptionService.getDescription.mockReturnValue('Test description');
 
-      const result = await provider.getIntegrations('cursor', 10, {
-        toolkit: 'test',
-      });
-
-      expect(mockComposioClient.getIntegrations).toHaveBeenCalledWith({
-        limit: 10,
-        cursor: 'cursor',
-        toolkit: 'test',
-      });
-
-      expect(result).toEqual([
-        {
-          id: 'auth-config-1',
-          name: 'Test Integration',
-          description: '',
-          authScheme: 'OAUTH2',
-          appName: 'test-app',
-          logo: 'https://logo.url',
-          provider: 'composio',
-        },
-        {
-          id: 'auth-config-2',
-          name: 'Another Integration',
-          description: '',
-          authScheme: 'API_KEY',
-          appName: 'another-app',
-          logo: 'https://another-logo.url',
-          provider: 'composio',
-        },
-      ]);
-    });
-
-    it('should handle default parameters', async () => {
-      mockComposioClient.getIntegrations.mockResolvedValue({ items: [] });
-
-      await provider.getIntegrations();
+      const result = await provider.getIntegrations();
 
       expect(mockComposioClient.getIntegrations).toHaveBeenCalledWith({
         limit: 50,
         cursor: '',
       });
+
+      expect(result).toEqual([
+        {
+          id: 'auth-config-1',
+          name: 'Test App',
+          description: 'Test description',
+          authScheme: 'OAUTH',
+          appName: 'test-app',
+          logo: 'test-logo.png',
+          provider: 'composio',
+        },
+      ]);
+
+      expect(mockIntegrationDescriptionService.getDescription).toHaveBeenCalledWith('composio', 'test-app');
     });
   });
 
   describe('getIntegration', () => {
-    const mockIntegration = {
-      id: 'auth-config-1',
-      name: 'Test Integration',
-      auth_scheme: 'OAUTH2',
-      toolkit: {
-        slug: 'test-app',
-        logo: 'https://logo.url',
-      },
-    };
+    it('should return specific integration', async () => {
+      const mockIntegration = {
+        id: 'auth-config-1',
+        name: 'Test Integration',
+        auth_scheme: 'OAUTH2',
+        toolkit: {
+          slug: 'test-app',
+          logo: 'https://logo.url',
+        },
+        restrict_to_following_tools: ['tool1', 'tool2'],
+      };
 
-    it('should return formatted integration', async () => {
       mockComposioClient.getIntegration.mockResolvedValue(mockIntegration);
+      mockIntegrationDescriptionService.getDescription.mockReturnValue('Test description');
 
       const result = await provider.getIntegration('auth-config-1');
 
@@ -168,12 +170,15 @@ describe('ComposioProvider', () => {
       expect(result).toEqual({
         id: 'auth-config-1',
         name: 'Test Integration',
-        description: '',
+        description: 'Test description',
         authScheme: 'OAUTH2',
         appName: 'test-app',
         logo: 'https://logo.url',
         provider: 'composio',
+        allowedTools: ['tool1', 'tool2'],
       });
+
+      expect(mockIntegrationDescriptionService.getDescription).toHaveBeenCalledWith('composio', 'test-app');
     });
 
     it('should validate integration ID', async () => {
@@ -284,12 +289,14 @@ describe('ComposioProvider', () => {
           name: 'Tool 1',
           description: 'Tool 1 description',
           provider: 'composio',
+          warning: false,
         },
         {
           slug: 'tool2',
           name: 'Tool 2',
           description: 'Tool 2 description',
           provider: 'composio',
+          warning: false,
         },
       ]);
     });
@@ -309,6 +316,97 @@ describe('ComposioProvider', () => {
         appName: 'test-app',
         tools: undefined,
       });
+    });
+
+    it('should set warning to true for tools with delete, remove, or archive in name', async () => {
+      const mockIntegrationWithWarningTools = {
+        ...mockIntegration,
+      };
+
+      const mockToolsWithWarning = {
+        items: [
+          {
+            slug: 'delete-user',
+            name: 'Delete User',
+            description: 'Delete user tool',
+          },
+          {
+            slug: 'remove-file',
+            name: 'Remove File',
+            description: 'Remove file tool',
+          },
+          {
+            slug: 'archive-data',
+            name: 'Archive Data',
+            description: 'Archive data tool',
+          },
+          {
+            slug: 'destroy-resource',
+            name: 'Destroy Resource',
+            description: 'Destroy resource tool',
+          },
+          {
+            slug: 'disable-service',
+            name: 'Disable Service',
+            description: 'Disable service tool',
+          },
+          {
+            slug: 'create-user',
+            name: 'Create User',
+            description: 'Create user tool',
+          },
+        ],
+      };
+
+      mockComposioClient.getIntegration.mockResolvedValue(mockIntegrationWithWarningTools);
+      mockComposioClient.getTools.mockResolvedValue(mockToolsWithWarning);
+
+      const result = await provider.getIntegrationTools('auth-config-1');
+
+      expect(result).toEqual([
+        {
+          slug: 'delete-user',
+          name: 'Delete User',
+          description: 'Delete user tool',
+          provider: 'composio',
+          warning: true,
+        },
+        {
+          slug: 'remove-file',
+          name: 'Remove File',
+          description: 'Remove file tool',
+          provider: 'composio',
+          warning: true,
+        },
+        {
+          slug: 'archive-data',
+          name: 'Archive Data',
+          description: 'Archive data tool',
+          provider: 'composio',
+          warning: true,
+        },
+        {
+          slug: 'destroy-resource',
+          name: 'Destroy Resource',
+          description: 'Destroy resource tool',
+          provider: 'composio',
+          warning: true,
+        },
+        {
+          slug: 'disable-service',
+          name: 'Disable Service',
+          description: 'Disable service tool',
+          provider: 'composio',
+          warning: true,
+        },
+        {
+          slug: 'create-user',
+          name: 'Create User',
+          description: 'Create user tool',
+          provider: 'composio',
+          warning: false,
+        },
+      ]);
     });
 
     it('should validate integration ID', async () => {
