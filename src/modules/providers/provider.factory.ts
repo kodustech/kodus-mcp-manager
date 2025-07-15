@@ -21,7 +21,8 @@ export class ProviderFactory {
     const enabledProviders = this.configService
       .get<string>('providers', 'composio')
       .split(',')
-      .map((provider) => provider.trim());
+      .map((provider) => provider.trim())
+      .filter(Boolean);
 
     for (const provider of enabledProviders) {
       switch (provider) {
