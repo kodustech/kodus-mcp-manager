@@ -7,16 +7,19 @@ import {
   MCPServerConfig,
   MCPRequiredParam,
   MCPInstallIntegration,
+  MCPTool,
 } from '../interfaces/provider.interface';
 import { BaseProvider } from '../base.provider';
 import { ConfigService } from '@nestjs/config';
 import { MCPConnectionStatus } from '../../mcp/entities/mcp-connection.entity';
 import { BadRequestException } from '@nestjs/common';
 import { ComposioClient } from '../../../clients/composio';
+import { IntegrationDescriptionService } from '../services/integration-description.service';
 
 export class ComposioProvider extends BaseProvider {
   private readonly client: ComposioClient;
   private readonly config: MCPProviderConfig;
+  private readonly integrationDescriptionService: IntegrationDescriptionService;
 
   public readonly statusMap = {
     INITIALIZING: MCPConnectionStatus.PENDING,
@@ -31,16 +34,18 @@ export class ComposioProvider extends BaseProvider {
     error: MCPConnectionStatus.FAILED,
   };
 
-  constructor(configService: ConfigService) {
+  constructor(
+    configService: ConfigService,
+    integrationDescriptionService: IntegrationDescriptionService,
+  ) {
     super();
-
     this.config = {
       apiKey: configService.get(`composio.apiKey`),
       baseUrl: configService.get(`composio.baseUrl`),
       redirectUri: configService.get('redirectUri'),
     };
-
     this.client = new ComposioClient(configService);
+    this.integrationDescriptionService = integrationDescriptionService;
   }
 
   private getMCPUrl(serverId: string, authConfigId: string): string {
@@ -87,7 +92,10 @@ export class ComposioProvider extends BaseProvider {
     return result.items.map((integration) => ({
       id: integration.id,
       name: integration.name,
-      description: '',
+      description: this.integrationDescriptionService.getDescription(
+        'composio',
+        integration.toolkit.slug,
+      ),
       authScheme: integration.auth_scheme,
       appName: integration.toolkit.slug,
       logo: integration.toolkit.logo,
@@ -101,7 +109,10 @@ export class ComposioProvider extends BaseProvider {
     return {
       id: integration.id,
       name: integration.name,
-      description: '',
+      description: this.integrationDescriptionService.getDescription(
+        'composio',
+        integration.toolkit.slug,
+      ),
       authScheme: integration.auth_scheme,
       appName: integration.toolkit.slug,
       logo: integration.toolkit.logo,
@@ -126,7 +137,7 @@ export class ComposioProvider extends BaseProvider {
     );
   }
 
-  async getIntegrationTools(integrationId: string): Promise<any[]> {
+  async getIntegrationTools(integrationId: string): Promise<MCPTool[]> {
     this.validateId(integrationId, 'Integration');
     const integration = await this.client.getIntegration(integrationId);
 
@@ -140,7 +151,21 @@ export class ComposioProvider extends BaseProvider {
       name: tool.name,
       description: tool.description,
       provider: 'composio',
+      warning: this.hasWarning(tool.name || tool.slug),
     }));
+  }
+
+  private hasWarning(toolName: string): boolean {
+    const warningKeywords = [
+      'delete', 'remove', 'archive',
+      'destroy', 'drop', 'clear', 'erase', 'purge',
+      'terminate', 'kill', 'stop', 'disable', 'suspend',
+      'revoke', 'cancel', 'reject', 'deny', 'block', 'ban',
+      'uninstall', 'reset', 'revert', 'undo', 'rollback',
+      'flush', 'wipe', 'truncate'
+    ];
+    const lowerToolName = toolName.toLowerCase();
+    return warningKeywords.some(keyword => lowerToolName.includes(keyword));
   }
 
   async initiateConnection(
