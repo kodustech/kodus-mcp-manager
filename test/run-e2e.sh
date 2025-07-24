@@ -1,15 +1,5 @@
 #!/bin/bash
 
-# Configurar variáveis de ambiente para teste
-export NODE_ENV=test
-export JWT_SECRET=test-secret-key
-export MCP_PROVIDERS=composio
-export DB_HOST=localhost
-export DB_PORT=5432
-export DB_USERNAME=kodus
-export DB_PASSWORD=kodus123
-export DB_DATABASE=kodus_mcp_test
-
 # Subir o container PostgreSQL (se não estiver rodando)
 echo "🐳 Verificando/subindo container PostgreSQL..."
 if ! docker ps | grep -q kodus-mcp-postgres; then
@@ -18,7 +8,7 @@ fi
 
 # Aguardar o container do banco estar pronto
 echo "⏳ Aguardando banco de dados ficar disponível..."
-until docker exec kodus-mcp-postgres pg_isready -U kodus > /dev/null 2>&1; do
+until docker exec kodus-mcp-postgres pg_isready -U kodus >/dev/null 2>&1; do
   echo -n "."
   sleep 2
 done
@@ -59,4 +49,4 @@ if [ $TEST_EXIT_CODE -eq 0 ]; then
 else
   echo "❌ Testes E2E falharam!"
   exit $TEST_EXIT_CODE
-fi 
+fi
