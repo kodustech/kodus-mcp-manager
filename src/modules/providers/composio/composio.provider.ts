@@ -15,6 +15,24 @@ import { MCPConnectionStatus } from '../../mcp/entities/mcp-connection.entity';
 import { BadRequestException } from '@nestjs/common';
 import { ComposioClient } from '../../../clients/composio';
 import { IntegrationDescriptionService } from '../services/integration-description.service';
+interface ActiveMCPServer {
+  id: string;
+  name: string;
+  auth_config_ids: string[];
+  managed_auth_via_composio: boolean;
+  allowed_tools: string[];
+  mcp_url: string;
+  toolkits: string[];
+  toolkit_icons: Record<string, string>;
+  commands: {
+    cursor: string;
+    claude: string;
+    windsurf: string;
+  };
+  updated_at: string;
+  created_at: string;
+  server_instance_count: number;
+}
 
 export class ComposioProvider extends BaseProvider {
   private readonly client: ComposioClient;
@@ -141,31 +159,61 @@ export class ComposioProvider extends BaseProvider {
     this.validateId(integrationId, 'Integration');
     const integration = await this.client.getIntegration(integrationId);
 
+    const activeMCPServers: ActiveMCPServer[] =
+      await this.client.getActiveMCPServers();
+
+    const activeMCPServer: ActiveMCPServer = activeMCPServers.find((server) =>
+      server.auth_config_ids.includes(integrationId),
+    );
+
     const { items } = await this.client.getTools({
       appName: integration.toolkit.slug,
       tools: integration.restrict_to_following_tools,
     });
 
-    return items.map((tool) => ({
-      slug: tool.slug,
-      name: tool.name,
-      description: tool.description,
-      provider: 'composio',
-      warning: this.hasWarning(tool.name || tool.slug),
-    }));
+    return items
+      .filter((tool) => activeMCPServer.allowed_tools.includes(tool.slug))
+      .map((tool) => ({
+        slug: tool.slug,
+        name: tool.name,
+        description: tool.description,
+        provider: 'composio',
+        warning: this.hasWarning(tool.name || tool.slug),
+      }));
   }
 
   private hasWarning(toolName: string): boolean {
     const warningKeywords = [
-      'delete', 'remove', 'archive',
-      'destroy', 'drop', 'clear', 'erase', 'purge',
-      'terminate', 'kill', 'stop', 'disable', 'suspend',
-      'revoke', 'cancel', 'reject', 'deny', 'block', 'ban',
-      'uninstall', 'reset', 'revert', 'undo', 'rollback',
-      'flush', 'wipe', 'truncate'
+      'delete',
+      'remove',
+      'archive',
+      'destroy',
+      'drop',
+      'clear',
+      'erase',
+      'purge',
+      'terminate',
+      'kill',
+      'stop',
+      'disable',
+      'suspend',
+      'revoke',
+      'cancel',
+      'reject',
+      'deny',
+      'block',
+      'ban',
+      'uninstall',
+      'reset',
+      'revert',
+      'undo',
+      'rollback',
+      'flush',
+      'wipe',
+      'truncate',
     ];
     const lowerToolName = toolName.toLowerCase();
-    return warningKeywords.some(keyword => lowerToolName.includes(keyword));
+    return warningKeywords.some((keyword) => lowerToolName.includes(keyword));
   }
 
   async initiateConnection(
