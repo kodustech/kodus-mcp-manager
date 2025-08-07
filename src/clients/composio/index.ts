@@ -166,6 +166,6 @@ export class ComposioClient {
 
   async getActiveMCPServers(): Promise<any> {
     const { data } = await this.client.get('/mcp/servers');
-    return data.items;
+    return data?.items || [];
   }
 }
