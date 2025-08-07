@@ -67,7 +67,7 @@ export class ComposioClient {
   }): Promise<any> {
     const query = {
       toolkit_slug: params.appName || undefined,
-      limit: params.limit || undefined,
+      limit: params.limit || 500,
       cursor: params.cursor || undefined,
       tool_slugs: params.tools?.join(',') || undefined,
     };
@@ -162,5 +162,10 @@ export class ComposioClient {
     });
 
     return data.items[0];
+  }
+
+  async getActiveMCPServers(): Promise<any> {
+    const { data } = await this.client.get('/mcp/servers');
+    return data.items;
   }
 }

@@ -10,7 +10,7 @@
       "github": "Manage repositories, issues, pull requests, and releases with comprehensive GitHub integration for seamless development workflow.",
       "slack": "Send messages, manage channels, and integrate team communication directly into your development process.",
       "trello": "Create cards, manage boards, and organize projects with Trello's visual project management capabilities.",
-      "discord": "Send messages, manage servers, and integrate team communication through Discord's platform.",
+      "discordbot": "Send messages, manage servers, and integrate team communication through Discord's platform.",
       "zoom": "Schedule meetings, manage participants, and integrate video conferencing into your workflow.",
       "calendar": "Create events, manage schedules, and synchronize calendar activities with your development process.",
       "drive": "Upload, download, and manage files with Google Drive integration for seamless document sharing.",
