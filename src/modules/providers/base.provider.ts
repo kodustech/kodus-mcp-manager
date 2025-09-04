@@ -32,6 +32,8 @@ export abstract class BaseProvider implements MCPProvider {
     config: MCPConnectionConfig,
   ): Promise<MCPConnection>;
 
+  abstract deleteConnection(connectionId: string): Promise<void>;
+
   abstract getConnections(
     cursor?: string,
     limit?: number,

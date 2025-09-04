@@ -7,12 +7,14 @@ import {
   Param,
   Req,
   Patch,
+  Put,
+  Delete,
   UseGuards,
 } from '@nestjs/common';
 import { FastifyRequest } from 'fastify';
 import { McpService } from './mcp.service';
 import { QueryDto } from './dto/query.dto';
-import { UpdateConnectionDto } from './dto/update-connection.dto';
+import { UpdateConnectionDto, UpdateAllowedToolsDto } from './dto/update-connection.dto';
 import { InitiateConnectionDto } from './dto/initiate-connection.dto';
 import { AuthGuard } from '../../common/guards/auth.guard';
 
@@ -37,6 +39,23 @@ export class McpController {
     @Req() request: FastifyRequest,
   ) {
     return this.mcpService.updateConnection(body, request.organizationId);
+  }
+
+  @Delete('connections/:integrationId')
+  deleteConnection(
+    @Param('integrationId') integrationId: string,
+    @Req() request: FastifyRequest,
+  ) {
+    return this.mcpService.deleteConnection(integrationId, request.organizationId);
+  }
+
+  @Put('connections/:integrationId/allowed-tools')
+  updateAllowedTools(
+    @Param('integrationId') integrationId: string,
+    @Body() body: UpdateAllowedToolsDto,
+    @Req() request: FastifyRequest,
+  ) {
+    return this.mcpService.updateAllowedTools(integrationId, body.allowedTools, request.organizationId);
   }
 
   @Get('integrations')

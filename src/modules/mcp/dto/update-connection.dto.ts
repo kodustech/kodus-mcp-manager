@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsObject, IsOptional, IsString, IsArray } from 'class-validator';
 
 export class UpdateConnectionDto {
   @IsString()
@@ -12,4 +12,10 @@ export class UpdateConnectionDto {
   @IsObject()
   @IsOptional()
   metadata?: Record<string, any>;
+}
+
+export class UpdateAllowedToolsDto {
+  @IsArray()
+  @IsString({ each: true })
+  allowedTools: string[];
 }

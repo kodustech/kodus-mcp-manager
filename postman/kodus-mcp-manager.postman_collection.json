@@ -89,11 +89,95 @@
 							"variable": [
 								{
 									"key": "connectionId",
-									"value": "{{connectionId}}"
+									"value": "{{connectionId}}",
+									"description": "UUID da tabela ou ID do Composio (ca_xxx)"
 								}
 							]
 						},
-						"description": "Get details of a specific connection"
+						"description": "Get details of a specific connection (supports UUID or Composio ID)"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Connection",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text",
+								"description": "JWT token for authentication"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/mcp/connections/:integrationId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"mcp",
+								"connections",
+								":integrationId"
+							],
+							"variable": [
+								{
+									"key": "integrationId",
+									"value": "{{integrationId}}",
+									"description": "Integration ID do Composio"
+								}
+							]
+						},
+						"description": "Delete connection by integration ID (deletes from both local DB and Composio)"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Allowed Tools",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text",
+								"description": "JWT token for authentication"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"allowedTools\": [\"gmail_send_email\", \"gmail_read_emails\"]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/mcp/connections/{{integrationId}}/allowed-tools",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"mcp",
+								"connections",
+								"{{integrationId}}",
+								"allowed-tools"
+							],
+							"variable": [
+								{
+									"key": "integrationId",
+									"value": "{{integrationId}}",
+									"description": "Integration ID do Composio"
+								}
+							]
+						},
+						"description": "Update allowed tools for a specific integration (replaces the entire array)"
 					},
 					"response": []
 				},

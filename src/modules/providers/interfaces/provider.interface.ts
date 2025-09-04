@@ -93,4 +93,5 @@ export interface MCPProvider {
     organizationId: string,
   ): Promise<MCPTool[]>;
   initiateConnection(config: MCPConnectionConfig): Promise<MCPConnection>;
+  deleteConnection(connectionId: string): Promise<void>;
 }

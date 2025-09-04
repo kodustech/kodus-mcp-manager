@@ -106,6 +106,13 @@ export class ComposioClient {
     return data;
   }
 
+  async deleteConnectedAccount(connectedAccountId: string): Promise<any> {
+    const { data } = await this.client.delete(
+      `/connected_accounts/${connectedAccountId}`,
+    );
+    return data;
+  }
+
   async createConnectedAccount(params: {
     integrationId: string;
     userId: string;
