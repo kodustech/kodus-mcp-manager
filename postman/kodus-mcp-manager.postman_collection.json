@@ -111,24 +111,24 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/mcp/connections/:integrationId",
+							"raw": "{{baseUrl}}/mcp/connections/:connectionId",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"mcp",
 								"connections",
-								":integrationId"
+								":connectionId"
 							],
 							"variable": [
 								{
-									"key": "integrationId",
-									"value": "{{integrationId}}",
-									"description": "Integration ID do Composio"
+									"key": "connectionId",
+									"value": "{{connectionId}}",
+									"description": "Connection ID (UUID da tabela)"
 								}
 							]
 						},
-						"description": "Delete connection by integration ID (deletes from both local DB and Composio)"
+						"description": "Delete connection by connection ID (deletes from both local DB and Composio)"
 					},
 					"response": []
 				},

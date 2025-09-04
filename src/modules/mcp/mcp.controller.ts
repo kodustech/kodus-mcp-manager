@@ -41,12 +41,12 @@ export class McpController {
     return this.mcpService.updateConnection(body, request.organizationId);
   }
 
-  @Delete('connections/:integrationId')
+  @Delete('connections/:connectionId')
   deleteConnection(
-    @Param('integrationId') integrationId: string,
+    @Param('connectionId') connectionId: string,
     @Req() request: FastifyRequest,
   ) {
-    return this.mcpService.deleteConnection(integrationId, request.organizationId);
+    return this.mcpService.deleteConnection(connectionId, request.organizationId);
   }
 
   @Put('connections/:integrationId/allowed-tools')

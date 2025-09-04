@@ -25,7 +25,6 @@ export class McpService {
     return { items, total };
   }
 
-
   async getConnection(connectionId: string) {
     // Try to find by UUID first
     let connection = await this.connectionRepository.findOne({
@@ -35,8 +34,8 @@ export class McpService {
     // If not found and looks like Composio ID, try other ways
     if (!connection && connectionId.startsWith('ca_')) {
       const connections = await this.connectionRepository.find();
-      connection = connections.find(conn =>
-        conn.metadata?.connection?.id === connectionId
+      connection = connections.find(
+        (conn) => conn.metadata?.connection?.id === connectionId,
       );
     }
 
@@ -174,40 +173,47 @@ export class McpService {
     return updatedConnection;
   }
 
-  async deleteConnection(integrationId: string, organizationId: string) {
-    // Busca a conexão pela integrationId e organizationId
-    const connection = await this.connectionRepository.findOne({
-      where: { integrationId, organizationId },
+  async deleteConnection(connectionId: string, organizationId: string) {
+    let connection = await this.connectionRepository.findOne({
+      where: { id: connectionId },
     });
 
     if (!connection) {
-      throw new NotFoundException('Connection not found');
+      throw new NotFoundException(
+        `Connection with ID ${connectionId} not found`,
+      );
+    }
+
+    if (connection.organizationId !== organizationId) {
+      throw new NotFoundException('Connection not found or access denied');
     }
 
     const provider = this.providerFactory.getProvider(connection.provider);
 
     try {
-      // Pega o ID da connected account do Composio do metadata
       const composioConnectionId = connection.metadata?.connection?.id;
 
       if (!composioConnectionId) {
-        throw new Error('Composio connection ID not found in connection metadata');
+        console.warn(
+          'Composio connection ID not found in metadata, using provided ID',
+        );
       }
 
-      // Deleta no Composio usando o ID correto
-      await provider.deleteConnection(composioConnectionId);
+      await provider.deleteConnection(composioConnectionId || connectionId);
     } catch (error) {
-      throw new Error(`Failed to delete connection from provider: ${error.message}`);
+      console.error('Error deleting from Composio:', error);
     }
 
-    // Deleta da tabela local
     await this.connectionRepository.delete(connection.id);
 
     return { message: 'Connection deleted successfully' };
   }
 
-  async updateAllowedTools(integrationId: string, allowedTools: string[], organizationId: string) {
-    // Busca a conexão pela integrationId e organizationId
+  async updateAllowedTools(
+    integrationId: string,
+    allowedTools: string[],
+    organizationId: string,
+  ) {
     const connection = await this.connectionRepository.findOne({
       where: { integrationId, organizationId },
     });
@@ -216,12 +222,10 @@ export class McpService {
       throw new NotFoundException('Connection not found');
     }
 
-    // Atualiza apenas as allowedTools
     const updatedConnection = Object.assign(connection, {
       allowedTools: allowedTools,
     });
 
-    // Salva no banco
     await this.connectionRepository.save(updatedConnection);
 
     return {
