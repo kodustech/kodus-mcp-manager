@@ -29,8 +29,8 @@ export class McpController {
   }
 
   @Get('connections/:connectionId')
-  async getConnection(@Param('connectionId') connectionId: string) {
-    return this.mcpService.getConnection(connectionId);
+  async getConnection(@Param('connectionId') connectionId: string, @Req() request: FastifyRequest) {
+    return this.mcpService.getConnection(connectionId, request.organizationId);
   }
 
   @Patch('connections')
