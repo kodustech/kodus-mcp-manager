@@ -25,10 +25,27 @@ export class McpService {
     return { items, total };
   }
 
-  getConnection(connectionId: string) {
-    return this.connectionRepository.findOne({
-      where: { id: connectionId },
+  private async getConnectionById(connectionId: string, organizationId: string) {
+    // Try to find by UUID first
+    let connection = await this.connectionRepository.findOne({
+      where: { id: connectionId, organizationId },
     });
+
+    // If not found and looks like Composio ID, try other ways
+    if (!connection && connectionId.startsWith('ca_')) {
+      connection = await this.connectionRepository.findOne({
+        where: { 
+          organizationId,
+          metadata: { connection: { id: connectionId } }
+        },
+      });
+    }
+
+    return connection;
+  }
+
+  async getConnection(connectionId: string, organizationId: string) {
+    return this.getConnectionById(connectionId, organizationId);
   }
 
   async getIntegrations(query: QueryDto, organizationId: string) {
@@ -160,5 +177,60 @@ export class McpService {
     await this.connectionRepository.save(updatedConnection);
 
     return updatedConnection;
+  }
+
+  async deleteConnection(connectionId: string, organizationId: string) {
+    const connection = await this.getConnectionById(connectionId, organizationId);
+
+    if (!connection) {
+      throw new NotFoundException(
+        `Connection with ID ${connectionId} not found`,
+      );
+    }
+
+    const provider = this.providerFactory.getProvider(connection.provider);
+
+    const composioConnectionId = connection.metadata?.connection?.id;
+
+    if (!composioConnectionId) {
+      console.warn(
+        'Composio connection ID not found in metadata, using provided ID',
+      );
+    }
+
+    await provider.deleteConnection(composioConnectionId || connectionId);
+
+    await this.connectionRepository.delete(connection.id);
+
+    return { message: 'Connection deleted successfully' };
+  }
+
+  async updateAllowedTools(
+    integrationId: string,
+    allowedTools: string[],
+    organizationId: string,
+  ) {
+    const connection = await this.connectionRepository.findOne({
+      where: { integrationId, organizationId },
+    });
+
+    if (!connection) {
+      throw new NotFoundException('Connection not found');
+    }
+
+    const updatedConnection = Object.assign(connection, {
+      allowedTools: allowedTools,
+    });
+
+    await this.connectionRepository.save(updatedConnection);
+
+    return {
+      message: 'Allowed tools updated successfully',
+      connection: {
+        id: updatedConnection.id,
+        integrationId: updatedConnection.integrationId,
+        allowedTools: updatedConnection.allowedTools,
+      },
+    };
   }
 }

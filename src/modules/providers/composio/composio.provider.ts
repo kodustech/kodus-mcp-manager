@@ -293,6 +293,11 @@ export class ComposioProvider extends BaseProvider {
     return this.client.getConnectedAccount(connectedAccountId);
   }
 
+  async deleteConnection(connectionId: string): Promise<void> {
+    this.validateId(connectionId, 'Connection');
+    await this.client.deleteConnectedAccount(connectionId);
+  }
+
   async createMCPServer(config: MCPServerConfig): Promise<MCPServer> {
     // this.validateConfig(config);
     const {
