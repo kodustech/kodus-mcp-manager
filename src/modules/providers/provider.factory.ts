@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { MCPProvider } from './interfaces/provider.interface';
 import { ComposioProvider } from './composio/composio.provider';
 import { IntegrationDescriptionService } from './services/integration-description.service';
+import { KodusMCPProvider } from './kodusMCP/kodus-mcp.provider';
 
 export type ProviderType = string;
 
@@ -19,7 +20,7 @@ export class ProviderFactory {
 
   private initializeProviders(): void {
     const enabledProviders = this.configService
-      .get<string>('providers', 'composio')
+      .get<string>('providers', 'composio,kodusmcp')
       .split(',')
       .map((provider) => provider.trim())
       .filter(Boolean);
@@ -29,7 +30,19 @@ export class ProviderFactory {
         case 'composio':
           this.providers.set(
             'composio',
-            new ComposioProvider(this.configService, this.integrationDescriptionService),
+            new ComposioProvider(
+              this.configService,
+              this.integrationDescriptionService,
+            ),
+          );
+          break;
+        case 'kodusmcp':
+          this.providers.set(
+            'kodusmcp',
+            new KodusMCPProvider(
+              this.configService,
+              this.integrationDescriptionService,
+            ),
           );
           break;
         default:

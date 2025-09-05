@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ProviderFactory } from '../providers/provider.factory';
 import { QueryDto } from './dto/query.dto';
-import { MCPConnectionEntity } from './entities/mcp-connection.entity';
+import {
+  MCPConnectionEntity,
+  MCPConnectionStatus,
+} from './entities/mcp-connection.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { InitiateConnectionDto } from './dto/initiate-connection.dto';
@@ -25,7 +28,10 @@ export class McpService {
     return { items, total };
   }
 
-  private async getConnectionById(connectionId: string, organizationId: string) {
+  private async getConnectionById(
+    connectionId: string,
+    organizationId: string,
+  ) {
     // Try to find by UUID first
     let connection = await this.connectionRepository.findOne({
       where: { id: connectionId, organizationId },
@@ -34,9 +40,9 @@ export class McpService {
     // If not found and looks like Composio ID, try other ways
     if (!connection && connectionId.startsWith('ca_')) {
       connection = await this.connectionRepository.findOne({
-        where: { 
+        where: {
           organizationId,
-          metadata: { connection: { id: connectionId } }
+          metadata: { connection: { id: connectionId } },
         },
       });
     }
@@ -54,19 +60,30 @@ export class McpService {
       return provider.getIntegrations(String(page), pageSize, { appName });
     });
 
-    const integrations = (await Promise.all(promises)).flat();
+    const integrations = (await Promise.all(promises))?.flat() || [];
     const connections = await this.connectionRepository.find({
       where: { organizationId },
     });
-    return integrations.map((integration) => {
-      const connection = connections.find(
+    return integrations?.map((integration) => {
+      const connection = connections?.find(
         (connection) => connection.integrationId === integration.id,
       );
-      return {
-        ...integration,
-        isConnected: !!connection,
-        connectionStatus: connection?.status,
-      };
+
+      if (integration.provider === 'composio') {
+        return {
+          ...integration,
+          isConnected: !!connection,
+          connectionStatus: connection?.status,
+        };
+      }
+
+      if (integration.provider === 'kodusmcp') {
+        return {
+          ...integration,
+          isConnected: true,
+          connectionStatus: MCPConnectionStatus.ACTIVE,
+        };
+      }
     });
   }
 
@@ -180,7 +197,10 @@ export class McpService {
   }
 
   async deleteConnection(connectionId: string, organizationId: string) {
-    const connection = await this.getConnectionById(connectionId, organizationId);
+    const connection = await this.getConnectionById(
+      connectionId,
+      organizationId,
+    );
 
     if (!connection) {
       throw new NotFoundException(

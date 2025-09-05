@@ -1,5 +1,10 @@
 import { MCPConnectionStatus } from '../../mcp/entities/mcp-connection.entity';
 
+export enum MCPProviderType {
+  COMPOSIO = 'composio',
+  KODUSMCP = 'kodusmcp',
+}
+
 export interface MCPProviderConfig {
   apiKey: string;
   baseUrl: string;
@@ -46,9 +51,11 @@ export interface MCPIntegration {
   description: string;
   authScheme: string;
   appName: string;
-  provider: string;
+  provider: MCPProviderType;
   logo?: string;
   allowedTools?: string[];
+  isConnected?: boolean;
+  isDefault?: boolean;
 }
 
 export interface MCPRequiredParam {
@@ -63,7 +70,7 @@ export interface MCPTool {
   slug: string;
   name: string;
   description: string;
-  provider: string;
+  provider: MCPProviderType;
   warning: boolean;
 }
 

@@ -8,6 +8,7 @@ import {
   MCPRequiredParam,
   MCPInstallIntegration,
   MCPTool,
+  MCPProviderType,
 } from '../interfaces/provider.interface';
 import { BaseProvider } from '../base.provider';
 import { ConfigService } from '@nestjs/config';
@@ -101,11 +102,7 @@ export class ComposioProvider extends BaseProvider {
     limit = 50,
     filters?: Record<string, any>,
   ): Promise<MCPIntegration[]> {
-    const result = await this.client.getIntegrations({
-      limit,
-      cursor,
-      ...filters,
-    });
+    const result = await this.client.getIntegrations({});
 
     return result.items.map((integration) => ({
       id: integration.id,
@@ -134,7 +131,7 @@ export class ComposioProvider extends BaseProvider {
       authScheme: integration.auth_scheme,
       appName: integration.toolkit.slug,
       logo: integration.toolkit.logo,
-      provider: 'composio',
+      provider: MCPProviderType.COMPOSIO,
       allowedTools: integration.restrict_to_following_tools,
     };
   }
