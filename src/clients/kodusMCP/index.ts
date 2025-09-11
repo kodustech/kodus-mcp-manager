@@ -98,6 +98,14 @@ export class KodusMCPClient {
         warning: false,
       },
       {
+        slug: 'KODUS_GET_PULL_REQUEST_DIFF',
+        name: 'KODUS_GET_PULL_REQUEST_DIFF',
+        description:
+          'Get the complete diff/patch for an entire Pull Request showing all changes across all files. Use this to see the full context of what changed in the PR, including additions, deletions, and modifications across all modified files.',
+        provider: MCPProviderType.KODUSMCP,
+        warning: false,
+      },
+      {
         slug: 'KODUS_GET_KODY_RULES',
         name: 'KODUS_GET_KODY_RULES ',
         description:
@@ -120,6 +128,22 @@ export class KodusMCPClient {
           'Create a new Kody Rule with custom scope and severity. pull_request scope: analyzes entire PR context for PR-level rules. file scope: analyzes individual files one by one for file-level rules. Rule starts in pending status.',
         provider: MCPProviderType.KODUSMCP,
         warning: false,
+      },
+      {
+        slug: 'KODUS_UPDATE_KODY_RULE',
+        name: 'KODUS_UPDATE_KODY_RULE',
+        description:
+          'Update an existing Kody Rule. Only the fields provided in kodyRule will be updated. Use this to modify rule details, change severity, scope, or status of existing rules.',
+        provider: MCPProviderType.KODUSMCP,
+        warning: false,
+      },
+      {
+        slug: 'KODUS_DELETE_KODY_RULE',
+        name: 'KODUS_DELETE_KODY_RULE',
+        description:
+          'Delete a Kody Rule permanently from the system. This action cannot be undone. Use this to remove rules that are no longer needed or relevant.',
+        provider: MCPProviderType.KODUSMCP,
+        warning: true,
       },
     ];
   }
