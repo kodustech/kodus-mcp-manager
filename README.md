@@ -27,12 +27,12 @@
 
 ## 🏗️ Prerequisites
 
-| Tool                    | Minimum Version | Status         | Description                |
-| ----------------------- | --------------- | -------------- | -------------------------- |
-| 📟 **Node.js**          | v18+            | ✅ Required    | JavaScript runtime         |
-| 🐳 **Docker**           | Latest          | ✅ Required    | For PostgreSQL             |
-| 🐳 **Docker Compose**   | Latest          | ✅ Required    | Container orchestration    |
-| 🔑 **Composio API Key** | -               | ✅ Required    | For Composio integration   |
+| Tool                    | Minimum Version | Status      | Description              |
+| ----------------------- | --------------- | ----------- | ------------------------ |
+| 📟 **Node.js**          | v18+            | ✅ Required | JavaScript runtime       |
+| 🐳 **Docker**           | Latest          | ✅ Required | For PostgreSQL           |
+| 🐳 **Docker Compose**   | Latest          | ✅ Required | Container orchestration  |
+| 🔑 **Composio API Key** | -               | ✅ Required | For Composio integration |
 
 ---
 
@@ -40,10 +40,10 @@
 
 ### 📊 Available Providers
 
-| Provider             | Status                | Description                           | Documentation                          |
-| -------------------- | --------------------- | ------------------------------------- | -------------------------------------- |
-| 🎯 **Composio**      | ✅ Active             | Automation and integration platform   | [Docs](https://docs.composio.dev)     |
-| ➕ **New Provider**  | 🔄 In Development     | Add your own provider                 | [Guide](#-adding-a-new-provider)      |
+| Provider            | Status            | Description                         | Documentation                     |
+| ------------------- | ----------------- | ----------------------------------- | --------------------------------- |
+| 🎯 **Composio**     | ✅ Active         | Automation and integration platform | [Docs](https://docs.composio.dev) |
+| ➕ **New Provider** | 🔄 In Development | Add your own provider               | [Guide](#-adding-a-new-provider)  |
 
 ### 🔧 Composio Setup
 
@@ -107,30 +107,30 @@ CREATE SCHEMA IF NOT EXISTS "mcp-manager";
 
 Main table for storing MCP connections:
 
-| Column           | Type      | Description                       |
-| ---------------- | --------- | --------------------------------- |
-| `id`             | UUID      | Primary key (uuid_generate_v4)   |
-| `organizationId` | VARCHAR   | Organization ID                   |
-| `integrationId`  | VARCHAR   | Integration ID                    |
-| `provider`       | VARCHAR   | Provider name (e.g., composio)   |
-| `status`         | VARCHAR   | Connection status                 |
-| `appName`        | VARCHAR   | Application name                  |
-| `mcpUrl`         | VARCHAR   | MCP server URL                    |
-| `allowedTools`   | JSONB     | List of allowed tools             |
-| `metadata`       | JSONB     | Additional connection data        |
-| `createdAt`      | TIMESTAMP | Creation date                     |
-| `updatedAt`      | TIMESTAMP | Last update date                  |
-| `deletedAt`      | TIMESTAMP | Deletion date (soft delete)       |
+| Column           | Type      | Description                    |
+| ---------------- | --------- | ------------------------------ |
+| `id`             | UUID      | Primary key (uuid_generate_v4) |
+| `organizationId` | VARCHAR   | Organization ID                |
+| `integrationId`  | VARCHAR   | Integration ID                 |
+| `provider`       | VARCHAR   | Provider name (e.g., composio) |
+| `status`         | VARCHAR   | Connection status              |
+| `appName`        | VARCHAR   | Application name               |
+| `mcpUrl`         | VARCHAR   | MCP server URL                 |
+| `allowedTools`   | JSONB     | List of allowed tools          |
+| `metadata`       | JSONB     | Additional connection data     |
+| `createdAt`      | TIMESTAMP | Creation date                  |
+| `updatedAt`      | TIMESTAMP | Last update date               |
+| `deletedAt`      | TIMESTAMP | Deletion date (soft delete)    |
 
 #### 📝 `migrations`
 
 TypeORM migration control table:
 
-| Column      | Type    | Description        |
-| ----------- | ------- | ------------------ |
-| `id`        | SERIAL  | Primary key        |
+| Column      | Type    | Description         |
+| ----------- | ------- | ------------------- |
+| `id`        | SERIAL  | Primary key         |
 | `timestamp` | BIGINT  | Migration timestamp |
-| `name`      | VARCHAR | Migration name     |
+| `name`      | VARCHAR | Migration name      |
 
 ### 🔧 Useful Commands
 
@@ -229,15 +229,15 @@ docker-compose exec kodus-mcp-manager yarn migrate
 
 ### 📋 Available Scripts
 
-| Command                   | Description                                    |
-| ------------------------- | ---------------------------------------------- |
-| `yarn migrate`            | Run complete migrations (schema + tables)     |
-| `yarn pre:migrate`        | Create schema if it doesn't exist             |
-| `yarn migration:run`      | Run TypeORM migrations                        |
-| `yarn migration:generate` | Generate new migration                         |
-| `yarn start:dev`          | Start application in development mode         |
-| `yarn docker:up`          | Start Docker containers                        |
-| `yarn docker:down`        | Stop Docker containers                         |
+| Command                   | Description                               |
+| ------------------------- | ----------------------------------------- |
+| `yarn migrate`            | Run complete migrations (schema + tables) |
+| `yarn pre:migrate`        | Create schema if it doesn't exist         |
+| `yarn migration:run`      | Run TypeORM migrations                    |
+| `yarn migration:generate` | Generate new migration                    |
+| `yarn start:dev`          | Start application in development mode     |
+| `yarn docker:up`          | Start Docker containers                   |
+| `yarn docker:down`        | Stop Docker containers                    |
 
 ---
 
@@ -321,17 +321,76 @@ yarn test
 
 ### 🔧 Configure Variables
 
-| Variable   | Value                   | Description           |
-| ---------- | ----------------------- | --------------------- |
-| `baseUrl`  | `http://localhost:3000` | API base URL          |
-| `provider` | `composio`              | Default provider      |
-| `token`    | `your-jwt-token`        | Authentication token  |
+| Variable   | Value                   | Description          |
+| ---------- | ----------------------- | -------------------- |
+| `baseUrl`  | `http://localhost:3000` | API base URL         |
+| `provider` | `composio`              | Default provider     |
+| `token`    | `your-jwt-token`        | Authentication token |
 
 ### 🎯 Available Endpoints
 
 - **🔗 Connections**: List, search, update
-- **🔌 Integrations**: List, details, parameters, tools
+- **🔌 Integrations**: List, details, parameters, tools, create
+- **🛠️ Tool Selection**: Get available tools, get selected tools, update selected tools
 - **🚀 Connect**: Initiate connection with provider
+
+### 🛠️ Tool Selection
+
+The system now supports dynamic tool selection and management:
+
+#### **Available Tools**
+
+```bash
+GET /mcp/{provider}/integrations/{integrationId}/available-tools
+```
+
+Returns all available tools for a specific integration.
+
+#### **Selected Tools**
+
+```bash
+GET /mcp/{provider}/integrations/{integrationId}/selected-tools
+```
+
+Returns currently selected tools for an integration.
+
+#### **Update Selected Tools**
+
+```bash
+PUT /mcp/{provider}/integrations/{integrationId}/selected-tools
+Content-Type: application/json
+
+{
+  "allowedTools": ["KODUS_LIST_REPOSITORIES", "KODUS_GET_KODY_RULES"]
+}
+```
+
+Updates the selected tools for an integration.
+
+### 🔌 Integration Management
+
+The system supports creating integrations directly in the database:
+
+#### **Create Integration**
+
+```bash
+POST /mcp/integration/{provider}
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "integrationId": "kd_mcp_oTUrzqsaxTg",
+  "mcpUrl": "https://mcp.kodus.io"
+}
+```
+
+Creates an integration for the organization with the specified provider. The integrationId is passed in the request body. If the integration already exists, returns the existing one. Allows custom configuration of MCP URL.
+
+**Example:**
+
+```bash
+POST /mcp/integration/kodusmcp
+```
 
 ---
 
@@ -417,12 +476,12 @@ cat .env | grep API_PG_DB
 
 ## 📚 Useful Resources
 
-| Resource                   | Link                                           | Description        |
-| -------------------------- | ---------------------------------------------- | ------------------ |
-| 📖 **NestJS Documentation** | [nestjs.com](https://nestjs.com)               | Base framework     |
-| 🎯 **Composio Docs**       | [docs.composio.dev](https://docs.composio.dev) | Main provider      |
-| 🐳 **Docker Docs**         | [docs.docker.com](https://docs.docker.com)     | Containerization   |
-| 📫 **Postman**             | [postman.com](https://postman.com)             | API testing        |
+| Resource                    | Link                                           | Description      |
+| --------------------------- | ---------------------------------------------- | ---------------- |
+| 📖 **NestJS Documentation** | [nestjs.com](https://nestjs.com)               | Base framework   |
+| 🎯 **Composio Docs**        | [docs.composio.dev](https://docs.composio.dev) | Main provider    |
+| 🐳 **Docker Docs**          | [docs.docker.com](https://docs.docker.com)     | Containerization |
+| 📫 **Postman**              | [postman.com](https://postman.com)             | API testing      |
 
 ---
 
