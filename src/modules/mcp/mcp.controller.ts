@@ -14,8 +14,12 @@ import {
 import { FastifyRequest } from 'fastify';
 import { McpService } from './mcp.service';
 import { QueryDto } from './dto/query.dto';
-import { UpdateConnectionDto, UpdateAllowedToolsDto } from './dto/update-connection.dto';
+import {
+  UpdateConnectionDto,
+  UpdateAllowedToolsDto,
+} from './dto/update-connection.dto';
 import { InitiateConnectionDto } from './dto/initiate-connection.dto';
+import { CreateIntegrationDto } from './dto/create-integration.dto';
 import { AuthGuard } from '../../common/guards/auth.guard';
 
 @Controller('mcp')
@@ -29,7 +33,10 @@ export class McpController {
   }
 
   @Get('connections/:connectionId')
-  async getConnection(@Param('connectionId') connectionId: string, @Req() request: FastifyRequest) {
+  async getConnection(
+    @Param('connectionId') connectionId: string,
+    @Req() request: FastifyRequest,
+  ) {
     return this.mcpService.getConnection(connectionId, request.organizationId);
   }
 
@@ -46,7 +53,10 @@ export class McpController {
     @Param('connectionId') connectionId: string,
     @Req() request: FastifyRequest,
   ) {
-    return this.mcpService.deleteConnection(connectionId, request.organizationId);
+    return this.mcpService.deleteConnection(
+      connectionId,
+      request.organizationId,
+    );
   }
 
   @Put('connections/:integrationId/allowed-tools')
@@ -55,7 +65,11 @@ export class McpController {
     @Body() body: UpdateAllowedToolsDto,
     @Req() request: FastifyRequest,
   ) {
-    return this.mcpService.updateAllowedTools(integrationId, body.allowedTools, request.organizationId);
+    return this.mcpService.updateAllowedTools(
+      integrationId,
+      body.allowedTools,
+      request.organizationId,
+    );
   }
 
   @Get('integrations')
@@ -88,7 +102,7 @@ export class McpController {
   }
 
   @Get(':provider/integrations/:integrationId/tools')
-  getIntegrationTools(
+  async getIntegrationTools(
     @Param('integrationId') integrationId: string,
     @Param('provider') provider: string,
     @Req() request: FastifyRequest,
@@ -107,6 +121,19 @@ export class McpController {
     @Req() request: FastifyRequest,
   ) {
     return this.mcpService.initiateConnection(
+      request.organizationId,
+      provider,
+      body,
+    );
+  }
+
+  @Post('integration/:provider')
+  createKodusMCPIntegration(
+    @Param('provider') provider: string,
+    @Body() body: CreateIntegrationDto,
+    @Req() request: FastifyRequest,
+  ) {
+    return this.mcpService.createKodusMCPIntegration(
       request.organizationId,
       provider,
       body,

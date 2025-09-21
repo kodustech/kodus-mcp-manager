@@ -9,6 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { InitiateConnectionDto } from './dto/initiate-connection.dto';
 import { UpdateConnectionDto } from './dto/update-connection.dto';
+import { CreateIntegrationDto } from './dto/create-integration.dto';
 
 @Injectable()
 export class McpService {
@@ -250,6 +251,158 @@ export class McpService {
         id: updatedConnection.id,
         integrationId: updatedConnection.integrationId,
         allowedTools: updatedConnection.allowedTools,
+      },
+    };
+  }
+
+  async getAvailableTools(
+    integrationId: string,
+    providerType: string,
+    organizationId: string,
+  ) {
+    const provider = this.providerFactory.getProvider(providerType);
+
+    // Check if provider has getAvailableTools method
+    if ('getAvailableTools' in provider) {
+      return await (provider as any).getAvailableTools(
+        integrationId,
+        organizationId,
+      );
+    }
+
+    // Fallback to getIntegrationTools
+    return await provider.getIntegrationTools(integrationId, organizationId);
+  }
+
+  async getSelectedTools(
+    integrationId: string,
+    providerType: string,
+    organizationId: string,
+  ) {
+    const provider = this.providerFactory.getProvider(providerType);
+
+    // Check if provider has getSelectedTools method
+    if ('getSelectedTools' in provider) {
+      return await (provider as any).getSelectedTools(
+        integrationId,
+        organizationId,
+      );
+    }
+
+    // Fallback: get from connection allowedTools
+    const connection = await this.connectionRepository.findOne({
+      where: { integrationId, organizationId },
+    });
+
+    return connection?.allowedTools || [];
+  }
+
+  async updateSelectedTools(
+    integrationId: string,
+    providerType: string,
+    organizationId: string,
+    selectedTools: string[],
+  ) {
+    const provider = this.providerFactory.getProvider(providerType);
+
+    // Check if provider has updateSelectedTools method
+    if ('updateSelectedTools' in provider) {
+      const result = await (provider as any).updateSelectedTools(
+        integrationId,
+        organizationId,
+        selectedTools,
+      );
+
+      // Also update the connection's allowedTools
+      const connection = await this.connectionRepository.findOne({
+        where: { integrationId, organizationId },
+      });
+
+      if (connection) {
+        connection.allowedTools = selectedTools;
+        await this.connectionRepository.save(connection);
+      }
+
+      return result;
+    }
+
+    // Fallback: update connection allowedTools
+    return await this.updateAllowedTools(
+      integrationId,
+      selectedTools,
+      organizationId,
+    );
+  }
+
+  async createKodusMCPIntegration(
+    organizationId: string,
+    providerType: string,
+    createIntegrationDto: CreateIntegrationDto,
+  ) {
+    const { integrationId, mcpUrl } = createIntegrationDto;
+
+    if (!integrationId) {
+      throw new Error('integrationId is required in request body');
+    }
+
+    const providerInstance = this.providerFactory.getProvider(providerType);
+    const integration = await providerInstance.getIntegration(integrationId);
+    const tools = await providerInstance.getIntegrationTools(
+      integrationId,
+      organizationId,
+    );
+
+    const existingConnection = await this.connectionRepository.findOne({
+      where: { integrationId, organizationId, provider: providerType },
+    });
+
+    if (existingConnection) {
+      return {
+        message: 'Kodus MCP integration already exists for this organization',
+        connection: {
+          id: existingConnection.id,
+          integrationId: existingConnection.integrationId,
+          provider: existingConnection.provider,
+          status: existingConnection.status,
+          appName: existingConnection.appName,
+          mcpUrl: existingConnection.mcpUrl,
+          allowedTools: existingConnection.allowedTools,
+          createdAt: existingConnection.createdAt,
+        },
+      };
+    }
+
+    const allowedTools = tools.map((tool) => tool.slug);
+
+    // Create new connection
+    const newConnection = this.connectionRepository.create({
+      organizationId,
+      integrationId,
+      provider: providerType,
+      status: MCPConnectionStatus.ACTIVE,
+      appName: integration.appName,
+      mcpUrl: mcpUrl || '',
+      allowedTools: allowedTools || [],
+      metadata: {
+        description: `${providerType} integration for organization`,
+        autoCreated: true,
+        createdAt: new Date().toISOString(),
+      },
+    });
+
+    const savedConnection = await this.connectionRepository.save(newConnection);
+
+    return {
+      message: 'Kodus MCP integration created successfully',
+      connection: {
+        id: savedConnection.id,
+        integrationId: savedConnection.integrationId,
+        provider: savedConnection.provider,
+        status: savedConnection.status,
+        appName: savedConnection.appName,
+        mcpUrl: savedConnection.mcpUrl,
+        allowedTools: savedConnection.allowedTools,
+        createdAt: savedConnection.createdAt,
       },
     };
   }

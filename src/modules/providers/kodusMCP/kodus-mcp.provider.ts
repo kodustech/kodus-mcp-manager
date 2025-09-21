@@ -35,6 +35,7 @@ export class KodusMCPProvider extends BaseProvider {
     filters?: Record<string, any>,
   ): Promise<MCPIntegration[]> {
     const integration = await this.client.getIntegration();
+
     return [
       {
         ...integration,
@@ -67,12 +68,49 @@ export class KodusMCPProvider extends BaseProvider {
   ): Promise<MCPRequiredParam[]> {
     return null;
   }
-  getIntegrationTools(
+
+  async getIntegrationTools(
     integrationId: string,
     organizationId: string,
   ): Promise<MCPTool[]> {
-    return Promise.resolve(this.client.getIntegrationTools());
+    this.validateId(integrationId, 'Integration');
+    const integration = await this.client.getIntegration();
+
+    const tools = await this.client.getTools();
+
+    return tools.map((tool) => ({
+      slug: tool.slug,
+      name: tool.name,
+      description: tool.description,
+      provider: MCPProviderType.KODUSMCP,
+      warning: this.hasWarning(tool.name || tool.slug),
+    }));
   }
+
+  // async getAvailableTools(
+  //   integrationId: string,
+  //   organizationId: string,
+  // ): Promise<MCPTool[]> {
+  //   return Promise.resolve(this.client.getAvailableTools());
+  // }
+
+  // async getSelectedTools(
+  //   integrationId: string,
+  //   organizationId: string,
+  // ): Promise<string[]> {
+  //   return Promise.resolve(this.client.getSelectedTools(organizationId));
+  // }
+
+  async updateSelectedTools(
+    integrationId: string,
+    organizationId: string,
+    selectedTools: string[],
+  ): Promise<{ success: boolean; message: string; selectedTools: string[] }> {
+    return Promise.resolve(
+      this.client.updateSelectedTools(organizationId, selectedTools),
+    );
+  }
+
   initiateConnection(config: MCPConnectionConfig): Promise<MCPConnection> {
     throw new Error('Method not implemented.');
   }
@@ -86,5 +124,39 @@ export class KodusMCPProvider extends BaseProvider {
     filters?: Record<string, any>,
   ): Promise<{ data: MCPConnection[]; total: number }> {
     throw new Error('Method not implemented.');
+  }
+
+  private hasWarning(toolName: string): boolean {
+    const warningKeywords = [
+      'delete',
+      'remove',
+      'archive',
+      'destroy',
+      'drop',
+      'clear',
+      'erase',
+      'purge',
+      'terminate',
+      'kill',
+      'stop',
+      'disable',
+      'suspend',
+      'revoke',
+      'cancel',
+      'reject',
+      'deny',
+      'block',
+      'ban',
+      'uninstall',
+      'reset',
+      'revert',
+      'undo',
+      'rollback',
+      'flush',
+      'wipe',
+      'truncate',
+    ];
+    const lowerToolName = toolName.toLowerCase();
+    return warningKeywords.some((keyword) => lowerToolName.includes(keyword));
   }
 }

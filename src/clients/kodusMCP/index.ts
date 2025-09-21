@@ -7,7 +7,7 @@ import {
 export class KodusMCPClient {
   getIntegrations(): MCPIntegration {
     return {
-      id: '123',
+      id: 'kd_mcp_oTUrzqsaxTg',
       name: 'Kodus MCP',
       description:
         'Manage integrations, manage connections, and manage tools with Kodus MCP integration.',
@@ -20,10 +20,14 @@ export class KodusMCPClient {
   }
 
   getIntegration(): MCPIntegration {
-    return this.getIntegrations();
+    const tools = this.getTools();
+    return {
+      ...this.getIntegrations(),
+      allowedTools: tools.map((tool) => tool.slug),
+    };
   }
 
-  getIntegrationTools(): MCPTool[] {
+  getTools(): MCPTool[] {
     return [
       {
         slug: 'KODUS_LIST_REPOSITORIES',
@@ -146,5 +150,16 @@ export class KodusMCPClient {
         warning: true,
       },
     ];
+  }
+
+  updateSelectedTools(
+    organizationId: string,
+    selectedTools: string[],
+  ): { success: boolean; message: string; selectedTools: string[] } {
+    return {
+      success: true,
+      message: 'Selected tools updated successfully',
+      selectedTools,
+    };
   }
 }

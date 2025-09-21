@@ -220,6 +220,47 @@
 						"description": "Update connection details"
 					},
 					"response": []
+				},
+				{
+					"name": "Create Integration",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text",
+								"description": "JWT token for authentication"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"integrationId\": \"kd_mcp_oTUrzqsaxTg\",\n  \"mcpUrl\": \"https://mcp.kodus.io\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/mcp/integration/{{provider}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"mcp",
+								"integration",
+								"{{provider}}"
+							]
+						},
+						"description": "Create integration for the organization with custom configuration"
+					},
+					"response": []
 				}
 			]
 		},
@@ -369,6 +410,107 @@
 							]
 						},
 						"description": "Get available tools for an integration"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Available Tools",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text",
+								"description": "JWT token for authentication"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/mcp/{{provider}}/integrations/{{integrationId}}/available-tools",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"mcp",
+								"{{provider}}",
+								"integrations",
+								"{{integrationId}}",
+								"available-tools"
+							]
+						},
+						"description": "Get all available tools for an integration"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Selected Tools",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text",
+								"description": "JWT token for authentication"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/mcp/{{provider}}/integrations/{{integrationId}}/selected-tools",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"mcp",
+								"{{provider}}",
+								"integrations",
+								"{{integrationId}}",
+								"selected-tools"
+							]
+						},
+						"description": "Get currently selected tools for an integration"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Selected Tools",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text",
+								"description": "JWT token for authentication"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"allowedTools\": [\"KODUS_LIST_REPOSITORIES\", \"KODUS_GET_KODY_RULES\"]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/mcp/{{provider}}/integrations/{{integrationId}}/selected-tools",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"mcp",
+								"{{provider}}",
+								"integrations",
+								"{{integrationId}}",
+								"selected-tools"
+							]
+						},
+						"description": "Update selected tools for an integration"
 					},
 					"response": []
 				},
