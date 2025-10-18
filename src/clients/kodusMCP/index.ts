@@ -149,6 +149,54 @@ export class KodusMCPClient {
         provider: MCPProviderType.KODUSMCP,
         warning: true,
       },
+      {
+        slug: 'KODUS_CREATE_KODY_ISSUE',
+        name: 'KODUS_CREATE_KODY_ISSUE',
+        description:
+          'Create a new Kody Issue linked to a pull request suggestion. Use this to escalate Kody review comments into trackable issues with metadata like file path, severity, and reporter.',
+        provider: MCPProviderType.KODUSMCP,
+        warning: false,
+      },
+      {
+        slug: 'KODUS_LIST_KODY_ISSUES',
+        name: 'KODUS_LIST_KODY_ISSUES',
+        description:
+          'List Kody Issues with optional filters (repository, severity, label). Use this to audit outstanding Kody findings, triage by severity, or review the issue backlog.',
+        provider: MCPProviderType.KODUSMCP,
+        warning: false,
+      },
+      {
+        slug: 'KODUS_GET_KODY_ISSUE_DETAILS',
+        name: 'KODUS_GET_KODY_ISSUE_DETAILS',
+        description:
+          'Get full details for a specific Kody Issue by id. Use this to inspect metadata, status, and linked suggestions before taking action.',
+        provider: MCPProviderType.KODUSMCP,
+        warning: false,
+      },
+      {
+        slug: 'KODUS_UPDATE_KODY_ISSUE_STATUS',
+        name: 'KODUS_UPDATE_KODY_ISSUE_STATUS',
+        description:
+          'Update the status of a Kody Issue (e.g. open, resolved, dismissed). Use this to move issues through the workflow directly from MCP.',
+        provider: MCPProviderType.KODUSMCP,
+        warning: false,
+      },
+      {
+        slug: 'KODUS_UPDATE_KODY_ISSUE_CATEGORY',
+        name: 'KODUS_UPDATE_KODY_ISSUE_CATEGORY',
+        description:
+          'Update the category/label for a Kody Issue. Use this to reclassify findings during triage and keep taxonomy accurate.',
+        provider: MCPProviderType.KODUSMCP,
+        warning: false,
+      },
+      {
+        slug: 'KODUS_DELETE_KODY_ISSUE',
+        name: 'KODUS_DELETE_KODY_ISSUE',
+        description:
+          'Dismiss a Kody Issue by updating its status to dismissed. Use this when an issue is no longer relevant or was created by mistake.',
+        provider: MCPProviderType.KODUSMCP,
+        warning: true,
+      },
     ];
   }
 
