@@ -8,27 +8,28 @@ import { McpModule } from './modules/mcp/mcp.module';
 import { getTypeOrmConfig } from './config/typeorm.config';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { HealthController } from './health/health.controller';
+import { IntegrationsModule } from './modules/integrations/integrations.module';
 
 @Module({
-  imports: [
-    AppConfigModule,
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: getTypeOrmConfig,
-      inject: [ConfigService],
-    }),
-    JwtModule.register({
-      global: true,
-      secret: process.env.API_MCP_MANAGER_JWT_SECRET,
-    }),
-    McpModule,
-  ],
-  controllers: [HealthController],
-  providers: [
-    {
-      provide: APP_FILTER,
-      useClass: HttpExceptionFilter,
-    },
-  ],
+    imports: [
+        AppConfigModule,
+        TypeOrmModule.forRootAsync({
+            imports: [ConfigModule],
+            useFactory: getTypeOrmConfig,
+            inject: [ConfigService],
+        }),
+        JwtModule.register({
+            global: true,
+            secret: process.env.API_MCP_MANAGER_JWT_SECRET,
+        }),
+        McpModule,
+    ],
+    controllers: [HealthController],
+    providers: [
+        {
+            provide: APP_FILTER,
+            useClass: HttpExceptionFilter,
+        },
+    ],
 })
 export class AppModule {}
