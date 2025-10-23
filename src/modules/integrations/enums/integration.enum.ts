@@ -7,7 +7,5 @@ export enum MCPIntegrationAuthType {
 
 export enum MCPIntegrationProtocol {
     HTTP = 'http',
-    STDIO = 'stdio',
     SSE = 'sse',
-    WEBSOCKET = 'websocket',
 }

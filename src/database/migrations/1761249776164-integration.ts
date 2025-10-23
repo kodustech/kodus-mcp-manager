@@ -1,11 +1,11 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class Integration1761238776977 implements MigrationInterface {
-    name = 'Integration1761238776977'
+export class Integration1761249776164 implements MigrationInterface {
+    name = 'Integration1761249776164'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            CREATE TYPE "mcp-manager"."mcp_integrations_protocol_enum" AS ENUM('http', 'stdio', 'sse', 'websocket')
+            CREATE TYPE "mcp-manager"."mcp_integrations_protocol_enum" AS ENUM('http', 'sse')
         `);
         await queryRunner.query(`
             CREATE TYPE "mcp-manager"."mcp_integrations_authtype_enum" AS ENUM('none', 'api_key', 'basic', 'bearer_token')
