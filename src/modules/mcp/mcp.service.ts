@@ -189,7 +189,7 @@ export class McpService {
                 ...connection.metadata,
                 ...body.metadata,
                 connection: {
-                    ...connection.metadata.connection,
+                    ...(connection.metadata?.connection || {}),
                     status: provider.statusMap[body.status],
                 },
             },
