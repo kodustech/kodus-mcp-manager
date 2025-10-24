@@ -4,62 +4,75 @@ import { MCPProvider } from './interfaces/provider.interface';
 import { ComposioProvider } from './composio/composio.provider';
 import { IntegrationDescriptionService } from './services/integration-description.service';
 import { KodusMCPProvider } from './kodusMCP/kodus-mcp.provider';
+import { CustomProvider } from './custom/custom.provider';
+import { IntegrationsService } from '../integrations/integrations.service';
 
 export type ProviderType = string;
 
 @Injectable()
 export class ProviderFactory {
-  private providers: Map<ProviderType, MCPProvider> = new Map();
+    private providers: Map<ProviderType, MCPProvider> = new Map();
 
-  constructor(
-    private configService: ConfigService,
-    private integrationDescriptionService: IntegrationDescriptionService,
-  ) {
-    this.initializeProviders();
-  }
-
-  private initializeProviders(): void {
-    const enabledProviders = this.configService
-      .get<string>('providers', 'composio,kodusmcp')
-      .split(',')
-      .map((provider) => provider.trim())
-      .filter(Boolean);
-
-    for (const provider of enabledProviders) {
-      switch (provider) {
-        case 'composio':
-          this.providers.set(
-            'composio',
-            new ComposioProvider(
-              this.configService,
-              this.integrationDescriptionService,
-            ),
-          );
-          break;
-        case 'kodusmcp':
-          this.providers.set(
-            'kodusmcp',
-            new KodusMCPProvider(
-              this.configService,
-              this.integrationDescriptionService,
-            ),
-          );
-          break;
-        default:
-          throw new Error(`Provider ${provider} não suportado`);
-      }
+    constructor(
+        private configService: ConfigService,
+        private integrationDescriptionService: IntegrationDescriptionService,
+        private integrationsService: IntegrationsService,
+    ) {
+        this.initializeProviders();
     }
-  }
 
-  getProvider(type: ProviderType): MCPProvider {
-    const provider = this.providers.get(type);
-    if (!provider) {
-      throw new Error(`Provider ${type} não encontrado`);
+    private initializeProviders(): void {
+        const enabledProviders = this.configService
+            .get<string>('providers', 'composio,kodusmcp,custom')
+            .split(',')
+            .map((provider) => provider.trim())
+            .filter(Boolean);
+
+        for (const provider of enabledProviders) {
+            switch (provider) {
+                case 'composio':
+                    this.providers.set(
+                        'composio',
+                        new ComposioProvider(
+                            this.configService,
+                            this.integrationDescriptionService,
+                        ),
+                    );
+                    break;
+                case 'kodusmcp':
+                    this.providers.set(
+                        'kodusmcp',
+                        new KodusMCPProvider(
+                            this.configService,
+                            this.integrationDescriptionService,
+                        ),
+                    );
+                    break;
+                case 'custom':
+                    this.providers.set(
+                        'custom',
+                        new CustomProvider(
+                            this.configService,
+                            this.integrationDescriptionService,
+                            this.integrationsService,
+                        ),
+                    );
+                    break;
+                default:
+                    throw new Error(`Provider ${provider} não suportado`);
+            }
+        }
     }
-    return provider;
-  }
 
-  getProviders(): MCPProvider[] {
-    return Array.from(this.providers.values());
-  }
+    getProvider(type: ProviderType): MCPProvider {
+        const provider = this.providers.get(type);
+        if (!provider) {
+            throw new Error(`Provider ${type} não encontrado`);
+        }
+        return provider;
+    }
+
+    getProviders(): MCPProvider[] {
+        return Array.from(this.providers.values());
+    }
 }
