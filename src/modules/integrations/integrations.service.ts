@@ -11,7 +11,7 @@ import { CustomClient } from 'src/clients/custom';
 type IntegrationFilters = Partial<
     Pick<
         MCPIntegrationInterface,
-        'active' | 'name' | 'authType' | 'organizationId'
+        'id' | 'active' | 'name' | 'authType' | 'organizationId'
     >
 >;
 
