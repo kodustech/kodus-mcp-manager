@@ -17,6 +17,8 @@ KEYS=(
     "/prod/kodus-mcp-manager/API_MCP_MANAGER_REDIRECT_URI"
 
     "/prod/kodus-mcp-manager/API_MCP_MANAGER_PG_DB_SCHEMA"
+
+    "/prod/kodus-mcp-manager/API_MCP_MANAGER_ENCRYPTION_SECRET"
 )
 
 # Lista de todas as chaves que você precisa
