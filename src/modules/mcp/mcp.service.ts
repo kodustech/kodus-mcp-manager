@@ -340,6 +340,21 @@ export class McpService {
         );
     }
 
+    async getCustomIntegrations(organizationId: string) {
+        return this.integrationsService.find({
+            organizationId,
+            active: true,
+        });
+    }
+
+    async getCustomIntegration(organizationId: string, integrationId: string) {
+        return this.integrationsService.findOne({
+            organizationId,
+            id: integrationId,
+            active: true,
+        });
+    }
+
     async createIntegration(
         organizationId: string,
         providerType: string,

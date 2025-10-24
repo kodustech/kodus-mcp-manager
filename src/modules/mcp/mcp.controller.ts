@@ -130,6 +130,22 @@ export class McpController {
         );
     }
 
+    @Get('integration/custom')
+    getCustomIntegrations(@Req() request: FastifyRequest) {
+        return this.mcpService.getCustomIntegrations(request.organizationId);
+    }
+
+    @Get('integration/custom/:integrationId')
+    getProviderIntegration(
+        @Param('integrationId') integrationId: string,
+        @Req() request: FastifyRequest,
+    ) {
+        return this.mcpService.getCustomIntegration(
+            request.organizationId,
+            integrationId,
+        );
+    }
+
     @Post('integration/:provider')
     createIntegration(
         @Param('provider') provider: string,

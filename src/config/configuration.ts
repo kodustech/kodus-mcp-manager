@@ -8,6 +8,5 @@ export default () => ({
     providers: process.env.API_MCP_MANAGER_MCP_PROVIDERS,
     encryption: {
         secret: process.env.API_MCP_MANAGER_ENCRYPTION_SECRET,
-        salt: process.env.API_MCP_MANAGER_ENCRYPTION_SALT,
     },
 });

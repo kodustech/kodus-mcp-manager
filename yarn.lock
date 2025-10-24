@@ -1270,10 +1270,10 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
-"@kodus/flow@^0.1.22":
-  version "0.1.22"
-  resolved "https://us-central1-npm.pkg.dev/kodus-infra-prod/kodus-pkg/@kodus/flow/-/@kodus/flow-0.1.22.tgz#3b5c5a55e0990123153eda4b67f4706bbb1085f5"
-  integrity sha512-NCMbMvsW4uHKrB1qbZyxirGzqE1+X28qITNk99K2BUue+naIQCpo23pQTrfSRRppmANZj6hqQPzEQEhsFAu3jw==
+"@kodus/flow@^0.1.23":
+  version "0.1.23"
+  resolved "https://us-central1-npm.pkg.dev/kodus-infra-prod/kodus-pkg/@kodus/flow/-/@kodus/flow-0.1.23.tgz#500d2bb196f95177c68aa65992eb7ba56964053f"
+  integrity sha512-3uswH9sD/lthyMxDGsYC1Mwy/DY/YQOuswFTUv2LNBPXEKeuTpRDkiWAlGYrPJC7iaXfSMsgGn2CJ5g2z4LeQg==
   dependencies:
     "@google/generative-ai" "^0.24.1"
     "@modelcontextprotocol/sdk" "^1.19.1"

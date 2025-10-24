@@ -26,7 +26,7 @@
     "dependencies": {
         "@composio/core": "^0.1.36-next.2",
         "@fastify/cors": "^11.1.0",
-        "@kodus/flow": "^0.1.22",
+        "@kodus/flow": "^0.1.23",
         "@nestjs/common": "^11.1.6",
         "@nestjs/config": "^4.0.2",
         "@nestjs/core": "^11.1.6",
