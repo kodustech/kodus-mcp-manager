@@ -11,11 +11,14 @@ ENV API_MCP_MANAGER_NODE_ENV=development
 # Copie os arquivos do projeto
 COPY package.json yarn.lock ./
 
-# Instale todas as dependências
-RUN yarn install
+# Instale dependências do sistema e do projeto
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends procps \
+    && rm -rf /var/lib/apt/lists/* \
+    && yarn install
 
 # Copie o resto dos arquivos
 COPY . .
 
 # Comando de inicialização para desenvolvimento
-CMD ["yarn", "start:dev"] 
+CMD ["yarn", "start:dev"]

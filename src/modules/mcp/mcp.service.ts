@@ -75,7 +75,10 @@ export class McpService {
                 (connection) => connection.integrationId === integration.id,
             );
 
-            if (integration.provider === 'kodusmcp') {
+            if (
+                integration.provider === 'kodusmcp' &&
+                integration.isDefault
+            ) {
                 return {
                     ...integration,
                     isConnected: true,
@@ -438,6 +441,7 @@ export class McpService {
         }
 
         const allowedTools = tools.map((tool) => tool.slug);
+        const resolvedMcpUrl = mcpUrl || integration?.baseUrl || '';
 
         // Create new connection
         const newConnection = this.connectionRepository.create({
@@ -446,7 +450,7 @@ export class McpService {
             provider: providerType,
             status: MCPConnectionStatus.ACTIVE,
             appName: integration.appName,
-            mcpUrl: mcpUrl || '',
+            mcpUrl: resolvedMcpUrl,
             allowedTools: allowedTools || [],
             metadata: {
                 description: `${providerType} integration for organization`,
