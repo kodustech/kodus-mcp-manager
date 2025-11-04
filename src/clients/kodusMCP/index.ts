@@ -13,7 +13,7 @@ export class KodusMCPClient {
         'Manage integrations, manage connections, and manage tools with Kodus MCP integration.',
       authScheme: 'OAUTH',
       appName: 'Kodus MCP',
-      logo: 'https://t5y4w6q9.delivery.rocketcdn.me/wp-content/uploads/2023/11/Kodus-logo-light.png.webp',
+      logo: 'https://kodus.io/wp-content/uploads/2025/11/Kodus-AI-Logo-6.png',
       isConnected: true,
       provider: MCPProviderType.KODUSMCP,
     };

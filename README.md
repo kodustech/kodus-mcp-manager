@@ -40,10 +40,11 @@
 
 ### 📊 Available Providers
 
-| Provider            | Status            | Description                         | Documentation                     |
-| ------------------- | ----------------- | ----------------------------------- | --------------------------------- |
-| 🎯 **Composio**     | ✅ Active         | Automation and integration platform | [Docs](https://docs.composio.dev) |
-| ➕ **New Provider** | 🔄 In Development | Add your own provider               | [Guide](#-adding-a-new-provider)  |
+| Provider            | Status            | Description                                                          | Documentation                     |
+| ------------------- | ----------------- | -------------------------------------------------------------------- | --------------------------------- |
+| 🎯 **Composio**     | ✅ Active         | Automation and integration platform                                  | [Docs](https://docs.composio.dev) |
+| 🏢 **Kodus**        | ✅ Active         | Kodus-managed MCPs (Kodus MCP, Context7 MCP & Kodus Docs MCP)        | -                                 |
+| ➕ **New Provider** | 🔄 In Development | Add your own provider                                                | [Guide](#-adding-a-new-provider)  |
 
 ### 🔧 Composio Setup
 
