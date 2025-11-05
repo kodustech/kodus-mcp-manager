@@ -44,6 +44,7 @@
 | ------------------- | ----------------- | -------------------------------------------------------------------- | --------------------------------- |
 | 🎯 **Composio**     | ✅ Active         | Automation and integration platform                                  | [Docs](https://docs.composio.dev) |
 | 🏢 **Kodus**        | ✅ Active         | Kodus-managed MCPs (Kodus MCP, Context7 MCP & Kodus Docs MCP)        | -                                 |
+| 🔮 **Smithery**     | ✅ Active         | Smithery.ai MCPs (Exa, Sequential Thinking, Azure DevOps, Supermemory, Mem0, Fetch, Browserbase) | [Docs](https://smithery.ai)       |
 | ➕ **New Provider** | 🔄 In Development | Add your own provider                                                | [Guide](#-adding-a-new-provider)  |
 
 ### 🔧 Composio Setup
@@ -53,6 +54,59 @@ To use the Composio provider, you need to:
 1. **🔑 Create an integration** for any app on the Composio platform
 2. **🖥️ Set up an MCP Server** for this integration
 3. **📋 Configure the required** environment variables
+
+### 🔮 Smithery Setup
+
+The Smithery provider offers 7 managed MCP integrations. Credentials are provided per organization when creating a connection (not via environment variables):
+
+#### 🔍 Exa Search
+- **Description**: Fast, intelligent web search and AI-powered code context
+- **Tools**: `web_search_exa`, `get_code_context_exa`
+- **Required**: API Key (provided during connection)
+- **Get API Key**: [exa.ai](https://exa.ai)
+
+#### 🧠 Sequential Thinking
+- **Description**: Dynamic problem-solving through structured thinking
+- **Tools**: `sequentialthinking`
+- **Required**: No authentication needed ✅
+
+#### 🔷 Azure DevOps
+- **Description**: Manage Azure DevOps projects, work items, repos, and pipelines
+- **Tools**: 73 tools for complete Azure DevOps management
+- **Required** (provided during connection): 
+  - Personal Access Token (PAT)
+  - Organization name
+
+#### 💾 Supermemory
+- **Description**: Universal memory system across AI tools
+- **Tools**: `addMemory`, `search`, `getProjects`, `whoAmI`
+- **Required**: API Key (provided during connection)
+- **Get API Key**: [supermemory.ai](https://supermemory.ai)
+
+#### 🧠 Mem0
+- **Description**: Store and retrieve user-specific memories with relevance scoring
+- **Tools**: Memory add, search, update, and delete operations
+- **Required**: API Key (provided during connection)
+- **Get API Key**: [app.mem0.ai](https://app.mem0.ai)
+
+#### 🌐 Fetch
+- **Description**: Fetch and retrieve web content with HTTP/HTTPS support
+- **Tools**: Web content fetching and resource retrieval
+- **Required**: No authentication needed ✅
+
+#### 🌐 Browserbase
+- **Description**: Cloud browser automation with Stagehand integration
+- **Tools**: Web interaction, screenshots, and browser session management
+- **Required** (provided during connection):
+  - API Key
+  - Project ID
+- **Get Started**: [browserbase.com](https://browserbase.com)
+
+**How it works:**
+1. List available Smithery integrations: `GET /mcp/smithery/integrations`
+2. Get required parameters: `GET /mcp/smithery/integrations/{integrationId}/required-params`
+3. Connect with credentials: `POST /mcp/smithery/connect` (provide `apiKey`, `bearerToken`, or other required params in the request body)
+4. Credentials are securely stored per organization in the database
 
 ---
 
@@ -71,7 +125,7 @@ PORT=3000
 JWT_SECRET=your-super-secret-jwt-key
 
 # 🔌 Providers
-MCP_PROVIDERS=composio
+MCP_PROVIDERS=composio,kodusmcp,smithery
 
 # 🎯 Composio
 COMPOSIO_API_KEY=your-composio-api-key
