@@ -5,7 +5,6 @@ import { ComposioProvider } from './composio/composio.provider';
 import { IntegrationDescriptionService } from './services/integration-description.service';
 import { KodusMCPProvider } from './kodusMCP/kodus-mcp.provider';
 import { CustomProvider } from './custom/custom.provider';
-import { SmitheryProvider } from './smithery/smithery.provider';
 import { IntegrationsService } from '../integrations/integrations.service';
 
 export type ProviderType = string;
@@ -24,7 +23,7 @@ export class ProviderFactory {
 
     private initializeProviders(): void {
         const enabledProviders = this.configService
-            .get<string>('providers', 'composio,kodusmcp,custom,smithery')
+            .get<string>('providers', 'composio,kodusmcp,custom')
             .split(',')
             .map((provider) => provider.trim())
             .filter(Boolean);
@@ -53,16 +52,6 @@ export class ProviderFactory {
                     this.providers.set(
                         'custom',
                         new CustomProvider(
-                            this.configService,
-                            this.integrationDescriptionService,
-                            this.integrationsService,
-                        ),
-                    );
-                    break;
-                case 'smithery':
-                    this.providers.set(
-                        'smithery',
-                        new SmitheryProvider(
                             this.configService,
                             this.integrationDescriptionService,
                             this.integrationsService,

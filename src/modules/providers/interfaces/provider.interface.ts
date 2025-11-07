@@ -4,7 +4,6 @@ export enum MCPProviderType {
     COMPOSIO = 'composio',
     KODUSMCP = 'kodusmcp',
     CUSTOM = 'custom',
-    SMITHERY = 'smithery',
 }
 
 export interface MCPProviderConfig {

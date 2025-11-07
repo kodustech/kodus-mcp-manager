@@ -35,16 +35,5 @@
             "context7": "Context7 MCP pulls up-to-date, version-specific documentation and code examples straight from the source — and places them directly into your prompt.",
             "kodusdocs": "Kodus Docs MCP exposes the official Kodus documentation as MCP tools, allowing Kodus to respond with official snippets, setup guides, and examples always up to date."
         }
-    },
-    "smithery": {
-        "integrations": {
-            "exa-search": "Fast, intelligent web search and web crawling with AI-powered code context. Provides agents with fresh information about libraries, APIs, and SDKs to reduce hallucinations.",
-            "sequential-thinking": "Dynamic and reflective problem-solving through structured thinking process. Break down complex problems into manageable steps with adaptive reasoning and hypothesis generation.",
-            "azure-devops": "Manage Azure DevOps projects, work items, repos, pipelines, wikis, and test plans. Create and update work items, branches, pull requests, run pipelines, and fetch build statuses.",
-            "supermemory": "Universal memory system to save and retrieve context across AI tools. Store user-specific memories, preferences, and behaviors with semantic search capabilities.",
-            "mem0": "Store and retrieve user-specific memories to maintain context across sessions. Add, search, and manage memories with relevance scoring for enhanced contextual awareness and personalized interactions.",
-            "fetch": "Fetch and retrieve web content with HTTP/HTTPS support. Simple, reliable way to get web pages, APIs, and resources for processing by AI agents.",
-            "browserbase": "Cloud browser automation with Stagehand integration. Interact with web pages, take screenshots, and run browser sessions in a scalable cloud environment for web scraping and automation."
-        }
     }
 }
