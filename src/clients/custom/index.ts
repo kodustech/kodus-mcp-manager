@@ -45,7 +45,6 @@ export class CustomClient {
                 headers['Authorization'] = `Basic ${basicAuth}`;
                 break;
             case MCPIntegrationAuthType.OAUTH2:
-                // Note: In a real implementation, you would handle token refresh logic here.
                 if (this.integration.accessToken) {
                     headers['Authorization'] =
                         `Bearer ${this.integration.accessToken}`;

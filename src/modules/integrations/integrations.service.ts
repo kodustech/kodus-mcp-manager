@@ -263,34 +263,88 @@ export class IntegrationsService {
     }
 
     private async discoverOAuth(baseUrl: string) {
-        const rsMetadataUrl = this.buildWellKnownUrl(
+        let rsMetadataUrl = this.buildWellKnownUrl(
             baseUrl,
             'oauth-protected-resource',
         );
-        const rsResp = await axios.get(rsMetadataUrl, {
+        let rsResp = await axios.get(rsMetadataUrl, {
             validateStatus: () => true,
         });
         if (rsResp.status >= 400) {
-            throw new Error('Failed to fetch resource server metadata');
+            console.error(
+                `Error accessing ${rsMetadataUrl}, code: ${rsResp.status}, attempting with root url`,
+            );
+
+            rsMetadataUrl = this.buildWellKnownUrl(
+                new URL(baseUrl).origin,
+                'oauth-protected-resource',
+            );
+
+            rsResp = await axios.get(rsMetadataUrl, {
+                validateStatus: () => true,
+            });
+
+            if (rsResp.status >= 400) {
+                console.error(
+                    `Error accessing ${rsMetadataUrl}, code: ${rsResp.status}, attempting to proceed without`,
+                );
+            }
         }
+
         const rs = rsResp.data || {};
         const authorizationServers: string[] =
             rs.authorization_servers || rs.authorization_servers?.values || [];
-        if (!authorizationServers || authorizationServers.length === 0) {
+        if (
+            rsResp.status < 400 &&
+            (!authorizationServers || authorizationServers.length === 0)
+        ) {
             throw new Error(
                 'authorization_servers not found in resource metadata',
             );
         }
-        const asIssuer = authorizationServers[0];
-        const asWellKnown = this.buildWellKnownUrl(
+
+        let asIssuer = authorizationServers?.[0] || baseUrl;
+        let asWellKnown = this.buildWellKnownUrl(
             asIssuer,
             'oauth-authorization-server',
         );
-        const asResp = await axios.get(asWellKnown, {
+        let asResp = await axios.get(asWellKnown, {
             validateStatus: () => true,
         });
         if (asResp.status >= 400) {
-            throw new Error('Failed to fetch authorization server metadata');
+            console.error(
+                `Error accessing ${asWellKnown}, status: ${asResp.status}, attempting with baseUrl`,
+            );
+
+            asIssuer = baseUrl;
+            asWellKnown = this.buildWellKnownUrl(
+                asIssuer,
+                'oauth-authorization-server',
+            );
+            asResp = await axios.get(asWellKnown, {
+                validateStatus: () => true,
+            });
+
+            if (asResp.status >= 400) {
+                console.error(
+                    `Error accessing ${asWellKnown}, status: ${asResp.status}, attempting with root url`,
+                );
+
+                asIssuer = new URL(baseUrl).origin;
+                asWellKnown = this.buildWellKnownUrl(
+                    asIssuer,
+                    'oauth-authorization-server',
+                );
+                asResp = await axios.get(asWellKnown, {
+                    validateStatus: () => true,
+                });
+
+                if (asResp.status >= 400) {
+                    throw new Error(
+                        'Failed to fetch authorization server metadata',
+                    );
+                }
+            }
         }
         const as = asResp.data || {};
         const authorizationEndpoint: string = as.authorization_endpoint;
@@ -610,6 +664,10 @@ export class IntegrationsService {
 
         if (!existingIntegration) {
             throw new Error('Integration not found');
+        }
+
+        if (existingIntegration.authType === MCPIntegrationAuthType.OAUTH2) {
+            throw new Error('Currently OAuth2 integrations cannot be edited');
         }
 
         const {
