@@ -21,6 +21,7 @@ import {
 import { InitiateConnectionDto } from './dto/initiate-connection.dto';
 import { CreateIntegrationDto } from './dto/create-integration.dto';
 import { AuthGuard } from '../../common/guards/auth.guard';
+import { FinishOAuthDto } from './dto/finish-oauth.dto';
 
 @Controller('mcp')
 @UseGuards(AuthGuard)
@@ -185,5 +186,16 @@ export class McpController {
             provider,
             integrationId,
         );
+    }
+
+    @Post('integration/custom/oauth')
+    finalizeOAuthIntegration(
+        @Body() body: FinishOAuthDto,
+        @Req() request: FastifyRequest,
+    ) {
+        return this.mcpService.finalizeOAuthIntegration(
+            request.organizationId,
+            body
+        )
     }
 }
