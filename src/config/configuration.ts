@@ -5,7 +5,6 @@ export default () => ({
         baseUrl: process.env.API_MCP_MANAGER_COMPOSIO_BASE_URL,
     },
     redirectUri: process.env.API_MCP_MANAGER_REDIRECT_URI,
-    customRedirectUri: process.env.API_MCP_MANAGER_CUSTOM_REDIRECT_URI,
     providers: process.env.API_MCP_MANAGER_MCP_PROVIDERS,
     encryption: {
         secret: process.env.API_MCP_MANAGER_ENCRYPTION_SECRET,

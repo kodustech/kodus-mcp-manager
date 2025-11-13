@@ -450,7 +450,7 @@ export class IntegrationsService {
     }
 
     private getAndValidateRedirectUri(): string {
-        const redirectUri = this.configService.get<string>('customRedirectUri');
+        const redirectUri = this.configService.get<string>('redirectUri');
         if (!redirectUri) {
             throw new Error('Redirect URI is not configured');
         }
