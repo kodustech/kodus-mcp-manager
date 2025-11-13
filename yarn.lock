@@ -1270,35 +1270,37 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
-"@kodus/flow@^0.1.23":
-  version "0.1.23"
-  resolved "https://us-central1-npm.pkg.dev/kodus-infra-prod/kodus-pkg/@kodus/flow/-/@kodus/flow-0.1.23.tgz#500d2bb196f95177c68aa65992eb7ba56964053f"
-  integrity sha512-3uswH9sD/lthyMxDGsYC1Mwy/DY/YQOuswFTUv2LNBPXEKeuTpRDkiWAlGYrPJC7iaXfSMsgGn2CJ5g2z4LeQg==
+"@kodus/flow@^0.1.27":
+  version "0.1.27"
+  resolved "https://us-central1-npm.pkg.dev/kodus-infra-prod/kodus-pkg/@kodus/flow/-/@kodus/flow-0.1.27.tgz#07f8d6ac465da76b0d6ebb417d54b6d6205f1b6e"
+  integrity sha512-hrS36BawaMwSyCG7xK6ue4IVJkXpwPi62E8VkQ/TYuVNoPjFH7I3HcSCFBQikTlH0Cxe/cb/MJhojtpMxYFOEw==
   dependencies:
     "@google/generative-ai" "^0.24.1"
-    "@modelcontextprotocol/sdk" "^1.19.1"
+    "@modelcontextprotocol/sdk" "^1.21.1"
     ajv "^8.17.1"
     ajv-formats "^3.0.1"
     dotenv "^17.2.3"
+    jose "^6.1.1"
     json5 "^2.2.3"
     mongodb "^6.20.0"
-    openai "^5.23.2"
-    pino "^10.0.0"
+    openai "^6.7.0"
+    pino "^10.1.0"
     tslib "^2.8.1"
     zod "^4.1.12"
-    zod-from-json-schema "^0.5.0"
+    zod-from-json-schema "^0.5.1"
 
 "@lukeed/csprng@^1.0.0":
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/@lukeed/csprng/-/csprng-1.1.0.tgz#1e3e4bd05c1cc7a0b2ddbd8a03f39f6e4b5e6cfe"
   integrity sha512-Z7C/xXCiGWsg0KuKsHTKJxbWhpI3Vs5GwLfOean7MGyVFGqdRgBbAjOCh6u4bbjPc/8MJ2pZmK/0DLdCbivLDA==
 
-"@modelcontextprotocol/sdk@^1.19.1":
-  version "1.20.1"
-  resolved "https://registry.yarnpkg.com/@modelcontextprotocol/sdk/-/sdk-1.20.1.tgz#f3d8cf2ac438e9761d736941177f7f00cadd94aa"
-  integrity sha512-j/P+yuxXfgxb+mW7OEoRCM3G47zCTDqUPivJo/VzpjbG8I9csTXtOprCf5FfOfHK4whOJny0aHuBEON+kS7CCA==
+"@modelcontextprotocol/sdk@^1.21.1":
+  version "1.21.1"
+  resolved "https://registry.yarnpkg.com/@modelcontextprotocol/sdk/-/sdk-1.21.1.tgz#8fba02e7581d49cc9b047aab0cfd334043321fe5"
+  integrity sha512-UyLFcJLDvUuZbGnaQqXFT32CpPpGj7VS19roLut6gkQVhb439xUzYWbsUvdI3ZPL+2hnFosuugtYWE0Mcs1rmQ==
   dependencies:
-    ajv "^6.12.6"
+    ajv "^8.17.1"
+    ajv-formats "^3.0.1"
     content-type "^1.0.5"
     cors "^2.8.5"
     cross-spawn "^7.0.5"
@@ -2236,7 +2238,7 @@ ajv@8.17.1, ajv@^8.0.0, ajv@^8.12.0, ajv@^8.17.1, ajv@^8.9.0:
     json-schema-traverse "^1.0.0"
     require-from-string "^2.0.2"
 
-ajv@^6.12.4, ajv@^6.12.5, ajv@^6.12.6:
+ajv@^6.12.4, ajv@^6.12.5:
   version "6.12.6"
   resolved "https://registry.yarnpkg.com/ajv/-/ajv-6.12.6.tgz#baf5a62e802b07d977034586f8c3baf5adf26df4"
   integrity sha512-j3fVLgvTo527anyYyJOGTYJbG+vnnQYvE0m5mmkc1TK+nxAppkCLMIL0aZ4dblVCNoGShhm+kzE4ZUykBoMg4g==
@@ -4483,6 +4485,11 @@ jest@^30.1.3:
     import-local "^3.2.0"
     jest-cli "30.1.3"
 
+jose@^6.1.1:
+  version "6.1.1"
+  resolved "https://registry.yarnpkg.com/jose/-/jose-6.1.1.tgz#2be48f5171ca8cb231e313da8572c05c48c68eb6"
+  integrity sha512-GWSqjfOPf4cWOkBzw5THBjtGPhXKqYnfRBzh4Ni+ArTrQQ9unvmsA3oFLqaYKoKe5sjWmGu5wVKg9Ft1i+LQfg==
+
 joycon@^3.1.1:
   version "3.1.1"
   resolved "https://registry.yarnpkg.com/joycon/-/joycon-3.1.1.tgz#bce8596d6ae808f8b68168f5fc69280996894f03"
@@ -5018,10 +5025,10 @@ openai@^4.94.0:
     formdata-node "^4.3.2"
     node-fetch "^2.6.7"
 
-openai@^5.23.2:
-  version "5.23.2"
-  resolved "https://registry.yarnpkg.com/openai/-/openai-5.23.2.tgz#f13e2dc2ef6b88aab6a9b97cdc68d41a1d083c68"
-  integrity sha512-MQBzmTulj+MM5O8SKEk/gL8a7s5mktS9zUtAkU257WjvobGc9nKcBuVwjyEEcb9SI8a8Y2G/mzn3vm9n1Jlleg==
+openai@^6.7.0:
+  version "6.8.1"
+  resolved "https://registry.yarnpkg.com/openai/-/openai-6.8.1.tgz#72610890aa6f67b3473c7be2e2d6ff25ebb9846a"
+  integrity sha512-ACifslrVgf+maMz9vqwMP4+v9qvx5Yzssydizks8n+YUJ6YwUoxj51sKRQ8HYMfR6wgKLSIlaI108ZwCk+8yig==
 
 optionator@^0.9.3:
   version "0.9.4"
@@ -5263,7 +5270,7 @@ pino-std-serializers@^7.0.0:
   resolved "https://registry.yarnpkg.com/pino-std-serializers/-/pino-std-serializers-7.0.0.tgz#7c625038b13718dbbd84ab446bd673dc52259e3b"
   integrity sha512-e906FRY0+tV27iq4juKzSYPbUj2do2X2JX4EzSca1631EB2QJQUqGbDuERal7LCtOpxl6x3+nvo9NPZcmjkiFA==
 
-pino@^10.0.0:
+pino@^10.1.0:
   version "10.1.0"
   resolved "https://registry.yarnpkg.com/pino/-/pino-10.1.0.tgz#eb2a8a5b509fe4c75643ccec30461ea24766003a"
   integrity sha512-0zZC2ygfdqvqK8zJIr1e+wT1T/L+LF6qvqvbzEQ6tiMAoTqEVK9a1K3YRu8HEUvGEvNqZyPJTtb2sNIoTkB83w==
@@ -6581,10 +6588,10 @@ yoctocolors-cjs@^2.1.2:
   resolved "https://registry.yarnpkg.com/yoctocolors-cjs/-/yoctocolors-cjs-2.1.2.tgz#f4b905a840a37506813a7acaa28febe97767a242"
   integrity sha512-cYVsTjKl8b+FrnidjibDWskAv7UKOfcwaVZdp/it9n1s9fU3IkgDbhdIRKCW4JDsAlECJY0ytoVPT3sK6kideA==
 
-zod-from-json-schema@^0.5.0:
-  version "0.5.0"
-  resolved "https://registry.yarnpkg.com/zod-from-json-schema/-/zod-from-json-schema-0.5.0.tgz#79ad1f74c4b0855ed618b0a6e3ad5b34e534e781"
-  integrity sha512-W1v1YIoimOJfvuorGGp1QroizLL3jEGELJtgrHiVg/ytxVZdh/BTTVyPypGB7YK30LHrCkkebbjuyHIjBGCEzw==
+zod-from-json-schema@^0.5.1:
+  version "0.5.1"
+  resolved "https://registry.yarnpkg.com/zod-from-json-schema/-/zod-from-json-schema-0.5.1.tgz#fc3257b1b7a0ac0cf75aefbdda9542460b4a2975"
+  integrity sha512-HZH5mnA6oasGU2mYknkhfZ2LbP2UaRk5cXmgDyc5AZdKvwq/4RY5P/yexPq8vl9rw/3OYvpwMXcDwLag3Tb6DQ==
   dependencies:
     zod "^4.0.17"
 

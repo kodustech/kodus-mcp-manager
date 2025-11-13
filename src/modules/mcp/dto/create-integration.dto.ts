@@ -65,4 +65,16 @@ export class CreateIntegrationDto {
     @IsString()
     @IsOptional()
     basicPassword?: string;
+
+    @IsString()
+    @IsOptional()
+    oauthScopes?: string;
+
+    @IsString()
+    @IsOptional()
+    clientId?: string;
+
+    @IsString()
+    @IsOptional()
+    clientSecret?: string;
 }

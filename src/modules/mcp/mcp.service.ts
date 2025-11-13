@@ -11,6 +11,8 @@ import { InitiateConnectionDto } from './dto/initiate-connection.dto';
 import { UpdateConnectionDto } from './dto/update-connection.dto';
 import { CreateIntegrationDto } from './dto/create-integration.dto';
 import { IntegrationsService } from '../integrations/integrations.service';
+import { MCPIntegrationAuthType } from '../integrations/enums/integration.enum';
+import { FinishOAuthDto } from './dto/finish-oauth.dto';
 
 @Injectable()
 export class McpService {
@@ -376,6 +378,16 @@ export class McpService {
 
         if (providerType === 'custom') {
             // baseUrl is already validated in DTO
+            if (
+                authType !== undefined &&
+                authType === MCPIntegrationAuthType.OAUTH2
+            ) {
+                return this.integrationsService.createIntegration(
+                    organizationId,
+                    createIntegrationDto,
+                );
+            }
+
             if (!name || !authType || !protocol) {
                 throw new Error(
                     'name, authType and protocol are required for custom integrations',
@@ -532,5 +544,25 @@ export class McpService {
         );
 
         return { message: 'Integration deleted successfully' };
+    }
+
+    async finalizeOAuthIntegration(
+        organizationId: string,
+        body: FinishOAuthDto,
+    ) {
+        const { integrationId, code, state } = body;
+
+        if (!integrationId || !code || !state) {
+            throw new Error('integrationId, code and state are required');
+        }
+
+        const result = await this.integrationsService.finalizeOAuthFlow({
+            organizationId,
+            integrationId,
+            code,
+            state,
+        });
+
+        return result;
     }
 }

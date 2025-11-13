@@ -44,6 +44,12 @@ export class CustomClient {
                 ).toString('base64');
                 headers['Authorization'] = `Basic ${basicAuth}`;
                 break;
+            case MCPIntegrationAuthType.OAUTH2:
+                if (this.integration.accessToken) {
+                    headers['Authorization'] =
+                        `Bearer ${this.integration.accessToken}`;
+                }
+                break;
             case MCPIntegrationAuthType.NONE:
             default:
                 break;
