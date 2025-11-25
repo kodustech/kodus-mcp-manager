@@ -7,7 +7,7 @@ import { CreateIntegrationDto } from '../mcp/dto/create-integration.dto';
 import { MCPIntegrationInterface } from './interfaces/mcp-integration.interface';
 import { StringRecordDto } from 'src/common/dto';
 import { CustomClient } from 'src/clients/custom';
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import { ConfigService } from '@nestjs/config';
 import { generatePKCE, generateState } from 'src/common/utils/oauth';
 
@@ -716,6 +716,74 @@ export class IntegrationsService {
         });
     }
 
+    private parseTokenResponse(response: AxiosResponse): {
+        accessToken: string;
+        tokenType?: string;
+        expiresIn?: number;
+        refreshToken?: string;
+        scope?: string;
+    } {
+        const tokenSet = response.data || {};
+        let parsedTokens = tokenSet;
+
+        if (typeof tokenSet === 'string') {
+            try {
+                parsedTokens = JSON.parse(tokenSet);
+            } catch (error) {
+                parsedTokens = {};
+                const accessMatch = tokenSet.match(
+                    /(?:^|&)access_token=([^&]+)/,
+                );
+                if (accessMatch) {
+                    parsedTokens['access_token'] = decodeURIComponent(
+                        accessMatch[1],
+                    );
+                }
+                const refreshMatch = tokenSet.match(
+                    /(?:^|&)refresh_token=([^&]+)/,
+                );
+                if (refreshMatch) {
+                    parsedTokens['refresh_token'] = decodeURIComponent(
+                        refreshMatch[1],
+                    );
+                }
+                const tokenTypeMatch = tokenSet.match(
+                    /(?:^|&)token_type=([^&]+)/,
+                );
+                if (tokenTypeMatch) {
+                    parsedTokens['token_type'] = decodeURIComponent(
+                        tokenTypeMatch[1],
+                    );
+                }
+                const expiresMatch = tokenSet.match(
+                    /(?:^|&)expires_in=([^&]+)/,
+                );
+                if (expiresMatch) {
+                    const n = Number(expiresMatch[1]);
+                    parsedTokens['expires_in'] = Number.isNaN(n)
+                        ? undefined
+                        : n;
+                }
+                const scopeMatch = tokenSet.match(/(?:^|&)scope=([^&]+)/);
+                if (scopeMatch) {
+                    parsedTokens['scope'] = decodeURIComponent(scopeMatch[1]);
+                }
+            }
+        }
+
+        if (!parsedTokens.access_token) {
+            throw new Error('Access token not found in response');
+        }
+
+        return {
+            accessToken: parsedTokens.access_token,
+            tokenType: parsedTokens.token_type,
+            expiresIn: parsedTokens.expires_in,
+            refreshToken: parsedTokens.refresh_token,
+            scope: parsedTokens.scope,
+        };
+    }
+
     private async checkAndRefreshOAuth(entity: MCPIntegrationEntity) {
         if (entity.authType !== MCPIntegrationAuthType.OAUTH2) {
             return entity;
@@ -764,24 +832,15 @@ export class IntegrationsService {
                     return entity;
                 }
 
-                const tokenSet = tokenResp.data || {};
-
-                let parsedTokens = tokenSet;
-                if (typeof tokenSet === 'string') {
-                    try {
-                        parsedTokens = JSON.parse(tokenSet);
-                    } catch (e) {
-                        parsedTokens = {};
-                    }
-                }
+                const parsedTokens = this.parseTokenResponse(tokenResp);
 
                 const newToken = {
                     ...token,
                     access_token:
-                        parsedTokens.access_token || token.access_token,
+                        parsedTokens.accessToken || token.access_token,
                     refresh_token:
-                        parsedTokens.refresh_token || token.refresh_token,
-                    expires_in: parsedTokens.expires_in || token.expires_in,
+                        parsedTokens.refreshToken || token.refresh_token,
+                    expires_in: parsedTokens.expiresIn || token.expires_in,
                     received_at: Date.now(),
                 };
 
@@ -939,64 +998,15 @@ export class IntegrationsService {
             throw new Error('OAuth token exchange failed');
         }
 
-        const tokenSet = tokenResp.data || {};
-        let parsedTokens = tokenSet;
-        if (typeof tokenSet === 'string') {
-            try {
-                parsedTokens = JSON.parse(tokenSet);
-            } catch (error) {
-                parsedTokens = {};
-                const accessMatch = tokenSet.match(
-                    /(?:^|&)access_token=([^&]+)/,
-                );
-                if (accessMatch) {
-                    parsedTokens['access_token'] = decodeURIComponent(
-                        accessMatch[1],
-                    );
-                }
-                const refreshMatch = tokenSet.match(
-                    /(?:^|&)refresh_token=([^&]+)/,
-                );
-                if (refreshMatch) {
-                    parsedTokens['refresh_token'] = decodeURIComponent(
-                        refreshMatch[1],
-                    );
-                }
-                const tokenTypeMatch = tokenSet.match(
-                    /(?:^|&)token_type=([^&]+)/,
-                );
-                if (tokenTypeMatch) {
-                    parsedTokens['token_type'] = decodeURIComponent(
-                        tokenTypeMatch[1],
-                    );
-                }
-                const expiresMatch = tokenSet.match(
-                    /(?:^|&)expires_in=([^&]+)/,
-                );
-                if (expiresMatch) {
-                    const n = Number(expiresMatch[1]);
-                    parsedTokens['expires_in'] = Number.isNaN(n)
-                        ? undefined
-                        : n;
-                }
-                const scopeMatch = tokenSet.match(/(?:^|&)scope=([^&]+)/);
-                if (scopeMatch) {
-                    parsedTokens['scope'] = decodeURIComponent(scopeMatch[1]);
-                }
-            }
-        }
-
-        if (!parsedTokens.access_token) {
-            throw new Error('No access_token in token response');
-        }
+        const parsedTokens = this.parseTokenResponse(tokenResp);
 
         const updatedAuth = {
             ...auth,
             token: {
-                access_token: parsedTokens.access_token,
-                refresh_token: parsedTokens.refresh_token,
-                token_type: parsedTokens.token_type,
-                expires_in: parsedTokens.expires_in,
+                access_token: parsedTokens.accessToken,
+                refresh_token: parsedTokens.refreshToken,
+                token_type: parsedTokens.tokenType,
+                expires_in: parsedTokens.expiresIn,
                 scope: parsedTokens.scope,
                 received_at: Date.now(),
             },
