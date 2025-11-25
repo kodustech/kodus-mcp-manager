@@ -143,13 +143,11 @@ export class CustomProvider extends BaseProvider {
             }
 
             if (integration.authType === MCPIntegrationAuthType.OAUTH2) {
-                const { integration: refreshedIntegration } =
-                    await this.integrationsService.getValidAccessToken(
+                integration =
+                    await this.integrationsService.getRefreshedOauthIntegration(
                         integrationId,
                         organizationId,
                     );
-
-                integration = refreshedIntegration;
             }
 
             const client = new CustomClient(integration);
@@ -179,13 +177,11 @@ export class CustomProvider extends BaseProvider {
             }
 
             if (integration.authType === MCPIntegrationAuthType.OAUTH2) {
-                const { integration: refreshedIntegration } =
-                    await this.integrationsService.getValidAccessToken(
+                integration =
+                    await this.integrationsService.getRefreshedOauthIntegration(
                         config.integrationId,
                         config.organizationId,
                     );
-
-                integration = refreshedIntegration;
             }
 
             const client = new CustomClient(integration);

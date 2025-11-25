@@ -1015,10 +1015,10 @@ export class IntegrationsService {
         }
     }
 
-    async getValidAccessToken(
+    async getRefreshedOauthIntegration(
         integrationId: string,
         organizationId: string,
-    ): Promise<{ accessToken: string; integration: MCPIntegrationInterface }> {
+    ): Promise<MCPIntegrationInterface> {
         const integration = await this.getIntegrationById(
             integrationId,
             organizationId,
@@ -1039,17 +1039,15 @@ export class IntegrationsService {
                 id: integrationId,
             } as MCPIntegrationInterface & { id: string });
 
-            if (refreshed.authType === MCPIntegrationAuthType.OAUTH2) {
-                return {
-                    accessToken: refreshed.accessToken!,
-                    integration: refreshed,
-                };
+            if (refreshed.authType !== MCPIntegrationAuthType.OAUTH2) {
+                throw new Error(
+                    'Failed to refresh token: Invalid integration type after refresh',
+                );
             }
-            throw new Error(
-                'Failed to refresh token: Invalid integration type after refresh',
-            );
+
+            return refreshed;
         }
 
-        return { accessToken: integration.accessToken!, integration };
+        return integration;
     }
 }

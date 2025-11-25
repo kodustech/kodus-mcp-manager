@@ -195,7 +195,18 @@ export class McpController {
     ) {
         return this.mcpService.finalizeOAuthIntegration(
             request.organizationId,
-            body
-        )
+            body,
+        );
+    }
+
+    @Get('integration/custom/oauth/:integrationId/refresh-token')
+    refreshOAuthToken(
+        @Req() request: FastifyRequest,
+        @Param('integrationId') integrationId: string,
+    ) {
+        return this.mcpService.refreshOauthIntegration(
+            request.organizationId,
+            integrationId,
+        );
     }
 }
