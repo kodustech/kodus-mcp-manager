@@ -77,10 +77,7 @@ export class McpService {
                 (connection) => connection.integrationId === integration.id,
             );
 
-            if (
-                integration.provider === 'kodusmcp' &&
-                integration.isDefault
-            ) {
+            if (integration.provider === 'kodusmcp' && integration.isDefault) {
                 return {
                     ...integration,
                     isConnected: true,
