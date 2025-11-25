@@ -14,6 +14,7 @@ import { IntegrationDescriptionService } from '../services/integration-descripti
 import { IntegrationsService } from 'src/modules/integrations/integrations.service';
 import { CustomClient } from 'src/clients/custom';
 import { MCPIntegrationInterface } from 'src/modules/integrations/interfaces/mcp-integration.interface';
+import { MCPIntegrationAuthType } from 'src/modules/integrations/enums/integration.enum';
 
 export class CustomProvider extends BaseProvider {
     statusMap: Record<string, MCPConnectionStatus> = {
@@ -132,14 +133,23 @@ export class CustomProvider extends BaseProvider {
         organizationId: string,
     ): Promise<MCPTool[]> {
         try {
-            const integration =
-                await this.integrationsService.getIntegrationById(
-                    integrationId,
-                    organizationId,
-                );
+            let integration = await this.integrationsService.getIntegrationById(
+                integrationId,
+                organizationId,
+            );
 
             if (!integration) {
                 throw new NotFoundException('Custom integration not found');
+            }
+
+            if (integration.authType === MCPIntegrationAuthType.OAUTH2) {
+                const { integration: refreshedIntegration } =
+                    await this.integrationsService.getValidAccessToken(
+                        integrationId,
+                        organizationId,
+                    );
+
+                integration = refreshedIntegration;
             }
 
             const client = new CustomClient(integration);
@@ -159,14 +169,23 @@ export class CustomProvider extends BaseProvider {
         config: MCPConnectionConfig,
     ): Promise<MCPConnection> {
         try {
-            const integration =
-                await this.integrationsService.getIntegrationById(
-                    config.integrationId,
-                    config.organizationId,
-                );
+            let integration = await this.integrationsService.getIntegrationById(
+                config.integrationId,
+                config.organizationId,
+            );
 
             if (!integration) {
                 throw new NotFoundException('Custom integration not found');
+            }
+
+            if (integration.authType === MCPIntegrationAuthType.OAUTH2) {
+                const { integration: refreshedIntegration } =
+                    await this.integrationsService.getValidAccessToken(
+                        config.integrationId,
+                        config.organizationId,
+                    );
+
+                integration = refreshedIntegration;
             }
 
             const client = new CustomClient(integration);
