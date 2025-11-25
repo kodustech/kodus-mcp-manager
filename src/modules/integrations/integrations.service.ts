@@ -7,7 +7,7 @@ import { CreateIntegrationDto } from '../mcp/dto/create-integration.dto';
 import { MCPIntegrationInterface } from './interfaces/mcp-integration.interface';
 import { StringRecordDto } from 'src/common/dto';
 import { CustomClient } from 'src/clients/custom';
-import axios, { AxiosResponse } from 'axios';
+import axios from 'axios';
 import { ConfigService } from '@nestjs/config';
 import { generatePKCE, generateState } from 'src/common/utils/oauth';
 
@@ -465,7 +465,7 @@ export class IntegrationsService {
         const registrationBody: any = {
             application_name: 'Kodus MCP Manager',
             redirect_uris: [redirectUri],
-            grant_types: ['authorization_code', 'refresh_token'],
+            grant_types: ['authorization_code'],
             response_types: ['code'],
             token_endpoint_auth_method: 'none',
             scope: oauthScopes,
@@ -716,84 +716,157 @@ export class IntegrationsService {
         });
     }
 
+    private async checkAndRefreshOAuth(entity: MCPIntegrationEntity) {
+        if (entity.authType !== MCPIntegrationAuthType.OAUTH2) {
+            return entity;
+        }
+
+        try {
+            const auth = this.decryptAndParse<any>(entity.auth, {});
+
+            if (!auth || !auth.token) {
+                return entity;
+            }
+
+            const {
+                token,
+                tokenEndpoint,
+                clientId,
+                clientSecret,
+                redirectUri,
+            } = auth;
+            const now = Date.now();
+            const expiresAt =
+                token.received_at + (token.expires_in || 0) * 1000;
+
+            if (expiresAt < now + 5 * 60 * 1000 && token.refresh_token) {
+                const body = new URLSearchParams({
+                    grant_type: 'refresh_token',
+                    client_id: clientId,
+                    refresh_token: token.refresh_token,
+                    ...(clientSecret ? { client_secret: clientSecret } : {}),
+                    ...(redirectUri ? { redirect_uri: redirectUri } : {}),
+                });
+
+                const tokenResp = await axios.post(
+                    tokenEndpoint,
+                    body.toString(),
+                    {
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        validateStatus: () => true,
+                    },
+                );
+
+                if (tokenResp.status >= 400) {
+                    console.error('Failed to refresh token', tokenResp.data);
+                    return entity;
+                }
+
+                const tokenSet = tokenResp.data || {};
+
+                let parsedTokens = tokenSet;
+                if (typeof tokenSet === 'string') {
+                    try {
+                        parsedTokens = JSON.parse(tokenSet);
+                    } catch (e) {
+                        parsedTokens = {};
+                    }
+                }
+
+                const newToken = {
+                    ...token,
+                    access_token:
+                        parsedTokens.access_token || token.access_token,
+                    refresh_token:
+                        parsedTokens.refresh_token || token.refresh_token,
+                    expires_in: parsedTokens.expires_in || token.expires_in,
+                    received_at: Date.now(),
+                };
+
+                const updatedAuth = {
+                    ...auth,
+                    token: newToken,
+                };
+
+                entity.auth = this.encryptAuth(MCPIntegrationAuthType.OAUTH2, {
+                    oauthData: updatedAuth,
+                });
+
+                await this.integrationRepository.save(entity);
+            }
+        } catch (error) {
+            console.error('Error checking/refreshing OAuth token:', error);
+        }
+
+        return entity;
+    }
+
     async getIntegrationById(
         integrationId: string,
         organizationId: string,
     ): Promise<MCPIntegrationInterface | null> {
-        const entity = await this.integrationRepository.findOne({
+        let entity = await this.integrationRepository.findOne({
             where: {
                 id: integrationId,
                 organizationId,
             },
         });
 
+        if (entity) {
+            entity = await this.checkAndRefreshOAuth(entity);
+        }
+
         return this.entityToInterface(entity);
     }
 
-    private parseTokenResponse(response: AxiosResponse): {
+    async getValidAccessToken(
+        integrationId: string,
+        organizationId: string,
+    ): Promise<{
         accessToken: string;
-        tokenType?: string;
-        expiresIn?: number;
-        refreshToken?: string;
-        scope?: string;
-    } {
-        const tokenSet = response.data || {};
-        let parsedTokens = tokenSet;
-        if (typeof tokenSet === 'string') {
-            try {
-                parsedTokens = JSON.parse(tokenSet);
-            } catch (error) {
-                parsedTokens = {};
-                const accessMatch = tokenSet.match(
-                    /(?:^|&)access_token=([^&]+)/,
-                );
-                if (accessMatch) {
-                    parsedTokens['access_token'] = decodeURIComponent(
-                        accessMatch[1],
-                    );
-                }
-                const refreshMatch = tokenSet.match(
-                    /(?:^|&)refresh_token=([^&]+)/,
-                );
-                if (refreshMatch) {
-                    parsedTokens['refresh_token'] = decodeURIComponent(
-                        refreshMatch[1],
-                    );
-                }
-                const tokenTypeMatch = tokenSet.match(
-                    /(?:^|&)token_type=([^&]+)/,
-                );
-                if (tokenTypeMatch) {
-                    parsedTokens['token_type'] = decodeURIComponent(
-                        tokenTypeMatch[1],
-                    );
-                }
-                const expiresMatch = tokenSet.match(
-                    /(?:^|&)expires_in=([^&]+)/,
-                );
-                if (expiresMatch) {
-                    const n = Number(expiresMatch[1]);
-                    parsedTokens['expires_in'] = Number.isNaN(n)
-                        ? undefined
-                        : n;
-                }
-                const scopeMatch = tokenSet.match(/(?:^|&)scope=([^&]+)/);
-                if (scopeMatch) {
-                    parsedTokens['scope'] = decodeURIComponent(scopeMatch[1]);
-                }
-            }
+        integration: MCPIntegrationInterface;
+    }> {
+        let entity = await this.integrationRepository.findOne({
+            where: {
+                id: integrationId,
+                organizationId,
+            },
+        });
+
+        if (!entity) {
+            throw new Error('Integration not found');
         }
 
-        if (!parsedTokens.access_token) {
-            throw new Error('Access token not found in response');
+        if (entity.authType !== MCPIntegrationAuthType.OAUTH2) {
+            // Se não for OAuth2, não tem "Access Token" no sentido OAuth,
+            // mas retornamos a integração como está.
+            return {
+                accessToken: '',
+                integration: this.entityToInterface(entity),
+            };
+        }
+
+        entity = await this.checkAndRefreshOAuth(entity);
+
+        const iface = this.entityToInterface(entity);
+
+        if (iface.authType === MCPIntegrationAuthType.OAUTH2) {
+            if (!iface.accessToken) {
+                throw new Error(
+                    'No access token available for this integration',
+                );
+            }
+            return {
+                accessToken: iface.accessToken,
+                integration: iface,
+            };
         }
 
         return {
-            accessToken: parsedTokens.access_token,
-            tokenType: parsedTokens.token_type,
-            expiresIn: parsedTokens.expires_in,
-            refreshToken: parsedTokens.refresh_token,
-            scope: parsedTokens.scope,
+            accessToken: '',
+            integration: iface,
         };
     }
 
@@ -866,17 +939,65 @@ export class IntegrationsService {
             throw new Error('OAuth token exchange failed');
         }
 
-        const { accessToken, tokenType, refreshToken, expiresIn, scope } =
-            this.parseTokenResponse(tokenResp);
+        const tokenSet = tokenResp.data || {};
+        let parsedTokens = tokenSet;
+        if (typeof tokenSet === 'string') {
+            try {
+                parsedTokens = JSON.parse(tokenSet);
+            } catch (error) {
+                parsedTokens = {};
+                const accessMatch = tokenSet.match(
+                    /(?:^|&)access_token=([^&]+)/,
+                );
+                if (accessMatch) {
+                    parsedTokens['access_token'] = decodeURIComponent(
+                        accessMatch[1],
+                    );
+                }
+                const refreshMatch = tokenSet.match(
+                    /(?:^|&)refresh_token=([^&]+)/,
+                );
+                if (refreshMatch) {
+                    parsedTokens['refresh_token'] = decodeURIComponent(
+                        refreshMatch[1],
+                    );
+                }
+                const tokenTypeMatch = tokenSet.match(
+                    /(?:^|&)token_type=([^&]+)/,
+                );
+                if (tokenTypeMatch) {
+                    parsedTokens['token_type'] = decodeURIComponent(
+                        tokenTypeMatch[1],
+                    );
+                }
+                const expiresMatch = tokenSet.match(
+                    /(?:^|&)expires_in=([^&]+)/,
+                );
+                if (expiresMatch) {
+                    const n = Number(expiresMatch[1]);
+                    parsedTokens['expires_in'] = Number.isNaN(n)
+                        ? undefined
+                        : n;
+                }
+                const scopeMatch = tokenSet.match(/(?:^|&)scope=([^&]+)/);
+                if (scopeMatch) {
+                    parsedTokens['scope'] = decodeURIComponent(scopeMatch[1]);
+                }
+            }
+        }
+
+        if (!parsedTokens.access_token) {
+            throw new Error('No access_token in token response');
+        }
 
         const updatedAuth = {
             ...auth,
             token: {
-                access_token: accessToken,
-                refresh_token: refreshToken,
-                token_type: tokenType,
-                expires_in: expiresIn,
-                scope,
+                access_token: parsedTokens.access_token,
+                refresh_token: parsedTokens.refresh_token,
+                token_type: parsedTokens.token_type,
+                expires_in: parsedTokens.expires_in,
+                scope: parsedTokens.scope,
                 received_at: Date.now(),
             },
         };
@@ -917,139 +1038,12 @@ export class IntegrationsService {
     async findOne(filters: IntegrationFilters) {
         const queryBuilder = this.buildQuery(filters);
 
-        const entities = await queryBuilder.getOne();
+        let entity = await queryBuilder.getOne();
 
-        return entities ? this.entityToInterface(entities) : null;
-    }
-
-    private isTokenExpired(
-        tokenExpiry?: number,
-        bufferMs: number = 5 * 60 * 1000,
-    ): boolean {
-        if (!tokenExpiry) return false;
-        return Date.now() + bufferMs >= tokenExpiry;
-    }
-
-    private async refreshOAuthToken(
-        integration: MCPIntegrationInterface & { id: string },
-    ): Promise<MCPIntegrationInterface> {
-        if (integration.authType !== MCPIntegrationAuthType.OAUTH2) {
-            throw new Error('Integration is not OAuth2');
+        if (entity) {
+            entity = await this.checkAndRefreshOAuth(entity);
         }
 
-        if (!integration.refreshToken) {
-            throw new Error('No refresh token available');
-        }
-
-        // Get the full entity to access the encrypted auth data
-        const entity = await this.integrationRepository.findOne({
-            where: { id: integration.id },
-        });
-
-        if (!entity) {
-            throw new Error('Integration not found');
-        }
-
-        const auth = this.decryptAndParse<any>(entity.auth, {});
-
-        if (!auth.tokenEndpoint) {
-            throw new Error('No token endpoint available for refresh');
-        }
-
-        const body = new URLSearchParams({
-            grant_type: 'refresh_token',
-            refresh_token: integration.refreshToken,
-            client_id: integration.clientId,
-            ...(integration.clientSecret
-                ? { client_secret: integration.clientSecret }
-                : {}),
-        });
-
-        try {
-            const tokenResp = await axios.post(
-                auth.tokenEndpoint,
-                body.toString(),
-                {
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    validateStatus: () => true,
-                },
-            );
-
-            if (tokenResp.status >= 400) {
-                throw new Error(
-                    `Token refresh failed with status ${tokenResp.status}: ${tokenResp.statusText}`,
-                );
-            }
-
-            const { accessToken, tokenType, refreshToken, expiresIn, scope } =
-                this.parseTokenResponse(tokenResp);
-            const now = Date.now();
-
-            // Update the token data in the auth object
-            const updatedAuth = {
-                ...auth,
-                token: {
-                    access_token: accessToken,
-                    refresh_token: refreshToken || integration.refreshToken, // Use new refresh token if provided, fallback to existing
-                    token_type: tokenType,
-                    expires_in: expiresIn,
-                    scope,
-                    received_at: now,
-                },
-            };
-
-            // Update the entity with the new tokens
-            entity.auth = this.encryptAuth(MCPIntegrationAuthType.OAUTH2, {
-                oauthData: updatedAuth,
-            });
-
-            await this.integrationRepository.save(entity);
-
-            // Return the updated integration
-            return this.entityToInterface(entity);
-        } catch (error) {
-            console.error('Error refreshing OAuth token:', error);
-            throw new Error(`Failed to refresh token: ${error.message}`);
-        }
-    }
-
-    async getValidAccessToken(
-        integrationId: string,
-        organizationId: string,
-    ): Promise<{ accessToken: string; integration: MCPIntegrationInterface }> {
-        const integration = await this.getIntegrationById(
-            integrationId,
-            organizationId,
-        );
-
-        if (!integration) {
-            throw new Error('Integration not found');
-        }
-
-        if (integration.authType !== MCPIntegrationAuthType.OAUTH2) {
-            throw new Error('Integration is not OAuth2');
-        }
-
-        // If token is expired or will expire in the next 5 minutes, refresh it
-        if (this.isTokenExpired(integration.tokenExpiry)) {
-            const refreshed = await this.refreshOAuthToken({
-                ...integration,
-                id: integrationId,
-            } as MCPIntegrationInterface & { id: string });
-
-            if (refreshed.authType === MCPIntegrationAuthType.OAUTH2) {
-                return {
-                    accessToken: refreshed.accessToken!,
-                    integration: refreshed,
-                };
-            }
-            throw new Error(
-                'Failed to refresh token: Invalid integration type after refresh',
-            );
-        }
-
-        return { accessToken: integration.accessToken!, integration };
+        return entity ? this.entityToInterface(entity) : null;
     }
 }
