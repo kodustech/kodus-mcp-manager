@@ -471,6 +471,11 @@ export class IntegrationsService {
             scope: oauthScopes,
         };
 
+        console.log(
+            'Dynamic client registration with body: ',
+            registrationBody,
+        );
+
         const regResp = await axios.post(
             registrationEndpoint,
             registrationBody,
@@ -480,13 +485,19 @@ export class IntegrationsService {
             },
         );
 
+        console.log('Dynamic client registration got response: ', regResp);
+
         if (regResp.status >= 400) {
-            throw new Error('Client registration failed');
+            throw new Error(
+                `Client registration failed, status: ${regResp.status}: statusText: ${regResp.statusText}`,
+            );
         }
 
         const client = regResp.data || {};
         const clientId: string = client.client_id;
         const clientSecret: string | undefined = client.client_secret;
+
+        console.log(`Dynamic client registration with client: ${client}`);
 
         if (!clientId) {
             throw new Error('Client registration did not return client_id');
