@@ -468,7 +468,7 @@ export class IntegrationsService {
             grant_types: ['authorization_code'],
             response_types: ['code'],
             token_endpoint_auth_method: 'none',
-            scope: oauthScopes,
+            ...(oauthScopes ? { scope: oauthScopes } : {}),
         };
 
         console.log(
