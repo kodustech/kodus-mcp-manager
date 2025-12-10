@@ -1,20 +1,32 @@
-import { InjectRepository } from '@nestjs/typeorm';
-import { MCPIntegrationEntity } from './entities/mcp-integration.entity';
-import { Repository } from 'typeorm';
-import { MCPIntegrationAuthType } from './enums/integration.enum';
-import { EncryptionUtils } from 'src/common/utils/encryption';
-import { CreateIntegrationDto } from '../mcp/dto/create-integration.dto';
-import { MCPIntegrationInterface } from './interfaces/mcp-integration.interface';
-import { StringRecordDto } from 'src/common/dto';
-import { CustomClient } from 'src/clients/custom';
-import axios, { AxiosResponse } from 'axios';
 import { ConfigService } from '@nestjs/config';
-import { generatePKCE, generateState } from 'src/common/utils/oauth';
+import { InjectRepository } from '@nestjs/typeorm';
+import { CustomClient } from 'src/clients/custom';
+import { StringRecordDto } from 'src/common/dto';
+import { EncryptionUtils } from 'src/common/utils/encryption';
+import {
+    buildAuthorizationUrl,
+    checkAndRefreshOAuth,
+    discoverOAuth,
+    exchangeCodeForTokens,
+    generatePKCE,
+    generateState,
+    getCanonicalResourceUri,
+    registerOauthClient,
+} from 'src/common/utils/oauth';
+import { Repository } from 'typeorm';
+import { CreateIntegrationDto } from '../mcp/dto/create-integration.dto';
+import { MCPProviderType } from '../providers/interfaces/provider.interface';
+import { MCPIntegrationEntity } from './entities/mcp-integration.entity';
+import { MCPIntegrationAuthType } from './enums/integration.enum';
+import {
+    MCPIntegrationInterface,
+    MCPIntegrationUniqueFields,
+} from './interfaces/mcp-integration.interface';
 
 type IntegrationFilters = Partial<
     Pick<
         MCPIntegrationInterface,
-        'id' | 'active' | 'name' | 'authType' | 'organizationId'
+        'id' | 'active' | 'name' | 'authType' | 'organizationId' | 'provider'
     >
 >;
 
@@ -43,83 +55,18 @@ export class IntegrationsService {
 
         const parsedAuth = this.decryptAndParse<any>(auth, {});
 
-        switch (authType) {
-            case MCPIntegrationAuthType.NONE:
-                return {
-                    ...baseProps,
-                    authType: MCPIntegrationAuthType.NONE,
-                };
-
-            case MCPIntegrationAuthType.BEARER_TOKEN:
-                return {
-                    ...baseProps,
-                    authType: MCPIntegrationAuthType.BEARER_TOKEN,
-                    bearerToken: parsedAuth.bearerToken,
-                };
-
-            case MCPIntegrationAuthType.API_KEY:
-                return {
-                    ...baseProps,
-                    authType: MCPIntegrationAuthType.API_KEY,
-                    apiKey: parsedAuth.apiKey,
-                    apiKeyHeader: parsedAuth.apiKeyHeader,
-                };
-
-            case MCPIntegrationAuthType.BASIC:
-                return {
-                    ...baseProps,
-                    authType: MCPIntegrationAuthType.BASIC,
-                    basicUser: parsedAuth.basicUser,
-                    basicPassword: parsedAuth.basicPassword,
-                };
-
-            case MCPIntegrationAuthType.OAUTH2:
-                return {
-                    ...baseProps,
-                    authType: MCPIntegrationAuthType.OAUTH2,
-                    clientId: parsedAuth.clientId,
-                    clientSecret: parsedAuth.clientSecret,
-                    scopes: parsedAuth.scopes,
-                    accessToken: parsedAuth.token?.access_token,
-                    refreshToken: parsedAuth.token?.refresh_token,
-                    tokenExpiry: parsedAuth.token
-                        ? parsedAuth.token.received_at +
-                          (parsedAuth.token.expires_in || 0) * 1000
-                        : undefined,
-                };
-
-            default:
-                throw new Error(`Unhandled authType: ${authType}`);
-        }
+        return {
+            ...baseProps,
+            ...parsedAuth,
+            authType,
+        };
     }
 
     private encryptAuth(
         authType: MCPIntegrationAuthType,
         data: {
             dto?: CreateIntegrationDto;
-            oauthData?: {
-                clientId: string;
-                clientSecret?: string | undefined;
-                authorizationEndpoint: string;
-                tokenEndpoint: string;
-                issuer: string;
-                asMetadata: any;
-                rsMetadata: any;
-                redirectUri: string;
-                codeChallengeMethod: string;
-                codeChallenge: string;
-                codeVerifier: string;
-                state: string;
-                scopes: string;
-                token?: {
-                    access_token: string;
-                    refresh_token?: string;
-                    token_type?: string;
-                    expires_in?: number;
-                    scope?: string;
-                    received_at: number;
-                };
-            };
+            oauthData?: MCPIntegrationUniqueFields<MCPIntegrationAuthType.OAUTH2>;
         },
     ): string {
         const { dto, oauthData } = data;
@@ -161,13 +108,30 @@ export class IntegrationsService {
                 break;
 
             case MCPIntegrationAuthType.OAUTH2:
-                if (!oauthData) {
-                    throw new Error(
-                        'OAuth data is required for OAUTH2 auth type',
-                    );
+                if (!oauthData && !dto) {
+                    throw new Error('Missing data for OAUTH2 auth type');
                 }
 
-                authPayload = oauthData;
+                authPayload = oauthData
+                    ? {
+                          clientId: oauthData.clientId,
+                          clientSecret: oauthData.clientSecret,
+                          oauthScopes: oauthData.oauthScopes,
+                          dynamicRegistration: oauthData.dynamicRegistration,
+                          asMetadata: oauthData.asMetadata,
+                          rsMetadata: oauthData.rsMetadata,
+                          redirectUri: oauthData.redirectUri,
+                          tokens: oauthData.tokens,
+                          codeChallenge: oauthData.codeChallenge,
+                          codeVerifier: oauthData.codeVerifier,
+                          state: oauthData.state,
+                      }
+                    : {
+                          clientId: dto.clientId,
+                          clientSecret: dto.clientSecret,
+                          oauthScopes: dto.oauthScopes,
+                          dynamicRegistration: dto.dynamicRegistration,
+                      };
                 break;
 
             case MCPIntegrationAuthType.NONE:
@@ -242,383 +206,6 @@ export class IntegrationsService {
         }
     }
 
-    private canonicalResourceUri(baseUrl: string): string {
-        const url = new URL(baseUrl);
-        const scheme = url.protocol.toLowerCase();
-        const host = url.hostname.toLowerCase();
-        const port = url.port ? `:${url.port}` : '';
-        const path = url.pathname && url.pathname !== '/' ? url.pathname : '';
-        const canonical = `${scheme}//${host}${port}${path}`;
-        return canonical.endsWith('/') && path
-            ? canonical.slice(0, -1)
-            : canonical;
-    }
-
-    private buildWellKnownUrl(base: string, wellKnownName: string): string {
-        const u = new URL(base);
-        const origin = u.origin;
-        const basePath = u.pathname && u.pathname !== '/' ? u.pathname : '';
-        const wellKnownPath = `/.well-known/${wellKnownName}${basePath}`;
-        return new URL(wellKnownPath, origin).toString();
-    }
-
-    private async discoverOAuth(baseUrl: string) {
-        let rsMetadataUrl = this.buildWellKnownUrl(
-            baseUrl,
-            'oauth-protected-resource',
-        );
-        let rsResp = await axios.get(rsMetadataUrl, {
-            validateStatus: () => true,
-        });
-        if (rsResp.status >= 400) {
-            console.error(
-                `Error accessing ${rsMetadataUrl}, code: ${rsResp.status}, attempting with root url`,
-            );
-
-            rsMetadataUrl = this.buildWellKnownUrl(
-                new URL(baseUrl).origin,
-                'oauth-protected-resource',
-            );
-
-            rsResp = await axios.get(rsMetadataUrl, {
-                validateStatus: () => true,
-            });
-
-            if (rsResp.status >= 400) {
-                console.error(
-                    `Error accessing ${rsMetadataUrl}, code: ${rsResp.status}, attempting to proceed without`,
-                );
-            }
-        }
-
-        const rs = rsResp.data || {};
-        const authorizationServers: string[] =
-            rs.authorization_servers || rs.authorization_servers?.values || [];
-        if (
-            rsResp.status < 400 &&
-            (!authorizationServers || authorizationServers.length === 0)
-        ) {
-            throw new Error(
-                'authorization_servers not found in resource metadata',
-            );
-        }
-
-        let asIssuer = authorizationServers?.[0] || baseUrl;
-        let asWellKnown = this.buildWellKnownUrl(
-            asIssuer,
-            'oauth-authorization-server',
-        );
-        let asResp = await axios.get(asWellKnown, {
-            validateStatus: () => true,
-        });
-        if (asResp.status >= 400) {
-            console.error(
-                `Error accessing ${asWellKnown}, status: ${asResp.status}, attempting with baseUrl`,
-            );
-
-            asIssuer = baseUrl;
-            asWellKnown = this.buildWellKnownUrl(
-                asIssuer,
-                'oauth-authorization-server',
-            );
-            asResp = await axios.get(asWellKnown, {
-                validateStatus: () => true,
-            });
-
-            if (asResp.status >= 400) {
-                console.error(
-                    `Error accessing ${asWellKnown}, status: ${asResp.status}, attempting with root url`,
-                );
-
-                asIssuer = new URL(baseUrl).origin;
-                asWellKnown = this.buildWellKnownUrl(
-                    asIssuer,
-                    'oauth-authorization-server',
-                );
-                asResp = await axios.get(asWellKnown, {
-                    validateStatus: () => true,
-                });
-
-                if (asResp.status >= 400) {
-                    throw new Error(
-                        'Failed to fetch authorization server metadata',
-                    );
-                }
-            }
-        }
-        const as = asResp.data || {};
-        const authorizationEndpoint: string = as.authorization_endpoint;
-        const tokenEndpoint: string = as.token_endpoint;
-        const registrationEndpoint: string | undefined =
-            as.registration_endpoint;
-        if (!authorizationEndpoint || !tokenEndpoint) {
-            throw new Error(
-                'Missing endpoints in authorization server metadata',
-            );
-        }
-        return {
-            rs,
-            as,
-            authorizationEndpoint,
-            tokenEndpoint,
-            registrationEndpoint,
-            asIssuer,
-        };
-    }
-
-    async createOAuth2Integration(
-        organizationId: string,
-        createIntegrationDto: CreateIntegrationDto,
-    ) {
-        const {
-            baseUrl,
-            headers,
-            oauthScopes,
-            clientId: providedClientId,
-            clientSecret: providedClientSecret,
-        } = createIntegrationDto;
-
-        const {
-            rs,
-            as,
-            authorizationEndpoint,
-            tokenEndpoint,
-            registrationEndpoint,
-            asIssuer,
-        } = await this.discoverOAuth(baseUrl);
-
-        const redirectUri = this.getAndValidateRedirectUri();
-
-        let clientId: string;
-        let clientSecret: string | undefined;
-
-        if (providedClientId) {
-            clientId = providedClientId;
-            clientSecret = providedClientSecret;
-        } else if (registrationEndpoint) {
-            const regResult = await this.registerClient(
-                registrationEndpoint,
-                redirectUri,
-                oauthScopes,
-            );
-            clientId = regResult.clientId;
-            clientSecret = regResult.clientSecret;
-        } else {
-            throw new Error(
-                'A client_id is required, and dynamic client registration is not supported.',
-            );
-        }
-
-        const { verifier, challenge } = generatePKCE();
-        const state = generateState();
-
-        const authUrl = this.buildAuthorizationUrl({
-            authorizationEndpoint,
-            clientId,
-            redirectUri,
-            challenge,
-            state,
-            baseUrl,
-            oauthScopes,
-        });
-
-        const encryptedAuth = this.prepareIntegrationAuth({
-            clientId,
-            clientSecret,
-            authorizationEndpoint,
-            tokenEndpoint,
-            issuer: asIssuer,
-            asMetadata: as,
-            rsMetadata: rs,
-            redirectUri,
-            codeChallenge: challenge,
-            codeVerifier: verifier,
-            state,
-            scopes: oauthScopes,
-        });
-
-        const encryptedHeaders = this.encryptRecordDto(headers);
-
-        const savedIntegration = await this.saveIntegration({
-            organizationId,
-            createIntegrationDto,
-            encryptedAuth,
-            encryptedHeaders,
-        });
-
-        return { authUrl, integrationId: savedIntegration.id };
-    }
-
-    private getAndValidateRedirectUri(): string {
-        const redirectUri = this.configService.get<string>('redirectUri');
-        if (!redirectUri) {
-            throw new Error('Redirect URI is not configured');
-        }
-        return redirectUri;
-    }
-
-    private async registerClient(
-        registrationEndpoint: string,
-        redirectUri: string,
-        oauthScopes: string,
-    ): Promise<{ clientId: string; clientSecret: string | undefined }> {
-        const registrationBody: any = {
-            application_name: 'Kodus MCP Manager',
-            redirect_uris: [redirectUri],
-            grant_types: ['authorization_code'],
-            response_types: ['code'],
-            token_endpoint_auth_method: 'none',
-            ...(oauthScopes ? { scope: oauthScopes } : {}),
-        };
-
-        console.log(
-            'Dynamic client registration with body: ',
-            registrationBody,
-        );
-
-        const regResp = await axios.post(
-            registrationEndpoint,
-            registrationBody,
-            {
-                headers: { 'Content-Type': 'application/json' },
-                validateStatus: () => true,
-            },
-        );
-
-        console.log('Dynamic client registration got response: ', regResp);
-
-        if (regResp.status >= 400) {
-            throw new Error(
-                `Client registration failed, status: ${regResp.status}: statusText: ${regResp.statusText}`,
-            );
-        }
-
-        const client = regResp.data || {};
-        const clientId: string = client.client_id;
-        const clientSecret: string | undefined = client.client_secret;
-
-        console.log(`Dynamic client registration with client: ${client}`);
-
-        if (!clientId) {
-            throw new Error('Client registration did not return client_id');
-        }
-
-        return { clientId, clientSecret };
-    }
-
-    private buildAuthorizationUrl(params: {
-        authorizationEndpoint: string;
-        clientId: string;
-        redirectUri: string;
-        challenge: string;
-        state: string;
-        baseUrl: string;
-        oauthScopes: string;
-    }): string {
-        const {
-            authorizationEndpoint,
-            clientId,
-            redirectUri,
-            challenge,
-            state,
-            baseUrl,
-            oauthScopes,
-        } = params;
-
-        const resource = this.canonicalResourceUri(baseUrl);
-        const searchParams = new URLSearchParams({
-            response_type: 'code',
-            client_id: clientId,
-            redirect_uri: redirectUri,
-            code_challenge: challenge,
-            code_challenge_method: 'S256',
-            resource,
-            state,
-            ...(oauthScopes ? { scope: oauthScopes } : {}),
-        });
-
-        return `${authorizationEndpoint}?${searchParams.toString()}`;
-    }
-
-    private prepareIntegrationAuth(params: {
-        clientId: string;
-        clientSecret?: string | undefined;
-        authorizationEndpoint: string;
-        tokenEndpoint: string;
-        issuer: string;
-        asMetadata: any;
-        rsMetadata: any;
-        redirectUri: string;
-        codeChallenge: string;
-        codeVerifier: string;
-        state: string;
-        scopes: string;
-    }): string {
-        const {
-            clientId,
-            clientSecret,
-            authorizationEndpoint,
-            tokenEndpoint,
-            issuer,
-            asMetadata,
-            rsMetadata,
-            redirectUri,
-            codeChallenge,
-            codeVerifier,
-            state,
-            scopes,
-        } = params;
-
-        return this.encryptAuth(MCPIntegrationAuthType.OAUTH2, {
-            oauthData: {
-                clientId,
-                clientSecret,
-                authorizationEndpoint,
-                tokenEndpoint,
-                issuer,
-                asMetadata,
-                rsMetadata,
-                redirectUri,
-                codeChallengeMethod: 'S256',
-                codeChallenge,
-                codeVerifier,
-                state,
-                scopes,
-            },
-        });
-    }
-
-    private async saveIntegration(params: {
-        organizationId: string;
-        createIntegrationDto: CreateIntegrationDto;
-        encryptedAuth: string;
-        encryptedHeaders: string;
-    }): Promise<any> {
-        const {
-            organizationId,
-            createIntegrationDto,
-            encryptedAuth,
-            encryptedHeaders,
-        } = params;
-
-        const { baseUrl, name, description, logoUrl, protocol } =
-            createIntegrationDto;
-
-        const newIntegration = this.integrationRepository.create({
-            organizationId,
-            baseUrl,
-            name: name || new URL(baseUrl).hostname,
-            description,
-            logoUrl,
-            authType: MCPIntegrationAuthType.OAUTH2,
-            protocol,
-            auth: encryptedAuth,
-            headers: encryptedHeaders,
-        });
-
-        return this.integrationRepository.save(newIntegration);
-    }
-
     async createIntegration(
         organizationId: string,
         createIntegrationDto: CreateIntegrationDto,
@@ -632,14 +219,6 @@ export class IntegrationsService {
             protocol,
             logoUrl,
         } = createIntegrationDto;
-
-        if (authType === MCPIntegrationAuthType.OAUTH2) {
-            const result = await this.createOAuth2Integration(
-                organizationId,
-                createIntegrationDto,
-            );
-            return result;
-        }
 
         const encryptedAuth = this.encryptAuth(authType, {
             dto: createIntegrationDto,
@@ -656,6 +235,8 @@ export class IntegrationsService {
             protocol,
             auth: encryptedAuth,
             headers: encryptedHeaders,
+            provider: MCPProviderType.CUSTOM,
+            active: authType !== MCPIntegrationAuthType.OAUTH2,
         });
 
         const savedIntegration =
@@ -675,10 +256,6 @@ export class IntegrationsService {
 
         if (!existingIntegration) {
             throw new Error('Integration not found');
-        }
-
-        if (existingIntegration.authType === MCPIntegrationAuthType.OAUTH2) {
-            throw new Error('Currently OAuth2 integrations cannot be edited');
         }
 
         const {
@@ -707,6 +284,7 @@ export class IntegrationsService {
                 protocol,
                 auth: encryptedAuth,
                 headers: encryptedHeaders,
+                active: authType !== MCPIntegrationAuthType.OAUTH2,
             },
         );
 
@@ -727,145 +305,45 @@ export class IntegrationsService {
         });
     }
 
-    private parseTokenResponse(response: AxiosResponse): {
-        accessToken: string;
-        tokenType?: string;
-        expiresIn?: number;
-        refreshToken?: string;
-        scope?: string;
-    } {
-        const tokenSet = response.data || {};
-        let parsedTokens = tokenSet;
-
-        if (typeof tokenSet === 'string') {
-            try {
-                parsedTokens = JSON.parse(tokenSet);
-            } catch (error) {
-                parsedTokens = {};
-                const accessMatch = tokenSet.match(
-                    /(?:^|&)access_token=([^&]+)/,
-                );
-                if (accessMatch) {
-                    parsedTokens['access_token'] = decodeURIComponent(
-                        accessMatch[1],
-                    );
-                }
-                const refreshMatch = tokenSet.match(
-                    /(?:^|&)refresh_token=([^&]+)/,
-                );
-                if (refreshMatch) {
-                    parsedTokens['refresh_token'] = decodeURIComponent(
-                        refreshMatch[1],
-                    );
-                }
-                const tokenTypeMatch = tokenSet.match(
-                    /(?:^|&)token_type=([^&]+)/,
-                );
-                if (tokenTypeMatch) {
-                    parsedTokens['token_type'] = decodeURIComponent(
-                        tokenTypeMatch[1],
-                    );
-                }
-                const expiresMatch = tokenSet.match(
-                    /(?:^|&)expires_in=([^&]+)/,
-                );
-                if (expiresMatch) {
-                    const n = Number(expiresMatch[1]);
-                    parsedTokens['expires_in'] = Number.isNaN(n)
-                        ? undefined
-                        : n;
-                }
-                const scopeMatch = tokenSet.match(/(?:^|&)scope=([^&]+)/);
-                if (scopeMatch) {
-                    parsedTokens['scope'] = decodeURIComponent(scopeMatch[1]);
-                }
-            }
-        }
-
-        if (!parsedTokens.access_token) {
-            throw new Error('Access token not found in response');
-        }
-
-        return {
-            accessToken: parsedTokens.access_token,
-            tokenType: parsedTokens.token_type,
-            expiresIn: parsedTokens.expires_in,
-            refreshToken: parsedTokens.refresh_token,
-            scope: parsedTokens.scope,
-        };
-    }
-
     private async checkAndRefreshOAuth(entity: MCPIntegrationEntity) {
         if (entity.authType !== MCPIntegrationAuthType.OAUTH2) {
             return entity;
         }
 
         try {
-            const auth = this.decryptAndParse<any>(entity.auth, {});
+            const auth = this.decryptAndParse<
+                MCPIntegrationUniqueFields<MCPIntegrationAuthType.OAUTH2>
+            >(entity.auth, {} as any);
 
-            if (!auth || !auth.token) {
+            if (!auth || !auth.tokens) {
                 return entity;
             }
 
-            const {
-                token,
-                tokenEndpoint,
+            const { tokens, clientId, clientSecret, asMetadata, redirectUri } =
+                auth;
+            const { token_endpoint: tokenEndpoint } = asMetadata;
+
+            const newTokens = await checkAndRefreshOAuth(tokenEndpoint, {
                 clientId,
                 clientSecret,
                 redirectUri,
-            } = auth;
-            const now = Date.now();
-            const expiresAt =
-                token.received_at + (token.expires_in || 0) * 1000;
+                tokens,
+            });
 
-            if (expiresAt < now + 5 * 60 * 1000 && token.refresh_token) {
-                const body = new URLSearchParams({
-                    grant_type: 'refresh_token',
-                    client_id: clientId,
-                    refresh_token: token.refresh_token,
-                    ...(clientSecret ? { client_secret: clientSecret } : {}),
-                    ...(redirectUri ? { redirect_uri: redirectUri } : {}),
-                });
-
-                const tokenResp = await axios.post(
-                    tokenEndpoint,
-                    body.toString(),
-                    {
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        validateStatus: () => true,
-                    },
-                );
-
-                if (tokenResp.status >= 400) {
-                    console.error('Failed to refresh token', tokenResp.data);
-                    return entity;
-                }
-
-                const parsedTokens = this.parseTokenResponse(tokenResp);
-
-                const newToken = {
-                    ...token,
-                    access_token:
-                        parsedTokens.accessToken || token.access_token,
-                    refresh_token:
-                        parsedTokens.refreshToken || token.refresh_token,
-                    expires_in: parsedTokens.expiresIn || token.expires_in,
-                    received_at: Date.now(),
-                };
-
-                const updatedAuth = {
-                    ...auth,
-                    token: newToken,
-                };
-
-                entity.auth = this.encryptAuth(MCPIntegrationAuthType.OAUTH2, {
-                    oauthData: updatedAuth,
-                });
-
-                await this.integrationRepository.save(entity);
+            if (!newTokens) {
+                return entity;
             }
+
+            const updatedAuth = {
+                ...auth,
+                tokens: newTokens,
+            };
+
+            entity.auth = this.encryptAuth(MCPIntegrationAuthType.OAUTH2, {
+                oauthData: updatedAuth,
+            });
+
+            await this.integrationRepository.save(entity);
         } catch (error) {
             console.error('Error checking/refreshing OAuth token:', error);
         }
@@ -923,13 +401,13 @@ export class IntegrationsService {
         const iface = this.entityToInterface(entity);
 
         if (iface.authType === MCPIntegrationAuthType.OAUTH2) {
-            if (!iface.accessToken) {
+            if (!iface.tokens?.accessToken) {
                 throw new Error(
                     'No access token available for this integration',
                 );
             }
             return {
-                accessToken: iface.accessToken,
+                accessToken: iface.tokens.accessToken,
                 integration: iface,
             };
         }
@@ -938,98 +416,6 @@ export class IntegrationsService {
             accessToken: '',
             integration: iface,
         };
-    }
-
-    async finalizeOAuthFlow(params: {
-        organizationId: string;
-        integrationId: string;
-        code: string;
-        state: string;
-    }): Promise<{ message: string }> {
-        const { organizationId, integrationId, code, state } = params;
-
-        const entity = await this.integrationRepository.findOne({
-            where: { id: integrationId, organizationId },
-        });
-
-        if (!entity) {
-            throw new Error('Integration not found');
-        }
-
-        if (entity.authType !== MCPIntegrationAuthType.OAUTH2) {
-            throw new Error('Integration is not OAuth2');
-        }
-
-        const auth = this.decryptAndParse<any>(entity.auth, {});
-
-        const {
-            clientId,
-            clientSecret,
-            tokenEndpoint,
-            redirectUri,
-            codeVerifier,
-            state: storedState,
-        } = auth;
-
-        if (
-            !clientId ||
-            !tokenEndpoint ||
-            !redirectUri ||
-            !codeVerifier ||
-            !storedState
-        ) {
-            throw new Error('OAuth metadata missing for integration');
-        }
-
-        if (state !== storedState) {
-            throw new Error('Invalid state parameter');
-        }
-
-        const resource = this.canonicalResourceUri(entity.baseUrl);
-
-        const body = new URLSearchParams({
-            client_id: clientId,
-            ...(clientSecret ? { client_secret: clientSecret } : {}),
-            grant_type: 'authorization_code',
-            code,
-            redirect_uri: redirectUri,
-            code_verifier: codeVerifier,
-            resource,
-            state,
-        });
-
-        const tokenResp = await axios.post(tokenEndpoint, body.toString(), {
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            validateStatus: () => true,
-        });
-
-        if (tokenResp.status >= 400) {
-            throw new Error('OAuth token exchange failed');
-        }
-
-        const parsedTokens = this.parseTokenResponse(tokenResp);
-
-        const updatedAuth = {
-            ...auth,
-            token: {
-                access_token: parsedTokens.accessToken,
-                refresh_token: parsedTokens.refreshToken,
-                token_type: parsedTokens.tokenType,
-                expires_in: parsedTokens.expiresIn,
-                scope: parsedTokens.scope,
-                received_at: Date.now(),
-            },
-        };
-
-        entity.auth = this.encryptAuth(MCPIntegrationAuthType.OAUTH2, {
-            oauthData: updatedAuth,
-        });
-
-        await this.integrationRepository.save(entity);
-
-        return { message: 'OAuth integration finalized' };
     }
 
     private buildQuery(filters: IntegrationFilters) {
@@ -1066,5 +452,202 @@ export class IntegrationsService {
         }
 
         return entity ? this.entityToInterface(entity) : null;
+    }
+
+    private getAndValidateRedirectUri(): string {
+        const redirectUri = this.configService.get<string>('redirectUri');
+        if (!redirectUri) {
+            throw new Error('Redirect URI is not configured');
+        }
+        return redirectUri;
+    }
+
+    async initiateOAuthFlow(params: {
+        organizationId: string;
+        integrationId: string;
+    }) {
+        const { organizationId, integrationId } = params;
+
+        const entity = await this.integrationRepository.findOne({
+            where: {
+                id: integrationId,
+                organizationId,
+            },
+        });
+
+        if (!entity) {
+            throw new Error('Integration not found');
+        }
+
+        const integration = this.entityToInterface(entity);
+
+        if (integration.active) {
+            throw new Error('Integration is already active');
+        }
+
+        if (integration.authType !== MCPIntegrationAuthType.OAUTH2) {
+            throw new Error('Integration is not OAuth2');
+        }
+
+        const { baseUrl, oauthScopes, dynamicRegistration } = integration;
+        let { clientId, clientSecret } = integration;
+
+        const { rs, as } = await discoverOAuth(baseUrl);
+
+        const {
+            authorization_endpoint: authorizationEndpoint,
+            token_endpoint: tokenEndpoint,
+            registration_endpoint: registrationEndpoint,
+        } = as;
+
+        if (!authorizationEndpoint || !tokenEndpoint) {
+            throw new Error('Missing authorization or token endpoints');
+        }
+
+        const redirectUri = this.getAndValidateRedirectUri();
+
+        if (dynamicRegistration && registrationEndpoint) {
+            const regResult = await registerOauthClient(
+                registrationEndpoint,
+                redirectUri,
+                oauthScopes,
+            );
+            clientId = regResult.clientId;
+            clientSecret = regResult.clientSecret;
+        } else if (!clientId) {
+            throw new Error(
+                'A client_id is required, and dynamic client registration is not supported.',
+            );
+        }
+
+        const { verifier, challenge } = generatePKCE();
+        const state = generateState();
+
+        const authUrl = buildAuthorizationUrl({
+            authorizationEndpoint,
+            clientId,
+            redirectUri,
+            challenge,
+            state,
+            baseUrl,
+            oauthScopes,
+        });
+
+        const updatedAuth = this.encryptAuth(integration.authType, {
+            oauthData: {
+                clientId,
+                clientSecret,
+                codeChallenge: challenge,
+                codeVerifier: verifier,
+                state,
+                asMetadata: as,
+                rsMetadata: rs,
+                oauthScopes,
+                redirectUri,
+                tokens: undefined,
+                dynamicRegistration,
+            },
+        });
+
+        await this.integrationRepository.update(
+            {
+                id: integrationId,
+                organizationId,
+            },
+            {
+                active: false,
+                auth: updatedAuth,
+            },
+        );
+
+        return authUrl;
+    }
+
+    async finalizeOAuthFlow(params: {
+        organizationId: string;
+        integrationId: string;
+        code: string;
+        state: string;
+    }) {
+        const { organizationId, integrationId, code, state } = params;
+
+        const entity = await this.integrationRepository.findOne({
+            where: {
+                id: integrationId,
+                organizationId,
+            },
+        });
+
+        if (!entity) {
+            throw new Error('Integration not found');
+        }
+
+        const integration = this.entityToInterface(entity);
+
+        if (integration.active) {
+            throw new Error('Integration is already active');
+        }
+
+        if (integration.authType !== MCPIntegrationAuthType.OAUTH2) {
+            throw new Error('Integration is not OAuth2');
+        }
+
+        const {
+            clientId,
+            clientSecret,
+            baseUrl,
+            redirectUri,
+            codeVerifier,
+            state: storedState,
+            asMetadata,
+        } = integration;
+
+        const { token_endpoint: tokenEndpoint } = asMetadata;
+
+        if (
+            !clientId ||
+            !tokenEndpoint ||
+            !redirectUri ||
+            !codeVerifier ||
+            !storedState
+        ) {
+            throw new Error('OAuth metadata missing for connection');
+        }
+
+        if (state !== storedState) {
+            throw new Error('Invalid state parameter');
+        }
+
+        const resource = getCanonicalResourceUri(baseUrl);
+
+        const tokens = await exchangeCodeForTokens(tokenEndpoint, {
+            clientId,
+            clientSecret,
+            code,
+            codeVerifier,
+            redirectUri,
+            resource,
+            state,
+        });
+
+        const updatedAuth = this.encryptAuth(integration.authType, {
+            oauthData: {
+                ...integration,
+                tokens,
+            },
+        });
+
+        await this.integrationRepository.update(
+            {
+                id: integrationId,
+                organizationId,
+            },
+            {
+                active: true,
+                auth: updatedAuth,
+            },
+        );
+
+        return { message: 'OAuth integration finalized' };
     }
 }

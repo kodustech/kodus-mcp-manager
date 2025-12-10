@@ -1,27 +1,28 @@
 import {
-    Controller,
-    Get,
-    Post,
     Body,
-    Query,
-    Param,
-    Req,
-    Patch,
-    Put,
+    Controller,
     Delete,
+    Get,
+    Param,
+    Patch,
+    Post,
+    Put,
+    Query,
+    Req,
     UseGuards,
 } from '@nestjs/common';
 import { FastifyRequest } from 'fastify';
-import { McpService } from './mcp.service';
+import { AuthGuard } from '../../common/guards/auth.guard';
+import { CreateIntegrationDto } from './dto/create-integration.dto';
+import { FinishOAuthDto } from './dto/finish-oauth.dto';
+import { InitiateConnectionDto } from './dto/initiate-connection.dto';
+import { InitiateOAuthDto } from './dto/initiate-oauth.dto';
 import { QueryDto } from './dto/query.dto';
 import {
-    UpdateConnectionDto,
     UpdateAllowedToolsDto,
+    UpdateConnectionDto,
 } from './dto/update-connection.dto';
-import { InitiateConnectionDto } from './dto/initiate-connection.dto';
-import { CreateIntegrationDto } from './dto/create-integration.dto';
-import { AuthGuard } from '../../common/guards/auth.guard';
-import { FinishOAuthDto } from './dto/finish-oauth.dto';
+import { McpService } from './mcp.service';
 
 @Controller('mcp')
 @UseGuards(AuthGuard)
@@ -132,18 +133,26 @@ export class McpController {
     }
 
     @Get('integration/custom')
-    getCustomIntegrations(@Req() request: FastifyRequest) {
-        return this.mcpService.getCustomIntegrations(request.organizationId);
+    getCustomIntegrations(
+        @Query('active') active: boolean,
+        @Req() request: FastifyRequest,
+    ) {
+        return this.mcpService.getCustomIntegrations(
+            request.organizationId,
+            active,
+        );
     }
 
     @Get('integration/custom/:integrationId')
     getProviderIntegration(
         @Param('integrationId') integrationId: string,
+        @Query('active') active: boolean,
         @Req() request: FastifyRequest,
     ) {
         return this.mcpService.getCustomIntegration(
             request.organizationId,
             integrationId,
+            active,
         );
     }
 
@@ -188,14 +197,25 @@ export class McpController {
         );
     }
 
-    @Post('integration/custom/oauth')
+    @Post('integration/custom/oauth/finalize')
     finalizeOAuthIntegration(
         @Body() body: FinishOAuthDto,
         @Req() request: FastifyRequest,
     ) {
         return this.mcpService.finalizeOAuthIntegration(
             request.organizationId,
-            body
-        )
+            body,
+        );
+    }
+
+    @Post('integration/custom/oauth/initialize')
+    initializeOAuthIntegration(
+        @Body() body: InitiateOAuthDto,
+        @Req() request: FastifyRequest,
+    ) {
+        return this.mcpService.initiateOAuthIntegration(
+            request.organizationId,
+            body,
+        );
     }
 }

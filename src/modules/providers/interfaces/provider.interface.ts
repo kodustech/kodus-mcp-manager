@@ -63,6 +63,7 @@ export interface MCPIntegration {
     headers?: Record<string, string>;
     apiKeyHeader?: string;
     basicUser?: string;
+    active?: boolean;
 }
 
 export interface MCPRequiredParam {

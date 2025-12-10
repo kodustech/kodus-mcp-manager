@@ -1,63 +1,51 @@
+import { ConfigService } from '@nestjs/config';
+import * as fs from 'fs';
+import * as path from 'path';
+import { CustomClient } from 'src/clients/custom';
+import { KodusMCPClient } from 'src/clients/kodusMCP';
+import {
+    MCPIntegrationAuthType,
+    MCPIntegrationProtocol,
+} from 'src/modules/integrations/enums/integration.enum';
+import { MCPIntegrationAllUniqueFields } from 'src/modules/integrations/interfaces/mcp-integration.interface';
 import { MCPConnectionStatus } from 'src/modules/mcp/entities/mcp-connection.entity';
 import { BaseProvider } from '../base.provider';
 import {
+    MCPConnection,
+    MCPConnectionConfig,
     MCPIntegration,
+    MCPProviderType,
     MCPRequiredParam,
     MCPTool,
-    MCPConnectionConfig,
-    MCPConnection,
-    MCPProviderType,
 } from '../interfaces/provider.interface';
-import { ConfigService } from '@nestjs/config';
 import { IntegrationDescriptionService } from '../services/integration-description.service';
-import { KodusMCPClient } from 'src/clients/kodusMCP';
-import { Context7Client } from 'src/clients/context7';
 
-interface ManagedHttpIntegrationConfig {
-    integrationId: string;
+interface ManagedIntegrationConfig {
+    id: string;
     appName: string;
     displayName: string;
     baseUrl: string;
-    protocol?: 'http' | 'sse';
-    logoUrl?: string;
+    protocol: MCPIntegrationProtocol;
+    logoUrl: string;
     serverName: string;
+    headers: Record<string, string>;
+    auth: {
+        type: MCPIntegrationAuthType;
+    } & MCPIntegrationAllUniqueFields;
 }
 
 export class KodusMCPProvider extends BaseProvider {
     private readonly client: KodusMCPClient;
     private readonly integrationDescriptionService: IntegrationDescriptionService;
-    private readonly managedHttpIntegrations: Map<
+    private readonly managedIntegrations: Map<
         string,
-        { config: ManagedHttpIntegrationConfig; client: Context7Client }
+        { config: ManagedIntegrationConfig; client: CustomClient }
     > = new Map();
     statusMap: Record<string, MCPConnectionStatus> = {
         ACTIVE: MCPConnectionStatus.ACTIVE,
         INACTIVE: MCPConnectionStatus.INACTIVE,
         FAILED: MCPConnectionStatus.FAILED,
     };
-
-    private static readonly MANAGED_HTTP_CONFIGS: ManagedHttpIntegrationConfig[] =
-        [
-            {
-                integrationId: 'context7-default',
-                appName: 'context7',
-                displayName: 'Context7',
-                baseUrl: 'https://context7-kodus.up.railway.app/mcp',
-                logoUrl:
-                    'https://avatars.githubusercontent.com/u/74989412?s=48&v=4',
-                serverName: 'context7',
-            },
-            {
-                integrationId: 'kodus-docs-default',
-                appName: 'kodusdocs',
-                displayName: 'Kodus Docs',
-                baseUrl: 'https://docs.kodus.io/mcp',
-                logoUrl:
-                    'https://kodus.io/wp-content/uploads/2025/11/Kodus-AI-Logo-6.png',
-                serverName: 'kodus-docs',
-            },
-        ];
-
     constructor(
         _configService: ConfigService,
         integrationDescriptionService: IntegrationDescriptionService,
@@ -66,18 +54,59 @@ export class KodusMCPProvider extends BaseProvider {
 
         this.client = new KodusMCPClient();
         this.integrationDescriptionService = integrationDescriptionService;
-        for (const config of KodusMCPProvider.MANAGED_HTTP_CONFIGS) {
-            const client = new Context7Client(
-                config.baseUrl,
-                config.protocol ?? 'http',
-                config.serverName,
+
+        this.loadManagedIntegrationsFromConfig();
+    }
+
+    private loadManagedIntegrationsFromConfig() {
+        try {
+            const configPath = path.resolve(
+                __dirname,
+                '../../../config/managed-mcp-servers.json',
             );
 
-            this.managedHttpIntegrations.set(config.integrationId, {
-                config,
-                client,
-            });
+            if (!fs.existsSync(configPath)) {
+                return;
+            }
+
+            const raw = fs.readFileSync(configPath, 'utf-8');
+            const managedConfigs = JSON.parse(
+                raw,
+            ) as ManagedIntegrationConfig[];
+
+            for (const entry of managedConfigs) {
+                const client = new CustomClient(
+                    this.transformManagedIntegration(entry),
+                );
+
+                this.managedIntegrations.set(entry.id, {
+                    config: entry,
+                    client,
+                });
+            }
+        } catch (error) {
+            console.error(
+                'Failed to load managed HTTP integrations from config:',
+                error,
+            );
         }
+    }
+
+    private transformManagedIntegration(
+        managed: ManagedIntegrationConfig,
+    ): ConstructorParameters<typeof CustomClient>[0] {
+        return {
+            id: managed.id,
+            name: managed.displayName,
+            authType: managed.auth.type,
+            protocol: managed.protocol,
+            baseUrl: managed.baseUrl,
+            logoUrl: managed.logoUrl,
+            headers: managed.headers,
+            serverName: managed.serverName,
+            providerType: MCPProviderType.KODUSMCP,
+            ...managed.auth,
+        } as unknown as ConstructorParameters<typeof CustomClient>[0];
     }
 
     async getIntegrations(
@@ -87,9 +116,8 @@ export class KodusMCPProvider extends BaseProvider {
     ): Promise<MCPIntegration[]> {
         const integration = await this.client.getIntegration();
         const managedIntegrations = await Promise.all(
-            Array.from(this.managedHttpIntegrations.keys()).map(
-                (integrationId) =>
-                    this.buildManagedHttpIntegration(integrationId),
+            Array.from(this.managedIntegrations.keys()).map((integrationId) =>
+                this.buildManagedHttpIntegration(integrationId),
             ),
         );
 
@@ -104,7 +132,7 @@ export class KodusMCPProvider extends BaseProvider {
     }
 
     async getIntegration(integrationId: string): Promise<MCPIntegration> {
-        if (this.managedHttpIntegrations.has(integrationId)) {
+        if (this.managedIntegrations.has(integrationId)) {
             return this.buildManagedHttpIntegration(integrationId);
         }
 
@@ -144,7 +172,7 @@ export class KodusMCPProvider extends BaseProvider {
     ): Promise<MCPTool[]> {
         this.validateId(integrationId, 'Integration');
 
-        const managed = this.managedHttpIntegrations.get(integrationId);
+        const managed = this.managedIntegrations.get(integrationId);
         if (managed) {
             return this.safeGetTools(managed.client);
         }
@@ -180,7 +208,7 @@ export class KodusMCPProvider extends BaseProvider {
         organizationId: string,
         selectedTools: string[],
     ): Promise<{ success: boolean; message: string; selectedTools: string[] }> {
-        if (this.managedHttpIntegrations.has(integrationId)) {
+        if (this.managedIntegrations.has(integrationId)) {
             return {
                 success: true,
                 message:
@@ -196,7 +224,7 @@ export class KodusMCPProvider extends BaseProvider {
     async initiateConnection(
         config: MCPConnectionConfig,
     ): Promise<MCPConnection> {
-        const managed = this.managedHttpIntegrations.get(config.integrationId);
+        const managed = this.managedIntegrations.get(config.integrationId);
         if (managed) {
             const tools = await this.safeGetTools(managed.client);
             const allToolSlugs = tools.map((tool) => tool.slug);
@@ -207,7 +235,7 @@ export class KodusMCPProvider extends BaseProvider {
                     : allToolSlugs;
 
             return {
-                id: managed.config.integrationId,
+                id: managed.config.id,
                 appName: managed.config.displayName,
                 authUrl: null,
                 mcpUrl: managed.config.baseUrl,
@@ -272,7 +300,7 @@ export class KodusMCPProvider extends BaseProvider {
     private async buildManagedHttpIntegration(
         integrationId: string,
     ): Promise<MCPIntegration> {
-        const entry = this.managedHttpIntegrations.get(integrationId);
+        const entry = this.managedIntegrations.get(integrationId);
 
         if (!entry) {
             throw new Error(
@@ -283,13 +311,13 @@ export class KodusMCPProvider extends BaseProvider {
         const tools = await this.safeGetTools(entry.client);
 
         return {
-            id: entry.config.integrationId,
+            id: entry.config.id,
             name: entry.config.displayName,
             description: this.integrationDescriptionService.getDescription(
                 'kodusmcp',
                 entry.config.appName,
             ),
-            authScheme: 'none',
+            authScheme: entry.config.auth.type,
             appName: entry.config.appName,
             logo: entry.config.logoUrl,
             provider: MCPProviderType.KODUSMCP,
@@ -300,7 +328,7 @@ export class KodusMCPProvider extends BaseProvider {
         };
     }
 
-    private async safeGetTools(client: Context7Client): Promise<MCPTool[]> {
+    private async safeGetTools(client: CustomClient): Promise<MCPTool[]> {
         try {
             return await client.getTools();
         } catch (error) {

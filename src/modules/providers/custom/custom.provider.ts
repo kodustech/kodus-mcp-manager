@@ -1,18 +1,18 @@
+import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { CustomClient } from 'src/clients/custom';
+import { IntegrationsService } from 'src/modules/integrations/integrations.service';
+import { MCPConnectionStatus } from '../../mcp/entities/mcp-connection.entity';
+import { BaseProvider } from '../base.provider';
 import {
     MCPConnection,
     MCPConnectionConfig,
     MCPIntegration,
+    MCPProviderType,
     MCPRequiredParam,
     MCPTool,
-    MCPProviderType,
 } from '../interfaces/provider.interface';
-import { BaseProvider } from '../base.provider';
-import { ConfigService } from '@nestjs/config';
-import { MCPConnectionStatus } from '../../mcp/entities/mcp-connection.entity';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { IntegrationDescriptionService } from '../services/integration-description.service';
-import { IntegrationsService } from 'src/modules/integrations/integrations.service';
-import { CustomClient } from 'src/clients/custom';
 
 export class CustomProvider extends BaseProvider {
     statusMap: Record<string, MCPConnectionStatus> = {
@@ -45,7 +45,7 @@ export class CustomProvider extends BaseProvider {
 
             const customIntegrations = await this.integrationsService.find({
                 organizationId,
-                active: true,
+                provider: MCPProviderType.CUSTOM,
             });
 
             return customIntegrations.map((integration) => ({
@@ -54,7 +54,7 @@ export class CustomProvider extends BaseProvider {
                 description: integration.description,
                 authScheme: integration.authType,
                 appName: integration.name,
-                provider: MCPProviderType.CUSTOM,
+                provider: integration.provider,
                 logo: integration.logoUrl,
                 baseUrl: integration.baseUrl,
                 protocol: integration.protocol,
@@ -68,6 +68,7 @@ export class CustomProvider extends BaseProvider {
                     'basicUser' in integration
                         ? integration.basicUser
                         : undefined,
+                active: integration.active,
             }));
         } catch (error) {
             console.error('Error fetching custom integrations:', error);
@@ -96,7 +97,7 @@ export class CustomProvider extends BaseProvider {
                 description: integration.description,
                 authScheme: integration.authType,
                 appName: integration.name,
-                provider: MCPProviderType.CUSTOM,
+                provider: integration.provider,
                 logo: integration.logoUrl,
                 baseUrl: integration.baseUrl,
                 protocol: integration.protocol,
@@ -110,6 +111,7 @@ export class CustomProvider extends BaseProvider {
                     'basicUser' in integration
                         ? integration.basicUser
                         : undefined,
+                active: integration.active,
             };
         } catch (error) {
             console.error(
@@ -131,8 +133,8 @@ export class CustomProvider extends BaseProvider {
         organizationId: string,
     ): Promise<MCPTool[]> {
         try {
-            const { integration } =
-                await this.integrationsService.getValidAccessToken(
+            const integration =
+                await this.integrationsService.getIntegrationById(
                     integrationId,
                     organizationId,
                 );
@@ -158,8 +160,8 @@ export class CustomProvider extends BaseProvider {
         config: MCPConnectionConfig,
     ): Promise<MCPConnection> {
         try {
-            const { integration } =
-                await this.integrationsService.getValidAccessToken(
+            const integration =
+                await this.integrationsService.getIntegrationById(
                     config.integrationId,
                     config.organizationId,
                 );
