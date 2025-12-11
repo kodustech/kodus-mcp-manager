@@ -1,21 +1,25 @@
-import axios, { AxiosInstance } from 'axios';
-import { MCPIntegrationInterface } from 'src/modules/integrations/interfaces/mcp-integration.interface';
-import { MCPIntegrationAuthType } from 'src/modules/integrations/enums/integration.enum';
-import {
-    MCPTool,
-    MCPProviderType,
-} from 'src/modules/providers/interfaces/provider.interface';
 import { createMCPAdapter, MCPAdapter } from '@kodus/flow';
+import { MCPIntegrationAuthType } from 'src/modules/integrations/enums/integration.enum';
+import { MCPIntegrationInterface } from 'src/modules/integrations/interfaces/mcp-integration.interface';
+import {
+    MCPProviderType,
+    MCPTool,
+} from 'src/modules/providers/interfaces/provider.interface';
 
 export class CustomClient {
     private readonly clientInstance: MCPAdapter;
     private connected: boolean = false;
 
-    constructor(private readonly integration: MCPIntegrationInterface) {
+    constructor(
+        private readonly integration: MCPIntegrationInterface & {
+            serverName?: string;
+            providerType?: MCPProviderType;
+        },
+    ) {
         this.clientInstance = createMCPAdapter({
             servers: [
                 {
-                    name: 'custom-server',
+                    name: this.integration.serverName || 'custom-server',
                     type: this.integration.protocol,
                     url: this.integration.baseUrl,
                     headers: this.buildHeaders(),
@@ -45,9 +49,9 @@ export class CustomClient {
                 headers['Authorization'] = `Basic ${basicAuth}`;
                 break;
             case MCPIntegrationAuthType.OAUTH2:
-                if (this.integration.accessToken) {
+                if (this.integration.tokens?.accessToken) {
                     headers['Authorization'] =
-                        `Bearer ${this.integration.accessToken}`;
+                        `Bearer ${this.integration.tokens.accessToken}`;
                 }
                 break;
             case MCPIntegrationAuthType.NONE:
@@ -88,10 +92,12 @@ export class CustomClient {
                 slug: tool.name,
                 name: tool.name,
                 description: tool.description,
-                provider: MCPProviderType.CUSTOM,
+                provider:
+                    this.integration.providerType || MCPProviderType.CUSTOM,
                 warning: false,
             }));
         } catch (error) {
+            await this.disconnect();
             console.error(`Failed to fetch custom tools:`, error.message);
             throw new Error(
                 `Failed to fetch tools from custom integration: ${error.message}`,

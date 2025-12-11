@@ -63,6 +63,7 @@ export interface MCPIntegration {
     headers?: Record<string, string>;
     apiKeyHeader?: string;
     basicUser?: string;
+    active?: boolean;
 }
 
 export interface MCPRequiredParam {
@@ -111,4 +112,14 @@ export interface MCPProvider {
     ): Promise<MCPTool[]>;
     initiateConnection(config: MCPConnectionConfig): Promise<MCPConnection>;
     deleteConnection(connectionId: string): Promise<void>;
+    initiateManagedOAuth?(
+        organizationId: string,
+        integrationId: string,
+    ): Promise<string>;
+    finalizeManagedOAuth?(params: {
+        organizationId: string;
+        integrationId: string;
+        code: string;
+        state: string;
+    }): Promise<void>;
 }

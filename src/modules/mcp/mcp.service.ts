@@ -1,18 +1,21 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { IntegrationOAuthService } from '../integrations/integration-oauth.service';
+import { IntegrationsService } from '../integrations/integrations.service';
+import { MCPProviderType } from '../providers/interfaces/provider.interface';
 import { ProviderFactory } from '../providers/provider.factory';
+import { CreateIntegrationDto } from './dto/create-integration.dto';
+import { FinishOAuthDto } from './dto/finish-oauth.dto';
+import { InitiateConnectionDto } from './dto/initiate-connection.dto';
+import { InitiateOAuthDto } from './dto/initiate-oauth.dto';
 import { QueryDto } from './dto/query.dto';
+import { UpdateConnectionDto } from './dto/update-connection.dto';
 import {
     MCPConnectionEntity,
     MCPConnectionStatus,
 } from './entities/mcp-connection.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { InitiateConnectionDto } from './dto/initiate-connection.dto';
-import { UpdateConnectionDto } from './dto/update-connection.dto';
-import { CreateIntegrationDto } from './dto/create-integration.dto';
-import { IntegrationsService } from '../integrations/integrations.service';
-import { MCPIntegrationAuthType } from '../integrations/enums/integration.enum';
-import { FinishOAuthDto } from './dto/finish-oauth.dto';
 
 @Injectable()
 export class McpService {
@@ -21,6 +24,8 @@ export class McpService {
         @InjectRepository(MCPConnectionEntity)
         private connectionRepository: Repository<MCPConnectionEntity>,
         private readonly integrationsService: IntegrationsService,
+        private readonly configService: ConfigService,
+        private readonly integrationOAuthService: IntegrationOAuthService,
     ) {}
 
     async getConnections(query: QueryDto, organizationId: string) {
@@ -99,7 +104,10 @@ export class McpService {
         organizationId: string,
     ) {
         const provider = this.providerFactory.getProvider(providerType);
-        const integration = await provider.getIntegration(integrationId);
+        const integration = await provider.getIntegration(
+            integrationId,
+            organizationId,
+        );
 
         const requiredParams = await this.getIntegrationRequiredParams(
             integrationId,
@@ -226,6 +234,12 @@ export class McpService {
 
         await provider.deleteConnection(composioConnectionId || connectionId);
 
+        // Remove OAuth state for the integration associated with this connection
+        await this.integrationOAuthService.deleteOAuthState(
+            organizationId,
+            connection.integrationId,
+        );
+
         await this.connectionRepository.delete(connection.id);
 
         return { message: 'Connection deleted successfully' };
@@ -342,18 +356,25 @@ export class McpService {
         );
     }
 
-    async getCustomIntegrations(organizationId: string) {
+    async getCustomIntegrations(
+        organizationId: string,
+        active: boolean = true,
+    ) {
         return this.integrationsService.find({
             organizationId,
-            active: true,
+            active,
         });
     }
 
-    async getCustomIntegration(organizationId: string, integrationId: string) {
+    async getCustomIntegration(
+        organizationId: string,
+        integrationId: string,
+        active: boolean = true,
+    ) {
         return this.integrationsService.findOne({
             organizationId,
             id: integrationId,
-            active: true,
+            active,
         });
     }
 
@@ -375,29 +396,10 @@ export class McpService {
 
         if (providerType === 'custom') {
             // baseUrl is already validated in DTO
-            if (
-                authType !== undefined &&
-                authType === MCPIntegrationAuthType.OAUTH2
-            ) {
-                return this.integrationsService.createIntegration(
-                    organizationId,
-                    createIntegrationDto,
-                );
-            }
-
             if (!name || !authType || !protocol) {
                 throw new Error(
                     'name, authType and protocol are required for custom integrations',
                 );
-            }
-
-            const validated =
-                await this.integrationsService.validateIntegration(
-                    createIntegrationDto,
-                );
-
-            if (!validated) {
-                throw new Error('Failed to validate custom integration');
             }
 
             return this.integrationsService.createIntegration(
@@ -498,15 +500,6 @@ export class McpService {
             );
         }
 
-        const validated =
-            await this.integrationsService.validateIntegration(
-                updateIntegrationDto,
-            );
-
-        if (!validated) {
-            throw new Error('Failed to validate custom integration');
-        }
-
         return this.integrationsService.editIntegration(
             organizationId,
             integrationId,
@@ -543,23 +536,91 @@ export class McpService {
         return { message: 'Integration deleted successfully' };
     }
 
+    async initiateOAuthIntegration(
+        organizationId: string,
+        body: InitiateOAuthDto,
+        provider: string,
+    ) {
+        const { integrationId } = body;
+
+        if (!organizationId || !integrationId) {
+            throw new Error('organizationId and integrationId are required');
+        }
+
+        if (provider === MCPProviderType.CUSTOM) {
+            const authUrl = await this.integrationsService.initiateOAuthFlow({
+                organizationId,
+                integrationId,
+            });
+
+            return { authUrl };
+        }
+
+        if (provider === MCPProviderType.KODUSMCP) {
+            const mcpProvider = this.providerFactory.getProvider(
+                MCPProviderType.KODUSMCP,
+            );
+
+            if (typeof mcpProvider.initiateManagedOAuth !== 'function') {
+                throw new Error(
+                    'KodusMCP provider does not support managed OAuth initiation',
+                );
+            }
+
+            const authUrl = await mcpProvider.initiateManagedOAuth(
+                organizationId,
+                integrationId,
+            );
+
+            return { authUrl };
+        }
+
+        throw new Error(`Provider ${provider} does not support OAuth flow`);
+    }
+
     async finalizeOAuthIntegration(
         organizationId: string,
         body: FinishOAuthDto,
+        provider: string,
     ) {
         const { integrationId, code, state } = body;
 
-        if (!integrationId || !code || !state) {
-            throw new Error('integrationId, code and state are required');
+        if (!organizationId || !integrationId || !code || !state) {
+            throw new Error(
+                'organizationId, integrationId, code and state are required',
+            );
         }
 
-        const result = await this.integrationsService.finalizeOAuthFlow({
-            organizationId,
-            integrationId,
-            code,
-            state,
-        });
+        if (provider === MCPProviderType.CUSTOM) {
+            return await this.integrationsService.finalizeOAuthFlow({
+                organizationId,
+                integrationId,
+                code,
+                state,
+            });
+        }
 
-        return result;
+        if (provider === MCPProviderType.KODUSMCP) {
+            const mcpProvider = this.providerFactory.getProvider(
+                MCPProviderType.KODUSMCP,
+            );
+
+            if (typeof mcpProvider.finalizeManagedOAuth !== 'function') {
+                throw new Error(
+                    'KodusMCP provider does not support managed OAuth finalization',
+                );
+            }
+
+            await mcpProvider.finalizeManagedOAuth({
+                organizationId,
+                integrationId,
+                code,
+                state,
+            });
+
+            return { message: 'OAuth integration finalized' };
+        }
+
+        throw new Error(`Provider ${provider} does not support OAuth flow`);
     }
 }

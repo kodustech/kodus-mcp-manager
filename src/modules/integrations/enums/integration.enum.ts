@@ -10,3 +10,9 @@ export enum MCPIntegrationProtocol {
     HTTP = 'http',
     SSE = 'sse',
 }
+
+export enum MCPIntegrationOAuthStatus {
+    ACTIVE = 'active',
+    PENDING = 'pending',
+    INACTIVE = 'inactive',
+}

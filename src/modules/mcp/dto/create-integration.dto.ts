@@ -1,10 +1,11 @@
 import { Type } from 'class-transformer';
 import {
-    IsString,
-    IsOptional,
-    IsEnum,
-    ValidateNested,
     IsArray,
+    IsBoolean,
+    IsEnum,
+    IsOptional,
+    IsString,
+    ValidateNested,
 } from 'class-validator';
 import { StringRecordDto } from 'src/common/dto';
 import {
@@ -66,9 +67,10 @@ export class CreateIntegrationDto {
     @IsOptional()
     basicPassword?: string;
 
-    @IsString()
     @IsOptional()
-    oauthScopes?: string;
+    @IsArray()
+    @IsString({ each: true })
+    oauthScopes?: string[];
 
     @IsString()
     @IsOptional()
@@ -77,4 +79,8 @@ export class CreateIntegrationDto {
     @IsString()
     @IsOptional()
     clientSecret?: string;
+
+    @IsBoolean()
+    @IsOptional()
+    dynamicRegistration?: boolean;
 }

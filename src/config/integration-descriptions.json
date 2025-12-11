@@ -32,8 +32,11 @@
     },
     "kodusmcp": {
         "integrations": {
-            "context7": "Context7 MCP pulls up-to-date, version-specific documentation and code examples straight from the source — and places them directly into your prompt.",
-            "kodusdocs": "Kodus Docs MCP exposes the official Kodus documentation as MCP tools, allowing Kodus to respond with official snippets, setup guides, and examples always up to date."
+            "context7-default": "Context7 MCP pulls up-to-date, version-specific documentation and code examples straight from the source — and places them directly into your prompt.",
+            "kodus-docs-default": "Kodus Docs MCP exposes the official Kodus documentation as MCP tools, allowing Kodus to respond with official snippets, setup guides, and examples always up to date.",
+            "sentry-default": "Sentry MCP allows agents to access project and team info, retrieve and update issues and events, and create releases—bringing error tracking and release management into your code reviews.",
+            "exa-default": "Exa Search MCP allows agents to search for information in multiple codebases and retrieve relevant results.",
+            "kodus-osv-default": "Kodus OSV MCP allows agents to query for known package vulnerabilities in your codebase."
         }
     }
 }

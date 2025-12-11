@@ -1,18 +1,23 @@
+import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { CustomClient } from 'src/clients/custom';
+import {
+    MCPIntegrationAuthType,
+    MCPIntegrationOAuthStatus,
+} from 'src/modules/integrations/enums/integration.enum';
+import { IntegrationOAuthService } from 'src/modules/integrations/integration-oauth.service';
+import { IntegrationsService } from 'src/modules/integrations/integrations.service';
+import { MCPConnectionStatus } from '../../mcp/entities/mcp-connection.entity';
+import { BaseProvider } from '../base.provider';
 import {
     MCPConnection,
     MCPConnectionConfig,
     MCPIntegration,
+    MCPProviderType,
     MCPRequiredParam,
     MCPTool,
-    MCPProviderType,
 } from '../interfaces/provider.interface';
-import { BaseProvider } from '../base.provider';
-import { ConfigService } from '@nestjs/config';
-import { MCPConnectionStatus } from '../../mcp/entities/mcp-connection.entity';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { IntegrationDescriptionService } from '../services/integration-description.service';
-import { IntegrationsService } from 'src/modules/integrations/integrations.service';
-import { CustomClient } from 'src/clients/custom';
 
 export class CustomProvider extends BaseProvider {
     statusMap: Record<string, MCPConnectionStatus> = {
@@ -25,6 +30,7 @@ export class CustomProvider extends BaseProvider {
         private readonly configService: ConfigService,
         private readonly integrationDescriptionService: IntegrationDescriptionService,
         private readonly integrationsService: IntegrationsService,
+        private readonly integrationOAuthService: IntegrationOAuthService,
     ) {
         super();
     }
@@ -45,7 +51,6 @@ export class CustomProvider extends BaseProvider {
 
             const customIntegrations = await this.integrationsService.find({
                 organizationId,
-                active: true,
             });
 
             return customIntegrations.map((integration) => ({
@@ -68,6 +73,7 @@ export class CustomProvider extends BaseProvider {
                     'basicUser' in integration
                         ? integration.basicUser
                         : undefined,
+                active: integration.active,
             }));
         } catch (error) {
             console.error('Error fetching custom integrations:', error);
@@ -90,6 +96,18 @@ export class CustomProvider extends BaseProvider {
                 return null;
             }
 
+            let active = integration.active;
+
+            if (integration.authType === MCPIntegrationAuthType.OAUTH2) {
+                const oauthStatus =
+                    await this.integrationOAuthService.getOAuthStatus(
+                        organizationId,
+                        integrationId,
+                    );
+
+                active = oauthStatus === MCPIntegrationOAuthStatus.ACTIVE;
+            }
+
             return {
                 id: integration.id,
                 name: integration.name,
@@ -110,6 +128,7 @@ export class CustomProvider extends BaseProvider {
                     'basicUser' in integration
                         ? integration.basicUser
                         : undefined,
+                active,
             };
         } catch (error) {
             console.error(
@@ -131,14 +150,28 @@ export class CustomProvider extends BaseProvider {
         organizationId: string,
     ): Promise<MCPTool[]> {
         try {
-            const { integration } =
-                await this.integrationsService.getValidAccessToken(
+            const baseIntegration =
+                await this.integrationsService.getIntegrationById(
                     integrationId,
                     organizationId,
                 );
 
-            if (!integration) {
+            if (!baseIntegration) {
                 throw new NotFoundException('Custom integration not found');
+            }
+
+            let integration = baseIntegration;
+
+            if (integration.authType === MCPIntegrationAuthType.OAUTH2) {
+                const oauthState =
+                    await this.integrationOAuthService.getOAuthState(
+                        organizationId,
+                        integrationId,
+                    );
+
+                if (oauthState?.tokens) {
+                    integration.tokens = oauthState.tokens;
+                }
             }
 
             const client = new CustomClient(integration);
@@ -158,8 +191,8 @@ export class CustomProvider extends BaseProvider {
         config: MCPConnectionConfig,
     ): Promise<MCPConnection> {
         try {
-            const { integration } =
-                await this.integrationsService.getValidAccessToken(
+            const integration =
+                await this.integrationsService.getIntegrationById(
                     config.integrationId,
                     config.organizationId,
                 );
