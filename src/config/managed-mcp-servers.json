@@ -1,12 +1,10 @@
 [
     {
         "id": "context7-default",
-        "appName": "context7",
-        "displayName": "Context7",
+        "name": "Context7",
         "baseUrl": "https://context7-kodus.up.railway.app/mcp",
         "protocol": "http",
         "logoUrl": "https://avatars.githubusercontent.com/u/74989412?s=48&v=4",
-        "serverName": "context7",
         "headers": {},
         "auth": {
             "type": "none"
@@ -14,12 +12,10 @@
     },
     {
         "id": "kodus-docs-default",
-        "appName": "kodusdocs",
-        "displayName": "Kodus Docs",
+        "name": "Kodus Docs",
         "baseUrl": "https://docs.kodus.io/mcp",
         "protocol": "http",
         "logoUrl": "https://kodus.io/wp-content/uploads/2025/11/Kodus-AI-Logo-6.png",
-        "serverName": "kodus-docs",
         "headers": {},
         "auth": {
             "type": "none"
@@ -27,16 +23,36 @@
     },
     {
         "id": "sentry-default",
-        "appName": "sentry",
-        "displayName": "Sentry",
+        "name": "Sentry",
         "baseUrl": "https://mcp.sentry.dev/mcp",
         "protocol": "http",
-        "logoUrl": "",
-        "serverName": "sentry",
+        "logoUrl": "https://kodus.io/wp-content/uploads/2025/12/sentry-glyph-light-400x367-1.svg",
         "headers": {},
         "auth": {
             "type": "oauth2",
             "dynamicRegistration": true
+        }
+    },
+    {
+        "id": "exa-default",
+        "name": "Exa Search",
+        "baseUrl": "https://mcp.exa.ai/mcp?tools=web_search_exa,get_code_context_exa,crawling_exa,company_research_exa,linkedin_search_exa,deep_researcher_start,deep_researcher_check",
+        "protocol": "http",
+        "logoUrl": "https://exa.ai/images/favicon-32x32.png",
+        "headers": {},
+        "auth": {
+            "type": "none"
+        }
+    },
+    {
+        "id": "kodus-osv-default",
+        "name": "Kodus OSV",
+        "baseUrl": "https://mcp-osv.kodus.io/mcp",
+        "protocol": "http",
+        "logoUrl": "https://kodus.io/wp-content/uploads/2025/11/Kodus-AI-Logo-6.png",
+        "headers": {},
+        "auth": {
+            "type": "none"
         }
     }
 ]

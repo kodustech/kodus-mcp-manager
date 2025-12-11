@@ -25,12 +25,10 @@ import { Logger } from '@nestjs/common';
 
 interface ManagedIntegrationConfig {
     id: string;
-    appName: string;
-    displayName: string;
+    name: string;
     baseUrl: string;
     protocol: MCPIntegrationProtocol;
     logoUrl: string;
-    serverName: string;
     headers: Record<string, string>;
     auth: {
         type: MCPIntegrationAuthType;
@@ -101,13 +99,13 @@ export class KodusMCPProvider extends BaseProvider {
     ): ConstructorParameters<typeof CustomClient>[0] {
         return {
             id: managed.id,
-            name: managed.displayName,
+            name: managed.name,
             authType: managed.auth.type,
             protocol: managed.protocol,
             baseUrl: managed.baseUrl,
             logoUrl: managed.logoUrl,
             headers: managed.headers,
-            serverName: managed.serverName,
+            serverName: managed.name,
             providerType: MCPProviderType.KODUSMCP,
             ...managed.auth,
         } as unknown as ConstructorParameters<typeof CustomClient>[0];
@@ -282,7 +280,7 @@ export class KodusMCPProvider extends BaseProvider {
 
                 return {
                     id: managed.config.id,
-                    appName: managed.config.displayName,
+                    appName: managed.config.name,
                     authUrl: null,
                     mcpUrl: managed.config.baseUrl,
                     status: MCPConnectionStatus.ACTIVE,
@@ -385,13 +383,13 @@ export class KodusMCPProvider extends BaseProvider {
         return {
             id: entry.config.id,
             active,
-            name: entry.config.displayName,
+            name: entry.config.name,
             description: this.integrationDescriptionService.getDescription(
                 'kodusmcp',
-                entry.config.appName,
+                entry.config.id,
             ),
             authScheme: entry.config.auth.type,
-            appName: entry.config.appName,
+            appName: entry.config.name,
             logo: entry.config.logoUrl,
             provider: MCPProviderType.KODUSMCP,
             allowedTools: tools.map((tool) => tool.slug),
