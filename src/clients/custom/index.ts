@@ -82,7 +82,6 @@ export class CustomClient {
         try {
             await this.connect();
             const response = await this.clientInstance.getTools();
-            await this.disconnect();
 
             if (!Array.isArray(response)) {
                 throw new Error('Tools endpoint did not return an array');
@@ -97,11 +96,12 @@ export class CustomClient {
                 warning: false,
             }));
         } catch (error) {
-            await this.disconnect();
             console.error(`Failed to fetch custom tools:`, error.message);
             throw new Error(
                 `Failed to fetch tools from custom integration: ${error.message}`,
             );
+        } finally {
+            await this.disconnect();
         }
     }
 }

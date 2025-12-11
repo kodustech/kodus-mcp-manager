@@ -8,11 +8,11 @@ module.exports = {
 
       // Configurações de memória
       node_args: [
-        `--max-old-space-size=64`,
+        `--max-old-space-size=1024`,
         '--max-http-header-size=16384',
         '--trace-warnings',
         '--unhandled-rejections=strict',
-        '--max-semi-space-size=128',
+        '--max-semi-space-size=64',
       ],
 
       // Controle de ciclo de vida
