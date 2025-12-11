@@ -13,13 +13,13 @@ export type ProviderType = string;
 @Injectable()
 export class ProviderFactory {
     private providers: Map<ProviderType, MCPProvider> = new Map();
+    private logger: Logger = new Logger(ProviderFactory.name);
 
     constructor(
         private configService: ConfigService,
         private integrationDescriptionService: IntegrationDescriptionService,
         private integrationsService: IntegrationsService,
         private integrationOAuthService: IntegrationOAuthService,
-        private logger: Logger,
     ) {
         this.initializeProviders();
     }
@@ -48,7 +48,6 @@ export class ProviderFactory {
                         new KodusMCPProvider(
                             this.integrationDescriptionService,
                             this.integrationOAuthService,
-                            this.logger,
                         ),
                     );
                     break;

@@ -30,12 +30,12 @@ type IntegrationOAuthState = Partial<
 
 @Injectable()
 export class IntegrationOAuthService {
+    private readonly logger: Logger = new Logger(IntegrationOAuthService.name);
     constructor(
         private readonly configService: ConfigService,
         @InjectRepository(MCPIntegrationOAuthEntity)
         private readonly integrationOAuthRepository: Repository<MCPIntegrationOAuthEntity>,
         private readonly encryptionUtils: EncryptionUtils,
-        private readonly logger: Logger,
     ) {}
 
     private decryptAndParse<T>(

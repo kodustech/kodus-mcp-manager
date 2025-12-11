@@ -24,12 +24,12 @@ type IntegrationFilters = Partial<
 >;
 
 export class IntegrationsService {
+    private readonly logger: Logger = new Logger(IntegrationsService.name);
     constructor(
         @InjectRepository(MCPIntegrationEntity)
         private readonly integrationRepository: Repository<MCPIntegrationEntity>,
         private readonly encryptionUtils: EncryptionUtils,
         private readonly integrationOAuthService: IntegrationOAuthService,
-        private readonly logger: Logger,
     ) {}
 
     private entityToInterface(

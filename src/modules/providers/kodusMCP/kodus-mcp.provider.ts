@@ -49,10 +49,10 @@ export class KodusMCPProvider extends BaseProvider {
         INACTIVE: MCPConnectionStatus.INACTIVE,
         FAILED: MCPConnectionStatus.FAILED,
     };
+    private readonly logger: Logger = new Logger(KodusMCPProvider.name);
     constructor(
         integrationDescriptionService: IntegrationDescriptionService,
         private readonly integrationOAuthService: IntegrationOAuthService,
-        private readonly logger: Logger,
     ) {
         super();
 
