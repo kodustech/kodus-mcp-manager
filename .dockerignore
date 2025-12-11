@@ -51,3 +51,5 @@ src/ee/configs/environment/environment.ts
 
 # Arquivos de sistema
 Thumbs.db
+.yalc/
+yalc.lock
