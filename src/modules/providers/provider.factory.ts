@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { MCPProvider } from './interfaces/provider.interface';
-import { ComposioProvider } from './composio/composio.provider';
-import { IntegrationDescriptionService } from './services/integration-description.service';
-import { KodusMCPProvider } from './kodusMCP/kodus-mcp.provider';
-import { CustomProvider } from './custom/custom.provider';
+import { IntegrationOAuthService } from '../integrations/integration-oauth.service';
 import { IntegrationsService } from '../integrations/integrations.service';
+import { ComposioProvider } from './composio/composio.provider';
+import { CustomProvider } from './custom/custom.provider';
+import { MCPProvider } from './interfaces/provider.interface';
+import { KodusMCPProvider } from './kodusMCP/kodus-mcp.provider';
+import { IntegrationDescriptionService } from './services/integration-description.service';
 
 export type ProviderType = string;
 
@@ -17,6 +18,7 @@ export class ProviderFactory {
         private configService: ConfigService,
         private integrationDescriptionService: IntegrationDescriptionService,
         private integrationsService: IntegrationsService,
+        private integrationOAuthService: IntegrationOAuthService,
     ) {
         this.initializeProviders();
     }
@@ -43,8 +45,9 @@ export class ProviderFactory {
                     this.providers.set(
                         'kodusmcp',
                         new KodusMCPProvider(
-                            this.configService,
                             this.integrationDescriptionService,
+                            this.integrationsService,
+                            this.integrationOAuthService,
                         ),
                     );
                     break;
@@ -55,6 +58,7 @@ export class ProviderFactory {
                             this.configService,
                             this.integrationDescriptionService,
                             this.integrationsService,
+                            this.integrationOAuthService,
                         ),
                     );
                     break;

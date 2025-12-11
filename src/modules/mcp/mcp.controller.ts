@@ -197,25 +197,29 @@ export class McpController {
         );
     }
 
-    @Post('integration/custom/oauth/finalize')
+    @Post('integration/:provider/oauth/finalize')
     finalizeOAuthIntegration(
+        @Param('provider') provider: string,
         @Body() body: FinishOAuthDto,
         @Req() request: FastifyRequest,
     ) {
         return this.mcpService.finalizeOAuthIntegration(
             request.organizationId,
             body,
+            provider,
         );
     }
 
-    @Post('integration/custom/oauth/initialize')
+    @Post('integration/:provider/oauth/initialize')
     initializeOAuthIntegration(
+        @Param('provider') provider: string,
         @Body() body: InitiateOAuthDto,
         @Req() request: FastifyRequest,
     ) {
         return this.mcpService.initiateOAuthIntegration(
             request.organizationId,
             body,
+            provider,
         );
     }
 }

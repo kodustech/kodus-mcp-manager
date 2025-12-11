@@ -1,6 +1,11 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CustomClient } from 'src/clients/custom';
+import {
+    MCPIntegrationAuthType,
+    MCPIntegrationOAuthStatus,
+} from 'src/modules/integrations/enums/integration.enum';
+import { IntegrationOAuthService } from 'src/modules/integrations/integration-oauth.service';
 import { IntegrationsService } from 'src/modules/integrations/integrations.service';
 import { MCPConnectionStatus } from '../../mcp/entities/mcp-connection.entity';
 import { BaseProvider } from '../base.provider';
@@ -25,6 +30,7 @@ export class CustomProvider extends BaseProvider {
         private readonly configService: ConfigService,
         private readonly integrationDescriptionService: IntegrationDescriptionService,
         private readonly integrationsService: IntegrationsService,
+        private readonly integrationOAuthService: IntegrationOAuthService,
     ) {
         super();
     }
@@ -45,7 +51,6 @@ export class CustomProvider extends BaseProvider {
 
             const customIntegrations = await this.integrationsService.find({
                 organizationId,
-                provider: MCPProviderType.CUSTOM,
             });
 
             return customIntegrations.map((integration) => ({
@@ -54,7 +59,7 @@ export class CustomProvider extends BaseProvider {
                 description: integration.description,
                 authScheme: integration.authType,
                 appName: integration.name,
-                provider: integration.provider,
+                provider: MCPProviderType.CUSTOM,
                 logo: integration.logoUrl,
                 baseUrl: integration.baseUrl,
                 protocol: integration.protocol,
@@ -91,13 +96,25 @@ export class CustomProvider extends BaseProvider {
                 return null;
             }
 
+            let active = integration.active;
+
+            if (integration.authType === MCPIntegrationAuthType.OAUTH2) {
+                const oauthStatus =
+                    await this.integrationOAuthService.getOAuthStatus(
+                        organizationId,
+                        integrationId,
+                    );
+
+                active = oauthStatus === MCPIntegrationOAuthStatus.ACTIVE;
+            }
+
             return {
                 id: integration.id,
                 name: integration.name,
                 description: integration.description,
                 authScheme: integration.authType,
                 appName: integration.name,
-                provider: integration.provider,
+                provider: MCPProviderType.CUSTOM,
                 logo: integration.logoUrl,
                 baseUrl: integration.baseUrl,
                 protocol: integration.protocol,
@@ -111,7 +128,7 @@ export class CustomProvider extends BaseProvider {
                     'basicUser' in integration
                         ? integration.basicUser
                         : undefined,
-                active: integration.active,
+                active,
             };
         } catch (error) {
             console.error(
@@ -133,14 +150,28 @@ export class CustomProvider extends BaseProvider {
         organizationId: string,
     ): Promise<MCPTool[]> {
         try {
-            const integration =
+            const baseIntegration =
                 await this.integrationsService.getIntegrationById(
                     integrationId,
                     organizationId,
                 );
 
-            if (!integration) {
+            if (!baseIntegration) {
                 throw new NotFoundException('Custom integration not found');
+            }
+
+            let integration = baseIntegration;
+
+            if (integration.authType === MCPIntegrationAuthType.OAUTH2) {
+                const oauthState =
+                    await this.integrationOAuthService.getOAuthState(
+                        organizationId,
+                        integrationId,
+                    );
+
+                if (oauthState?.tokens) {
+                    integration.tokens = oauthState.tokens;
+                }
             }
 
             const client = new CustomClient(integration);

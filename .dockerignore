@@ -1,0 +1,53 @@
+# Ignora dependências locais
+node_modules
+lib/
+dist/
+DockerFiles
+docker-entrypoint-initdb.d
+
+# Logs e arquivos temporários
+npm-debug.log
+*.log
+*.test.js
+.DS_Store
+
+# Infra de dev
+.dockerignore
+Dockerfile
+docker-compose.yml
+docker-compose.*.yml
+
+# Git e outros
+.git
+.github
+.husky
+
+# Testes
+test/
+coverage/
+*.spec.ts
+*.test.ts
+
+# Documentação
+*.md
+docs/
+
+# Configurações de IDE
+.vscode/
+.idea/
+
+# Arquivos temporários
+temp/
+tmp/
+*.tmp
+
+# Ignora apenas o arquivo gerado no build (não o template!)
+ee/configs/environment/environment.ts
+src/ee/configs/environment/environment.ts
+
+# Arquivos de build
+.nyc_output/
+.eslintcache
+
+# Arquivos de sistema
+Thumbs.db

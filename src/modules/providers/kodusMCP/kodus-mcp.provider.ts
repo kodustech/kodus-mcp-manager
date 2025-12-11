@@ -1,12 +1,14 @@
-import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs';
 import * as path from 'path';
 import { CustomClient } from 'src/clients/custom';
 import { KodusMCPClient } from 'src/clients/kodusMCP';
 import {
     MCPIntegrationAuthType,
+    MCPIntegrationOAuthStatus,
     MCPIntegrationProtocol,
 } from 'src/modules/integrations/enums/integration.enum';
+import { IntegrationOAuthService } from 'src/modules/integrations/integration-oauth.service';
+import { IntegrationsService } from 'src/modules/integrations/integrations.service';
 import { MCPIntegrationAllUniqueFields } from 'src/modules/integrations/interfaces/mcp-integration.interface';
 import { MCPConnectionStatus } from 'src/modules/mcp/entities/mcp-connection.entity';
 import { BaseProvider } from '../base.provider';
@@ -47,8 +49,9 @@ export class KodusMCPProvider extends BaseProvider {
         FAILED: MCPConnectionStatus.FAILED,
     };
     constructor(
-        _configService: ConfigService,
         integrationDescriptionService: IntegrationDescriptionService,
+        private readonly integrationsService: IntegrationsService,
+        private readonly integrationOAuthService: IntegrationOAuthService,
     ) {
         super();
 
@@ -114,10 +117,16 @@ export class KodusMCPProvider extends BaseProvider {
         limit = 50,
         filters?: Record<string, any>,
     ): Promise<MCPIntegration[]> {
+        const { organizationId } = filters;
+
+        if (!organizationId) {
+            throw new Error('Missing organizationId');
+        }
+
         const integration = await this.client.getIntegration();
         const managedIntegrations = await Promise.all(
             Array.from(this.managedIntegrations.keys()).map((integrationId) =>
-                this.buildManagedHttpIntegration(integrationId),
+                this.buildManagedHttpIntegration(organizationId, integrationId),
             ),
         );
 
@@ -131,9 +140,15 @@ export class KodusMCPProvider extends BaseProvider {
         ];
     }
 
-    async getIntegration(integrationId: string): Promise<MCPIntegration> {
+    async getIntegration(
+        integrationId: string,
+        organizationId: string,
+    ): Promise<MCPIntegration> {
         if (this.managedIntegrations.has(integrationId)) {
-            return this.buildManagedHttpIntegration(integrationId);
+            return this.buildManagedHttpIntegration(
+                organizationId,
+                integrationId,
+            );
         }
 
         const integration = await this.client.getIntegration();
@@ -174,9 +189,13 @@ export class KodusMCPProvider extends BaseProvider {
 
         const managed = this.managedIntegrations.get(integrationId);
         if (managed) {
-            return this.safeGetTools(managed.client);
+            const client = await this.buildManagedClient(
+                organizationId,
+                integrationId,
+            );
+
+            return this.safeGetTools(client);
         }
-        const integration = await this.client.getIntegration();
 
         const tools = await this.client.getTools();
 
@@ -188,20 +207,6 @@ export class KodusMCPProvider extends BaseProvider {
             warning: this.hasWarning(tool.name || tool.slug),
         }));
     }
-
-    // async getAvailableTools(
-    //   integrationId: string,
-    //   organizationId: string,
-    // ): Promise<MCPTool[]> {
-    //   return Promise.resolve(this.client.getAvailableTools());
-    // }
-
-    // async getSelectedTools(
-    //   integrationId: string,
-    //   organizationId: string,
-    // ): Promise<string[]> {
-    //   return Promise.resolve(this.client.getSelectedTools(organizationId));
-    // }
 
     async updateSelectedTools(
         integrationId: string,
@@ -298,6 +303,7 @@ export class KodusMCPProvider extends BaseProvider {
     }
 
     private async buildManagedHttpIntegration(
+        organizationId: string,
         integrationId: string,
     ): Promise<MCPIntegration> {
         const entry = this.managedIntegrations.get(integrationId);
@@ -308,10 +314,29 @@ export class KodusMCPProvider extends BaseProvider {
             );
         }
 
-        const tools = await this.safeGetTools(entry.client);
+        let active = true;
+
+        if (entry.config.auth.type === MCPIntegrationAuthType.OAUTH2) {
+            const status = await this.integrationOAuthService.getOAuthStatus(
+                organizationId,
+                integrationId,
+            );
+
+            active = status === MCPIntegrationOAuthStatus.ACTIVE;
+        }
+
+        let tools: MCPTool[] = [];
+        if (active) {
+            const client = await this.buildManagedClient(
+                organizationId,
+                integrationId,
+            );
+            tools = await this.safeGetTools(client);
+        }
 
         return {
             id: entry.config.id,
+            active,
             name: entry.config.displayName,
             description: this.integrationDescriptionService.getDescription(
                 'kodusmcp',
@@ -326,6 +351,187 @@ export class KodusMCPProvider extends BaseProvider {
             protocol: entry.config.protocol ?? 'http',
             isDefault: false,
         };
+    }
+
+    private async buildManagedClient(
+        organizationId: string,
+        integrationId: string,
+    ): Promise<CustomClient> {
+        const entry = this.managedIntegrations.get(integrationId);
+
+        if (!entry) {
+            throw new Error(
+                `Integration ${integrationId} não suportada pela Kodus`,
+            );
+        }
+
+        const baseIntegration = this.transformManagedIntegration(
+            entry.config,
+        ) as any;
+
+        if (entry.config.auth.type === MCPIntegrationAuthType.OAUTH2) {
+            let oauthState = await this.integrationOAuthService.getOAuthState(
+                organizationId,
+                integrationId,
+            );
+
+            if (oauthState) {
+                try {
+                    oauthState =
+                        await this.integrationOAuthService.refreshOAuthStateIfNeeded(
+                            {
+                                organizationId,
+                                integrationId,
+                                oauthState,
+                            },
+                        );
+                } catch (error) {
+                    console.error(
+                        'Failed to refresh managed Kodus MCP OAuth tokens:',
+                        error,
+                    );
+                }
+            }
+
+            return new CustomClient({
+                ...baseIntegration,
+                tokens: oauthState?.tokens,
+            });
+        }
+
+        return new CustomClient(baseIntegration);
+    }
+
+    async initiateManagedOAuth(
+        organizationId: string,
+        integrationId: string,
+    ): Promise<string> {
+        const entry = this.managedIntegrations.get(integrationId);
+
+        if (!entry) {
+            throw new Error(
+                `Integration ${integrationId} não suportada pela Kodus`,
+            );
+        }
+
+        if (entry.config.auth.type !== MCPIntegrationAuthType.OAUTH2) {
+            throw new Error('Integration is not OAuth2');
+        }
+
+        const { baseUrl } = entry.config;
+        const { oauthScopes, dynamicRegistration, clientId, clientSecret } =
+            entry.config.auth as any;
+
+        const oauthInit = await this.integrationOAuthService.initiateOAuth({
+            baseUrl,
+            oauthScopes,
+            dynamicRegistration,
+            clientId,
+            clientSecret,
+        });
+
+        await this.integrationOAuthService.saveOAuthState(
+            organizationId,
+            integrationId,
+            MCPIntegrationOAuthStatus.PENDING,
+            {
+                clientId: oauthInit.clientId,
+                clientSecret: oauthInit.clientSecret,
+                oauthScopes,
+                dynamicRegistration,
+                asMetadata: oauthInit.as,
+                rsMetadata: oauthInit.rs,
+                redirectUri: oauthInit.redirectUri,
+                codeChallenge: oauthInit.codeChallenge,
+                codeVerifier: oauthInit.codeVerifier,
+                state: oauthInit.state,
+                tokens: undefined,
+            },
+        );
+
+        return oauthInit.authUrl;
+    }
+
+    async finalizeManagedOAuth(params: {
+        organizationId: string;
+        integrationId: string;
+        code: string;
+        state: string;
+    }): Promise<void> {
+        const { organizationId, integrationId, code, state } = params;
+
+        const entry = this.managedIntegrations.get(integrationId);
+
+        if (!entry) {
+            throw new Error(
+                `Integration ${integrationId} não suportada pela Kodus`,
+            );
+        }
+
+        if (entry.config.auth.type !== MCPIntegrationAuthType.OAUTH2) {
+            throw new Error('Integration is not OAuth2');
+        }
+
+        const { baseUrl } = entry.config;
+
+        const oauthState = await this.integrationOAuthService.getOAuthState(
+            organizationId,
+            integrationId,
+        );
+
+        if (!oauthState) {
+            throw new Error('OAuth metadata missing for connection');
+        }
+
+        const { clientId, clientSecret } = oauthState;
+        const {
+            redirectUri,
+            codeVerifier,
+            state: storedState,
+            asMetadata,
+        } = oauthState;
+
+        if (!asMetadata) {
+            throw new Error('OAuth metadata missing for connection');
+        }
+
+        const { token_endpoint: tokenEndpoint } = asMetadata;
+
+        if (
+            !clientId ||
+            !tokenEndpoint ||
+            !redirectUri ||
+            !codeVerifier ||
+            !storedState
+        ) {
+            throw new Error('OAuth metadata missing for connection');
+        }
+
+        if (state !== storedState) {
+            throw new Error('Invalid state parameter');
+        }
+
+        const tokens =
+            await this.integrationOAuthService.exchangeAuthorizationCode({
+                baseUrl,
+                tokenEndpoint,
+                clientId,
+                clientSecret,
+                code,
+                codeVerifier,
+                redirectUri,
+                state,
+            });
+
+        await this.integrationOAuthService.saveOAuthState(
+            organizationId,
+            integrationId,
+            MCPIntegrationOAuthStatus.ACTIVE,
+            {
+                ...oauthState,
+                tokens,
+            },
+        );
     }
 
     private async safeGetTools(client: CustomClient): Promise<MCPTool[]> {

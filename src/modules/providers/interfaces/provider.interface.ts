@@ -112,4 +112,14 @@ export interface MCPProvider {
     ): Promise<MCPTool[]>;
     initiateConnection(config: MCPConnectionConfig): Promise<MCPConnection>;
     deleteConnection(connectionId: string): Promise<void>;
+    initiateManagedOAuth?(
+        organizationId: string,
+        integrationId: string,
+    ): Promise<string>;
+    finalizeManagedOAuth?(params: {
+        organizationId: string;
+        integrationId: string;
+        code: string;
+        state: string;
+    }): Promise<void>;
 }

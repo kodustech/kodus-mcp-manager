@@ -2,7 +2,6 @@ import {
     MCPIntegrationAuthType,
     MCPIntegrationProtocol,
 } from 'src/modules/integrations/enums/integration.enum';
-import { MCPProviderType } from 'src/modules/providers/interfaces/provider.interface';
 import {
     Column,
     CreateDateColumn,
@@ -19,14 +18,6 @@ import {
 export class MCPIntegrationEntity {
     @PrimaryGeneratedColumn('uuid')
     id: string;
-
-    @Column({
-        name: 'provider',
-        type: 'enum',
-        enum: MCPProviderType,
-        default: MCPProviderType.CUSTOM,
-    })
-    provider: MCPProviderType;
 
     @Column({ name: 'active', type: 'boolean', default: true })
     active: boolean;
