@@ -129,14 +129,10 @@ export async function registerOauthClient(
         ...(oauthScopes?.length > 0 ? { scope: oauthScopes.join(' ') } : {}),
     };
 
-    console.log('Dynamic client registration with body: ', registrationBody);
-
     const regResp = await axios.post(registrationEndpoint, registrationBody, {
         headers: { 'Content-Type': 'application/json' },
         validateStatus: () => true,
     });
-
-    console.log('Dynamic client registration got response: ', regResp);
 
     if (regResp.status >= 400) {
         throw new Error(
@@ -147,8 +143,6 @@ export async function registerOauthClient(
     const client = regResp.data || {};
     const clientId: string = client.client_id;
     const clientSecret: string | undefined = client.client_secret;
-
-    console.log(`Dynamic client registration with client: ${client}`);
 
     if (!clientId) {
         throw new Error('Client registration did not return client_id');

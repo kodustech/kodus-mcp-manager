@@ -270,6 +270,11 @@ export class IntegrationOAuthService {
         } = params;
 
         try {
+            const url = new URL(baseUrl);
+            if (url.protocol !== 'https:') {
+                throw new Error('Only HTTPS is allowed for OAuth discovery');
+            }
+
             const { rs, as } = await discoverOAuth(baseUrl);
 
             const {
