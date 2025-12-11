@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IntegrationOAuthService } from '../integrations/integration-oauth.service';
 import { IntegrationsService } from '../integrations/integrations.service';
@@ -19,6 +19,7 @@ export class ProviderFactory {
         private integrationDescriptionService: IntegrationDescriptionService,
         private integrationsService: IntegrationsService,
         private integrationOAuthService: IntegrationOAuthService,
+        private logger: Logger,
     ) {
         this.initializeProviders();
     }
@@ -46,8 +47,8 @@ export class ProviderFactory {
                         'kodusmcp',
                         new KodusMCPProvider(
                             this.integrationDescriptionService,
-                            this.integrationsService,
                             this.integrationOAuthService,
+                            this.logger,
                         ),
                     );
                     break;

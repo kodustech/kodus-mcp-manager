@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EncryptionUtils } from 'src/common/utils/encryption';
@@ -35,6 +35,7 @@ export class IntegrationOAuthService {
         @InjectRepository(MCPIntegrationOAuthEntity)
         private readonly integrationOAuthRepository: Repository<MCPIntegrationOAuthEntity>,
         private readonly encryptionUtils: EncryptionUtils,
+        private readonly logger: Logger,
     ) {}
 
     private decryptAndParse<T>(
@@ -49,7 +50,9 @@ export class IntegrationOAuthService {
             const decrypted = this.encryptionUtils.decrypt(encrypted);
             return JSON.parse(decrypted) as T;
         } catch (error) {
-            console.error('Failed to decrypt or parse OAuth data:', error);
+            this.logger.error('Failed to decrypt or parse OAuth data:', {
+                error,
+            });
             return defaultValue;
         }
     }
@@ -58,33 +61,51 @@ export class IntegrationOAuthService {
         organizationId: string,
         integrationId: string,
     ): Promise<MCPIntegrationOAuthStatus | null> {
-        const entity = await this.integrationOAuthRepository.findOne({
-            where: { integrationId, organizationId },
-        });
+        try {
+            const entity = await this.integrationOAuthRepository.findOne({
+                where: { integrationId, organizationId },
+            });
 
-        if (!entity || !entity.status) {
-            return null;
+            if (!entity || !entity.status) {
+                return null;
+            }
+
+            return entity.status;
+        } catch (error) {
+            this.logger.error('Failed to get oauth status', {
+                organizationId,
+                integrationId,
+                error,
+            });
+            throw error;
         }
-
-        return entity.status;
     }
 
     async getOAuthState(
         organizationId: string,
         integrationId: string,
     ): Promise<IntegrationOAuthState | null> {
-        const entity = await this.integrationOAuthRepository.findOne({
-            where: { integrationId, organizationId },
-        });
+        try {
+            const entity = await this.integrationOAuthRepository.findOne({
+                where: { integrationId, organizationId },
+            });
 
-        if (!entity || !entity.auth) {
-            return null;
+            if (!entity || !entity.auth) {
+                return null;
+            }
+
+            return this.decryptAndParse<IntegrationOAuthState>(
+                entity.auth,
+                {} as IntegrationOAuthState,
+            );
+        } catch (error) {
+            this.logger.error('Failed to get oauth state', {
+                organizationId,
+                integrationId,
+                error,
+            });
+            throw error;
         }
-
-        return this.decryptAndParse<IntegrationOAuthState>(
-            entity.auth,
-            {} as IntegrationOAuthState,
-        );
     }
 
     async saveOAuthState(
@@ -93,25 +114,34 @@ export class IntegrationOAuthService {
         status: MCPIntegrationOAuthStatus,
         state: IntegrationOAuthState,
     ): Promise<void> {
-        const payload = this.encryptionUtils.encrypt(JSON.stringify(state));
+        try {
+            const payload = this.encryptionUtils.encrypt(JSON.stringify(state));
 
-        let entity = await this.integrationOAuthRepository.findOne({
-            where: { integrationId, organizationId },
-        });
+            let entity = await this.integrationOAuthRepository.findOne({
+                where: { integrationId, organizationId },
+            });
 
-        if (!entity) {
-            entity = this.integrationOAuthRepository.create({
+            if (!entity) {
+                entity = this.integrationOAuthRepository.create({
+                    organizationId,
+                    integrationId,
+                    auth: payload,
+                    status,
+                });
+            } else {
+                entity.auth = payload;
+                entity.status = status;
+            }
+
+            await this.integrationOAuthRepository.save(entity);
+        } catch (error) {
+            this.logger.error('Failed to save oauth state', {
                 organizationId,
                 integrationId,
-                auth: payload,
-                status,
+                error,
             });
-        } else {
-            entity.auth = payload;
-            entity.status = status;
+            throw error;
         }
-
-        await this.integrationOAuthRepository.save(entity);
     }
 
     async refreshOAuthStateIfNeeded(params: {
@@ -163,7 +193,11 @@ export class IntegrationOAuthService {
 
             return oauthState;
         } catch (error) {
-            console.error('Error checking/refreshing OAuth token:', error);
+            this.logger.error('Error checking/refreshing OAuth token:', {
+                organizationId,
+                integrationId,
+                error,
+            });
             return oauthState;
         }
     }
@@ -171,34 +205,43 @@ export class IntegrationOAuthService {
     async refreshIntegrationOAuthIfNeeded(
         entity: MCPIntegrationEntity,
     ): Promise<void> {
-        if (entity.authType !== MCPIntegrationAuthType.OAUTH2) {
-            return;
+        try {
+            if (entity.authType !== MCPIntegrationAuthType.OAUTH2) {
+                return;
+            }
+
+            const config = this.decryptAndParse<
+                MCPIntegrationUniqueFields<MCPIntegrationAuthType.OAUTH2>
+            >(entity.auth, {} as any);
+
+            const oauthState = await this.getOAuthState(
+                entity.organizationId,
+                entity.id,
+            );
+
+            if (!oauthState) {
+                return;
+            }
+
+            const mergedState: IntegrationOAuthState = {
+                ...oauthState,
+                clientId: oauthState.clientId ?? config.clientId,
+                clientSecret: oauthState.clientSecret ?? config.clientSecret,
+            };
+
+            await this.refreshOAuthStateIfNeeded({
+                organizationId: entity.organizationId,
+                integrationId: entity.id,
+                oauthState: mergedState,
+            });
+        } catch (error) {
+            this.logger.error('Failed to refresh integration oauth', {
+                organizationId: entity.organizationId,
+                integrationId: entity.id,
+                error,
+            });
+            throw error;
         }
-
-        const config = this.decryptAndParse<
-            MCPIntegrationUniqueFields<MCPIntegrationAuthType.OAUTH2>
-        >(entity.auth, {} as any);
-
-        const oauthState = await this.getOAuthState(
-            entity.organizationId,
-            entity.id,
-        );
-
-        if (!oauthState) {
-            return;
-        }
-
-        const mergedState: IntegrationOAuthState = {
-            ...oauthState,
-            clientId: oauthState.clientId ?? config.clientId,
-            clientSecret: oauthState.clientSecret ?? config.clientSecret,
-        };
-
-        await this.refreshOAuthStateIfNeeded({
-            organizationId: entity.organizationId,
-            integrationId: entity.id,
-            oauthState: mergedState,
-        });
     }
 
     async initiateOAuth(params: {
@@ -226,65 +269,72 @@ export class IntegrationOAuthService {
             clientSecret,
         } = params;
 
-        const { rs, as } = await discoverOAuth(baseUrl);
+        try {
+            const { rs, as } = await discoverOAuth(baseUrl);
 
-        const {
-            authorization_endpoint: authorizationEndpoint,
-            token_endpoint: tokenEndpoint,
-            registration_endpoint: registrationEndpoint,
-        } = as;
+            const {
+                authorization_endpoint: authorizationEndpoint,
+                token_endpoint: tokenEndpoint,
+                registration_endpoint: registrationEndpoint,
+            } = as;
 
-        if (!authorizationEndpoint || !tokenEndpoint) {
-            throw new Error('Missing authorization or token endpoints');
-        }
+            if (!authorizationEndpoint || !tokenEndpoint) {
+                throw new Error('Missing authorization or token endpoints');
+            }
 
-        const redirectUri = this.configService.get<string>('redirectUri');
+            const redirectUri = this.configService.get<string>('redirectUri');
 
-        if (!redirectUri) {
-            throw new Error('Redirect URI is not configured');
-        }
+            if (!redirectUri) {
+                throw new Error('Redirect URI is not configured');
+            }
 
-        let effectiveClientId = clientId;
-        let effectiveClientSecret = clientSecret;
+            let effectiveClientId = clientId;
+            let effectiveClientSecret = clientSecret;
 
-        if (dynamicRegistration && registrationEndpoint) {
-            const regResult = await registerOauthClient(
-                registrationEndpoint,
+            if (dynamicRegistration && registrationEndpoint) {
+                const regResult = await registerOauthClient(
+                    registrationEndpoint,
+                    redirectUri,
+                    oauthScopes,
+                );
+                effectiveClientId = regResult.clientId;
+                effectiveClientSecret = regResult.clientSecret;
+            } else if (!effectiveClientId) {
+                throw new Error(
+                    'A client_id is required, and dynamic client registration is not supported.',
+                );
+            }
+
+            const { verifier, challenge } = generatePKCE();
+            const state = generateState();
+
+            const authUrl = buildAuthorizationUrl({
+                authorizationEndpoint,
+                clientId: effectiveClientId,
                 redirectUri,
+                challenge,
+                state,
+                baseUrl,
                 oauthScopes,
-            );
-            effectiveClientId = regResult.clientId;
-            effectiveClientSecret = regResult.clientSecret;
-        } else if (!effectiveClientId) {
-            throw new Error(
-                'A client_id is required, and dynamic client registration is not supported.',
-            );
+            });
+
+            return {
+                authUrl,
+                clientId: effectiveClientId,
+                clientSecret: effectiveClientSecret,
+                rs,
+                as,
+                redirectUri,
+                codeChallenge: challenge,
+                codeVerifier: verifier,
+                state,
+            };
+        } catch (error) {
+            this.logger.error('Failed to initiate OAuth', {
+                error,
+            });
+            throw error;
         }
-
-        const { verifier, challenge } = generatePKCE();
-        const state = generateState();
-
-        const authUrl = buildAuthorizationUrl({
-            authorizationEndpoint,
-            clientId: effectiveClientId,
-            redirectUri,
-            challenge,
-            state,
-            baseUrl,
-            oauthScopes,
-        });
-
-        return {
-            authUrl,
-            clientId: effectiveClientId,
-            clientSecret: effectiveClientSecret,
-            rs,
-            as,
-            redirectUri,
-            codeChallenge: challenge,
-            codeVerifier: verifier,
-            state,
-        };
     }
 
     async exchangeAuthorizationCode(params: {
@@ -308,28 +358,42 @@ export class IntegrationOAuthService {
             state,
         } = params;
 
-        const resource = getCanonicalResourceUri(baseUrl);
+        try {
+            const resource = getCanonicalResourceUri(baseUrl);
 
-        const tokens = await exchangeCodeForTokens(tokenEndpoint, {
-            clientId,
-            clientSecret,
-            code,
-            codeVerifier,
-            redirectUri,
-            resource,
-            state,
-        });
+            const tokens = await exchangeCodeForTokens(tokenEndpoint, {
+                clientId,
+                clientSecret,
+                code,
+                codeVerifier,
+                redirectUri,
+                resource,
+                state,
+            });
 
-        return tokens;
+            return tokens;
+        } catch (error) {
+            this.logger.error('Failed to exchange authorization code', {
+                error,
+            });
+            throw error;
+        }
     }
 
     async deleteOAuthState(
         organizationId: string,
         integrationId: string,
     ): Promise<void> {
-        await this.integrationOAuthRepository.delete({
-            organizationId,
-            integrationId,
-        });
+        try {
+            await this.integrationOAuthRepository.delete({
+                organizationId,
+                integrationId,
+            });
+        } catch (error) {
+            this.logger.error('Failed to delete OAuth state', {
+                error,
+            });
+            throw error;
+        }
     }
 }
