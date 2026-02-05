@@ -14,9 +14,7 @@ const requiredEnvVars = [
 
 for (const envVar of requiredEnvVars) {
     if (!process.env[envVar]) {
-        throw new Error(
-            `Variável de ambiente obrigatória não encontrada: ${envVar}`,
-        );
+        throw new Error(`Required environment variable not found: ${envVar}`);
     }
 }
 

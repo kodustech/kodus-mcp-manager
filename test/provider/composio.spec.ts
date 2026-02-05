@@ -5,7 +5,7 @@ import { MCPConnectionStatus } from '../../src/modules/mcp/entities/mcp-connecti
 import { Test, TestingModule } from '@nestjs/testing';
 import { IntegrationDescriptionService } from '../../src/modules/providers/services/integration-description.service';
 
-// Mock das dependências
+// Dependencies mock
 jest.mock('../../src/clients/composio', () => ({
   ComposioClient: jest.fn().mockImplementation(() => ({
     getIntegrations: jest.fn(),

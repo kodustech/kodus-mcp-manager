@@ -63,7 +63,7 @@ export class ProviderFactory {
                     );
                     break;
                 default:
-                    throw new Error(`Provider ${provider} não suportado`);
+                    throw new Error(`Provider ${provider} not supported`);
             }
         }
     }
@@ -71,7 +71,7 @@ export class ProviderFactory {
     getProvider(type: ProviderType): MCPProvider {
         const provider = this.providers.get(type);
         if (!provider) {
-            throw new Error(`Provider ${type} não encontrado`);
+            throw new Error(`Provider ${type} not found`);
         }
         return provider;
     }

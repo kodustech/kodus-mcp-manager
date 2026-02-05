@@ -1,52 +1,52 @@
 #!/bin/bash
 
-# Subir o container PostgreSQL (se não estiver rodando)
-echo "🐳 Verificando/subindo container PostgreSQL..."
+# Start PostgreSQL container (if not running)
+echo "🐳 Checking/starting PostgreSQL container..."
 if ! docker ps | grep -q kodus-mcp-postgres; then
   docker compose up -d postgres
 fi
 
-# Aguardar o container do banco estar pronto
-echo "⏳ Aguardando banco de dados ficar disponível..."
+# Wait for the database container to be ready
+echo "⏳ Waiting for database to become available..."
 until docker exec kodus-mcp-postgres pg_isready -U kodus >/dev/null 2>&1; do
   echo -n "."
   sleep 2
 done
 echo ""
-echo "✅ Banco de dados está disponível!"
+echo "✅ Database is available!"
 
-# Criar banco de teste (se não existir)
-echo "🗄️ Criando banco de teste..."
-docker exec kodus-mcp-postgres psql -U kodus -d kodus_mcp -c "CREATE DATABASE kodus_mcp_test;" 2>/dev/null || echo "Banco de teste já existe ou erro ao criar (continuando...)"
+# Create test database (if it doesn't exist)
+echo "🗄️ Creating test database..."
+docker exec kodus-mcp-postgres psql -U kodus -d kodus_mcp -c "CREATE DATABASE kodus_mcp_test;" 2>/dev/null || echo "Test database already exists or error creating it (continuing...)"
 
-# Aguardar um pouco para garantir que o banco está disponível
+# Wait a bit to ensure the database is available
 sleep 2
 
-# Executar migrations no banco de teste
-echo "🔄 Executando migrations no banco de teste..."
+# Run migrations on the test database
+echo "🔄 Running migrations on test database..."
 yarn run migration:run
 
 if [ $? -eq 0 ]; then
-  echo "✅ Migrations executadas com sucesso!"
+  echo "✅ Migrations executed successfully!"
 else
-  echo "❌ Erro ao executar migrations"
+  echo "❌ Error executing migrations"
   exit 1
 fi
 
-# Executar os testes e2e
-echo "🧪 Executando testes E2E..."
+# Run E2E tests
+echo "🧪 Running E2E tests..."
 yarn jest --config jest.config.json --verbose --detectOpenHandles --forceExit --coverage --runInBand
 
-# Capturar o código de saída dos testes
+# Capture test exit code
 TEST_EXIT_CODE=$?
 
-# Limpar banco de teste após os testes
-echo "🧹 Limpando banco de teste..."
-docker exec kodus-mcp-postgres psql -U kodus -d kodus_mcp -c "DROP DATABASE IF EXISTS kodus_mcp_test;" 2>/dev/null || echo "Erro ao limpar banco de teste (não é crítico)"
+# Clean up test database after tests
+echo "🧹 Cleaning up test database..."
+docker exec kodus-mcp-postgres psql -U kodus -d kodus_mcp -c "DROP DATABASE IF EXISTS kodus_mcp_test;" 2>/dev/null || echo "Error cleaning up test database (not critical)"
 
 if [ $TEST_EXIT_CODE -eq 0 ]; then
-  echo "✅ Testes E2E concluídos com sucesso!"
+  echo "✅ E2E tests completed successfully!"
 else
-  echo "❌ Testes E2E falharam!"
+  echo "❌ E2E tests failed!"
   exit $TEST_EXIT_CODE
 fi

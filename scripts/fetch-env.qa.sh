@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Lista de todas as chaves que você precisa
+# List of all keys you need
 KEYS=(
     "/qa/kodus-mcp-manager/API_MCP_MANAGER_LOG_LEVEL"
     "/qa/kodus-mcp-manager/API_MCP_MANAGER_PORT"
@@ -21,14 +21,14 @@ KEYS=(
     "/qa/kodus-mcp-manager/API_MCP_MANAGER_ENCRYPTION_SECRET"
 )
 
-# Lista de todas as chaves que você precisa
+# List of all keys you need
 
 ENV_FILE=".env.qa"
 
-# Limpe o arquivo .env existente ou crie um novo
+# Clear existing .env file or create a new one
 >$ENV_FILE
 
-# Busque cada chave e adicione-a ao arquivo .env
+# Fetch each key and add it to the .env file
 for KEY in "${KEYS[@]}"; do
     VALUE=$(aws ssm get-parameter --name "$KEY" --with-decryption --query "Parameter.Value" --output text)
     echo "${KEY##*/}=$VALUE" >>$ENV_FILE

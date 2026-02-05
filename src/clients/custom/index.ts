@@ -9,6 +9,8 @@ import {
 export class CustomClient {
     private readonly clientInstance: MCPAdapter;
     private connected: boolean = false;
+    private connectionCount: number = 0;
+    private connectionPromise: Promise<void> | null = null;
 
     constructor(
         private readonly integration: MCPIntegrationInterface & {
@@ -63,17 +65,35 @@ export class CustomClient {
     }
 
     async connect() {
-        if (this.connected) {
+        this.connectionCount++;
+        if (this.connected) return;
+
+        if (this.connectionPromise) {
+            await this.connectionPromise;
             return;
         }
-        await this.clientInstance.connect();
-        this.connected = true;
+
+        this.connectionPromise = (async () => {
+            try {
+                await this.clientInstance.connect();
+                this.connected = true;
+            } finally {
+                this.connectionPromise = null;
+            }
+        })();
+
+        await this.connectionPromise;
     }
 
     async disconnect() {
-        if (!this.connected) {
-            return;
-        }
+        this.connectionCount--;
+        if (this.connectionCount > 0) return;
+
+        // Safety reset
+        this.connectionCount = 0;
+
+        if (!this.connected) return;
+
         await this.clientInstance.disconnect();
         this.connected = false;
     }
@@ -82,7 +102,6 @@ export class CustomClient {
         try {
             await this.connect();
             const response = await this.clientInstance.getTools();
-            await this.disconnect();
 
             if (!Array.isArray(response)) {
                 throw new Error('Tools endpoint did not return an array');
@@ -97,11 +116,12 @@ export class CustomClient {
                 warning: false,
             }));
         } catch (error) {
-            await this.disconnect();
             console.error(`Failed to fetch custom tools:`, error.message);
             throw new Error(
                 `Failed to fetch tools from custom integration: ${error.message}`,
             );
+        } finally {
+            await this.disconnect();
         }
     }
 }

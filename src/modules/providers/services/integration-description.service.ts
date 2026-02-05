@@ -24,7 +24,7 @@ export class IntegrationDescriptionService {
       const fileContent = readFileSync(filePath, 'utf8');
       this.descriptions = JSON.parse(fileContent);
     } catch (error) {
-      console.warn('Erro ao carregar descrições das integrações:', error);
+      console.warn('Error loading integration descriptions:', error);
       this.descriptions = {};
     }
   }
@@ -45,6 +45,6 @@ export class IntegrationDescriptionService {
 
   private generateFallbackDescription(appName: string): string {
     const formattedAppName = appName.charAt(0).toUpperCase() + appName.slice(1);
-    return `Integração com ${formattedAppName} para automação e gerenciamento de tarefas.`;
+    return `Integration with ${formattedAppName} for automation and task management.`;
   }
 } 
