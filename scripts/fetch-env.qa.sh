@@ -20,16 +20,16 @@ KEYS=(
 
     "/qa/kodus-mcp-manager/API_MCP_MANAGER_PG_DB_SCHEMA"
 
-    "/qa/kodus-mcp-manager/API_MCP_MANAGER_ENCRYPTION_SECRET"
+    # Fetch DB settings from orchestrator to avoid duplication
+    "/qa/kodus-orchestrator/API_PG_DB_HOST"
+    "/qa/kodus-orchestrator/API_PG_DB_PORT"
+    "/qa/kodus-orchestrator/API_PG_DB_USERNAME"
+    "/qa/kodus-orchestrator/API_PG_DB_PASSWORD"
+    "/qa/kodus-orchestrator/API_PG_DB_DATABASE"
 
-    "/qa/kodus-mcp-manager/API_DOCS_ENABLED"
-    "/qa/kodus-mcp-manager/API_DOCS_PATH"
-    "/qa/kodus-mcp-manager/API_DOCS_SPEC_PATH"
-    "/qa/kodus-mcp-manager/API_DOCS_IP_ALLOWLIST"
-    "/qa/kodus-mcp-manager/API_DOCS_BASIC_USER"
-    "/qa/kodus-mcp-manager/API_DOCS_BASIC_PASS"
-    "/qa/kodus-mcp-manager/API_DOCS_SERVER_URLS"
-    "/qa/kodus-mcp-manager/API_DOCS_BASE_URL"  
+    "/qa/kodus-mcp-manager/API_MCP_MANAGER_ENCRYPTION_SECRET"
+    "/qa/kodus-orchestrator/API_DOCS_BASIC_USER"
+    "/qa/kodus-orchestrator/API_DOCS_BASIC_PASS"
 )
 
 # List of all keys you need
@@ -39,8 +39,23 @@ ENV_FILE=".env.qa"
 # Clear existing .env file or create a new one
 >$ENV_FILE
 
-# Fetch each key and add it to the .env file
+# Fetch each key and add it to the .env file (wrap in single quotes)
+escape_squotes() {
+    printf "%s" "$1" | sed "s/'/'\"'\"'/g"
+}
+
 for KEY in "${KEYS[@]}"; do
     VALUE=$(aws ssm get-parameter --name "$KEY" --with-decryption --query "Parameter.Value" --output text)
-    echo "${KEY##*/}=$VALUE" >>$ENV_FILE
+    SAFE=$(escape_squotes "$VALUE")
+    echo "${KEY##*/}='${SAFE}'" >> "$ENV_FILE"
 done
+
+# Fixed overrides for docs
+{
+    echo "API_DOCS_ENABLED='false'"
+    echo "API_DOCS_PATH='/docs'"
+    echo "API_DOCS_SPEC_PATH='/openapi.json'"
+    echo "API_DOCS_IP_ALLOWLIST='"
+    echo "API_DOCS_SERVER_URLS="
+    echo "API_DOCS_BASE_URL="
+} >> "$ENV_FILE"
