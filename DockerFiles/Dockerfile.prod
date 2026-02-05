@@ -1,14 +1,14 @@
-FROM --platform=linux/amd64 node:22.14.0-slim AS production
+FROM node:22.22.0-slim AS production
 
 WORKDIR /app
 
-# Instalação de Dependências
+# Dependency Installation
 COPY package.json yarn.lock ./
 
-# Copiando a aplicação
+# Copying the application
 COPY . .
 
-# Instale apenas as dependências de produção
+# Install production dependencies only
 RUN yarn install && yarn build
 
 RUN yarn global add pm2 && \
@@ -21,10 +21,10 @@ RUN yarn global add pm2 && \
     pm2 set pm2-logrotate:rotateInterval '0 0 * * *' && \
     pm2 set pm2-logrotate:rotateModule true
 
-# Expondo a porta
+# Exposing the port
 EXPOSE 3101
 ENV NODE_ENV=production
 ENV API_MCP_MANAGER_NODE_ENV=production
 
-# Comando de inicialização usando PM2
-CMD ["pm2-runtime", "start", "ecosystem.config.js", "--env", "production"] 
+# Startup command using PM2
+CMD ["pm2-runtime", "start", "ecosystem.config.js", "--env", "production"]

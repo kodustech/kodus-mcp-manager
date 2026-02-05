@@ -1,0 +1,7 @@
+extends: spectral:oas
+rules:
+  operation-description: error
+  operation-summary: error
+  operation-tags: error
+  operation-tag-defined: error
+  tag-description: error

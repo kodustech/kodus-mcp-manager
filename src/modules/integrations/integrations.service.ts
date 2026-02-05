@@ -366,7 +366,7 @@ export class IntegrationsService {
                 integrationId,
             });
 
-            let entity = await this.integrationRepository.findOne({
+            const entity = await this.integrationRepository.findOne({
                 where: {
                     id: integrationId,
                     organizationId,
@@ -403,7 +403,7 @@ export class IntegrationsService {
                 integrationId,
             });
 
-            let entity = await this.integrationRepository.findOne({
+            const entity = await this.integrationRepository.findOne({
                 where: {
                     id: integrationId,
                     organizationId,
@@ -498,7 +498,7 @@ export class IntegrationsService {
         try {
             const queryBuilder = this.buildQuery(filters);
 
-            let entity = await queryBuilder.getOne();
+            const entity = await queryBuilder.getOne();
 
             if (entity) {
                 await this.integrationOAuthService.refreshIntegrationOAuthIfNeeded(

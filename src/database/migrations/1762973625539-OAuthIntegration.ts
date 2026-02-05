@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class OAuthIntegration1762973625539 implements MigrationInterface {
-    name = 'OAuthIntegration1762973625539'
+    name = 'OAuthIntegration1762973625539';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -60,5 +60,4 @@ export class OAuthIntegration1762973625539 implements MigrationInterface {
             RENAME TO "mcp_integrations_authtype_enum"
         `);
     }
-
 }

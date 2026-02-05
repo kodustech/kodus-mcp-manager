@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class OauthState1765405906994 implements MigrationInterface {
-    name = 'OauthState1765405906994'
+    name = 'OauthState1765405906994';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -30,5 +30,4 @@ export class OauthState1765405906994 implements MigrationInterface {
             DROP TYPE "mcp-manager"."mcp_integration_oauth_status_enum"
         `);
     }
-
 }

@@ -1,22 +1,29 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsArray,
-  IsNotEmpty,
-  IsObject,
-  IsOptional,
-  IsString,
+    IsArray,
+    IsNotEmpty,
+    IsObject,
+    IsOptional,
+    IsString,
 } from 'class-validator';
 
 export class InitiateConnectionDto {
-  @IsString()
-  @IsNotEmpty()
-  integrationId: string;
+    @ApiProperty({ example: 'int_456' })
+    @IsString()
+    @IsNotEmpty()
+    integrationId: string;
 
-  @IsArray()
-  @IsString({ each: true })
-  @IsOptional()
-  allowedTools?: string[];
+    @ApiPropertyOptional({ type: [String], example: ['repo.read'] })
+    @IsArray()
+    @IsString({ each: true })
+    @IsOptional()
+    allowedTools?: string[];
 
-  @IsObject()
-  @IsOptional()
-  authParams?: Record<string, any>;
+    @ApiPropertyOptional({
+        description: 'Provider-specific authentication parameters',
+        example: { apiKey: '***' },
+    })
+    @IsObject()
+    @IsOptional()
+    authParams?: Record<string, any>;
 }

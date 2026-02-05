@@ -1,6 +1,6 @@
 # 🚀 Kodus MCP Manager
 
-![Node.js](https://img.shields.io/badge/Node.js-v18+-green)
+![Node.js](https://img.shields.io/badge/Node.js-v22.22.0-green)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.1+-blue)
 ![NestJS](https://img.shields.io/badge/NestJS-10.0+-red)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)
@@ -21,6 +21,7 @@
 - [🆕 Adding a New Provider](#-adding-a-new-provider)
 - [🧪 Testing](#-testing)
 - [📫 Postman](#-postman)
+- [📚 OpenAPI / Swagger](#-openapi--swagger)
 - [🐛 Troubleshooting](#-troubleshooting)
 
 ---
@@ -29,7 +30,7 @@
 
 | Tool                    | Minimum Version | Status      | Description              |
 | ----------------------- | --------------- | ----------- | ------------------------ |
-| 📟 **Node.js**          | v18+            | ✅ Required | JavaScript runtime       |
+| 📟 **Node.js**          | v22.22.0        | ✅ Required | JavaScript runtime       |
 | 🐳 **Docker**           | Latest          | ✅ Required | For PostgreSQL           |
 | 🐳 **Docker Compose**   | Latest          | ✅ Required | Container orchestration  |
 | 🔑 **Composio API Key** | -               | ✅ Required | For Composio integration |
@@ -391,6 +392,46 @@ Creates an integration for the organization with the specified provider. The int
 
 ```bash
 POST /mcp/integration/kodusmcp
+```
+
+---
+
+## 📚 OpenAPI / Swagger
+
+Swagger UI and OpenAPI JSON are exposed **only in development and qa environments** and require `API_DOCS_ENABLED=true`.
+
+### 🔐 Basic Auth (required)
+
+Set the following environment variables:
+
+```bash
+API_DOCS_ENABLED=true
+API_DOCS_PATH=/docs
+API_DOCS_SPEC_PATH=/openapi.json
+API_DOCS_IP_ALLOWLIST=103.72.59.0/24
+API_DOCS_BASIC_USER=dev
+API_DOCS_BASIC_PASS=devpass
+API_DOCS_SERVER_URLS=
+API_DOCS_BASE_URL=
+```
+
+### 📄 Endpoints
+
+- Swagger UI: `/docs`
+- OpenAPI JSON: `/openapi.json`
+
+### 📦 Export OpenAPI
+
+```bash
+OPENAPI_SOURCE_URL=http://localhost:3101/openapi.json \
+OPENAPI_BASIC_AUTH=dev:devpass \
+yarn openapi:export
+```
+
+### ✅ Lint OpenAPI
+
+```bash
+yarn openapi:lint
 ```
 
 ---

@@ -1,24 +1,21 @@
-FROM --platform=linux/amd64 node:22.14.0-slim AS development
+FROM node:22.22.0-slim AS development
 
-WORKDIR /usr/src/app
+WORKDIR /app
 
-EXPOSE 3101
-
-# Defina a variável de ambiente NODE_ENV para "development"
+# Set NODE_ENV to "development"
 ENV NODE_ENV=development
-ENV API_MCP_MANAGER_NODE_ENV=development
 
-# Copie os arquivos do projeto
+# Dependency Installation
 COPY package.json yarn.lock ./
 
-# Instale dependências do sistema e do projeto
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends procps \
-    && rm -rf /var/lib/apt/lists/* \
-    && yarn install
+# Install system and project dependencies
+RUN yarn install
 
-# Copie o resto dos arquivos
+# Copying the application
 COPY . .
 
-# Comando de inicialização para desenvolvimento
+# Exposing the port
+EXPOSE 3101
+
+# Startup command for development
 CMD ["yarn", "start:dev"]

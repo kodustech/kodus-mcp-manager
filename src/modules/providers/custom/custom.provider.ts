@@ -160,7 +160,7 @@ export class CustomProvider extends BaseProvider {
                 throw new NotFoundException('Custom integration not found');
             }
 
-            let integration = baseIntegration;
+            const integration = baseIntegration;
 
             if (integration.authType === MCPIntegrationAuthType.OAUTH2) {
                 const oauthState =

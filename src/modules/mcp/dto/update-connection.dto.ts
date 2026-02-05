@@ -1,21 +1,35 @@
-import { IsNotEmpty, IsObject, IsOptional, IsString, IsArray } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+    IsNotEmpty,
+    IsObject,
+    IsOptional,
+    IsString,
+    IsArray,
+} from 'class-validator';
 
 export class UpdateConnectionDto {
-  @IsString()
-  @IsNotEmpty()
-  integrationId: string;
+    @ApiProperty({ example: 'int_456' })
+    @IsString()
+    @IsNotEmpty()
+    integrationId: string;
 
-  @IsString()
-  @IsOptional()
-  status?: string;
+    @ApiPropertyOptional({ example: 'ACTIVE' })
+    @IsString()
+    @IsOptional()
+    status?: string;
 
-  @IsObject()
-  @IsOptional()
-  metadata?: Record<string, any>;
+    @ApiPropertyOptional({
+        description: 'Metadata to merge into existing connection metadata',
+        example: { note: 'Updated by admin' },
+    })
+    @IsObject()
+    @IsOptional()
+    metadata?: Record<string, any>;
 }
 
 export class UpdateAllowedToolsDto {
-  @IsArray()
-  @IsString({ each: true })
-  allowedTools: string[];
+    @ApiProperty({ type: [String], example: ['repo.read', 'issue.create'] })
+    @IsArray()
+    @IsString({ each: true })
+    allowedTools: string[];
 }

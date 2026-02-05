@@ -9,6 +9,8 @@ import {
 export class CustomClient {
     private readonly clientInstance: MCPAdapter;
     private connected: boolean = false;
+    private connectionCount: number = 0;
+    private connectionPromise: Promise<void> | null = null;
 
     constructor(
         private readonly integration: MCPIntegrationInterface & {
@@ -63,19 +65,37 @@ export class CustomClient {
     }
 
     async connect() {
-        if (this.connected) {
+        this.connectionCount++;
+        if (this.connected) return;
+
+        if (this.connectionPromise) {
+            await this.connectionPromise;
             return;
         }
-        await this.clientInstance.connect();
-        this.connected = true;
+
+        this.connectionPromise = (async () => {
+            try {
+                await this.clientInstance.connect();
+                this.connected = true;
+            } finally {
+                this.connectionPromise = null;
+            }
+        })();
+
+        await this.connectionPromise;
     }
 
     async disconnect() {
-        if (!this.connected) {
-            return;
-        }
-        await this.clientInstance.disconnect();
+        this.connectionCount--;
+        if (this.connectionCount > 0) return;
+
+        // Safety reset
+        this.connectionCount = 0;
+
+        if (!this.connected) return;
+
         this.connected = false;
+        await this.clientInstance.disconnect();
     }
 
     async getTools(): Promise<MCPTool[]> {
