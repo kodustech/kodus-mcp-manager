@@ -408,7 +408,6 @@ Set the following environment variables:
 API_DOCS_ENABLED=true
 API_DOCS_PATH=/docs
 API_DOCS_SPEC_PATH=/openapi.json
-API_DOCS_IP_ALLOWLIST=103.72.59.0/24
 API_DOCS_BASIC_USER=dev
 API_DOCS_BASIC_PASS=devpass
 API_DOCS_SERVER_URLS=

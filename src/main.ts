@@ -6,12 +6,7 @@ import {
     NestFastifyApplication,
 } from '@nestjs/platform-fastify';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import {
-    extractClientIp,
-    isIpAllowed,
-    parseBasicAuth,
-    validateBasicAuth,
-} from './common/utils/docs-auth';
+import { parseBasicAuth, validateBasicAuth } from './common/utils/docs-auth';
 
 async function bootstrap() {
     const app = await NestFactory.create<NestFastifyApplication>(
@@ -37,17 +32,17 @@ async function bootstrap() {
         }),
     );
 
-  const docsEnabledFlag =
-    (process.env.API_DOCS_ENABLED || '').toLowerCase() === 'true';
-  const docsUser = process.env.API_DOCS_BASIC_USER ?? '';
-  const docsPass = process.env.API_DOCS_BASIC_PASS ?? '';
-  const basicEnabled = !!docsUser && !!docsPass;
-  const docsEnabled = docsEnabledFlag && basicEnabled;
-  if (docsEnabledFlag && !basicEnabled) {
-    console.warn(
-      'API_DOCS_BASIC_USER/API_DOCS_BASIC_PASS required to enable docs. Docs disabled.',
-    );
-  }
+    const docsEnabledFlag =
+        (process.env.API_DOCS_ENABLED || '').toLowerCase() === 'true';
+    const docsUser = process.env.API_DOCS_BASIC_USER ?? '';
+    const docsPass = process.env.API_DOCS_BASIC_PASS ?? '';
+    const basicEnabled = !!docsUser && !!docsPass;
+    const docsEnabled = docsEnabledFlag && basicEnabled;
+    if (docsEnabledFlag && !basicEnabled) {
+        console.warn(
+            'API_DOCS_BASIC_USER/API_DOCS_BASIC_PASS required to enable docs. Docs disabled.',
+        );
+    }
     if (docsEnabled) {
         const rawDocsPath = process.env.API_DOCS_PATH || '/docs';
         const rawDocsSpecPath =
@@ -58,12 +53,6 @@ async function bootstrap() {
         const docsSpecPath = rawDocsSpecPath.startsWith('/')
             ? rawDocsSpecPath
             : `/${rawDocsSpecPath}`;
-        const allowlistRaw = process.env.API_DOCS_IP_ALLOWLIST || '';
-        const allowlist = allowlistRaw
-            .split(',')
-            .map((entry) => entry.trim())
-            .filter(Boolean);
-
         const fastify = app.getHttpAdapter().getInstance();
         fastify.addHook('onRequest', async (request, reply) => {
             const url = request.raw?.url || request.url || '';
@@ -73,18 +62,6 @@ async function bootstrap() {
                 url === docsSpecPath ||
                 url.startsWith(`${docsSpecPath}/`)
             ) {
-                const ip = extractClientIp(request.headers, request.ip);
-                if (
-                    (!ip && allowlist.length > 0) ||
-                    (ip && !isIpAllowed(ip, allowlist))
-                ) {
-                    reply.status(403).send({
-                        statusCode: 403,
-                        message: 'Forbidden',
-                    });
-                    return;
-                }
-
                 const credentials = parseBasicAuth(
                     request.headers.authorization,
                 );
