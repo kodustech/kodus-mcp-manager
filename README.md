@@ -398,7 +398,7 @@ POST /mcp/integration/kodusmcp
 
 ## 📚 OpenAPI / Swagger
 
-Swagger UI and OpenAPI JSON are exposed **only in development and qa environments** and require `API_DOCS_ENABLED=true`.
+Swagger UI and OpenAPI JSON are exposed when `API_DOCS_ENABLED=true`.
 
 ### 🔐 Basic Auth (required)
 

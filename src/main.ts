@@ -37,19 +37,17 @@ async function bootstrap() {
         }),
     );
 
-    const docsEnv = process.env.API_MCP_MANAGER_NODE_ENV || 'development';
-    const docsEnabledEnv = docsEnv === 'development' || docsEnv === 'qa';
-    const docsEnabledFlag =
-        (process.env.API_DOCS_ENABLED || '').toLowerCase() === 'true';
-    const docsUser = process.env.API_DOCS_BASIC_USER ?? '';
-    const docsPass = process.env.API_DOCS_BASIC_PASS ?? '';
-    const basicEnabled = !!docsUser && !!docsPass;
-    const docsEnabled = docsEnabledEnv && docsEnabledFlag && basicEnabled;
-    if (docsEnabledFlag && docsEnabledEnv && !basicEnabled) {
-        console.warn(
-            'API_DOCS_BASIC_USER/API_DOCS_BASIC_PASS required to enable docs. Docs disabled.',
-        );
-    }
+  const docsEnabledFlag =
+    (process.env.API_DOCS_ENABLED || '').toLowerCase() === 'true';
+  const docsUser = process.env.API_DOCS_BASIC_USER ?? '';
+  const docsPass = process.env.API_DOCS_BASIC_PASS ?? '';
+  const basicEnabled = !!docsUser && !!docsPass;
+  const docsEnabled = docsEnabledFlag && basicEnabled;
+  if (docsEnabledFlag && !basicEnabled) {
+    console.warn(
+      'API_DOCS_BASIC_USER/API_DOCS_BASIC_PASS required to enable docs. Docs disabled.',
+    );
+  }
     if (docsEnabled) {
         const rawDocsPath = process.env.API_DOCS_PATH || '/docs';
         const rawDocsSpecPath =
