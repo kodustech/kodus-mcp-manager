@@ -162,7 +162,7 @@ export class KodusMCPProvider extends BaseProvider {
 
             if (integration.id !== integrationId) {
                 throw new Error(
-                    `Integration ${integrationId} not supported by Kodus`,
+                    `Integration ${integrationId} não suportada pela Kodus`,
                 );
             }
 
@@ -288,7 +288,7 @@ export class KodusMCPProvider extends BaseProvider {
             }
 
             throw new Error(
-                `Integration ${config.integrationId} not supported for Kodus connection`,
+                `Integration ${config.integrationId} não suportada para conexão Kodus`,
             );
         } catch (error) {
             this.logger.error('Failed to initiate connection:', {
@@ -355,7 +355,7 @@ export class KodusMCPProvider extends BaseProvider {
 
         if (!entry) {
             throw new Error(
-                `Integration ${integrationId} not supported by Kodus`,
+                `Integration ${integrationId} não suportada pela Kodus`,
             );
         }
 
@@ -406,7 +406,7 @@ export class KodusMCPProvider extends BaseProvider {
 
         if (!entry) {
             throw new Error(
-                `Integration ${integrationId} not supported by Kodus`,
+                `Integration ${integrationId} não suportada pela Kodus`,
             );
         }
 
@@ -444,7 +444,7 @@ export class KodusMCPProvider extends BaseProvider {
             });
         }
 
-        return entry.client;
+        return new CustomClient(baseIntegration);
     }
 
     async initiateManagedOAuth(
@@ -456,7 +456,7 @@ export class KodusMCPProvider extends BaseProvider {
 
             if (!entry) {
                 throw new Error(
-                    `Integration ${integrationId} not supported by Kodus`,
+                    `Integration ${integrationId} não suportada pela Kodus`,
                 );
             }
 
@@ -518,7 +518,7 @@ export class KodusMCPProvider extends BaseProvider {
 
             if (!entry) {
                 throw new Error(
-                    `Integration ${integrationId} not supported by Kodus`,
+                    `Integration ${integrationId} não suportada pela Kodus`,
                 );
             }
 

@@ -1,7 +1,16 @@
 import { Controller, Get } from '@nestjs/common';
+import {
+  ApiInternalServerErrorResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
+import { ErrorResponseDto } from '../common/dto';
+import { HealthResponseDto } from './dto/health-response.dto';
 
+@ApiTags('Health')
 @Controller('health')
 export class HealthController {
   constructor(
@@ -10,6 +19,12 @@ export class HealthController {
   ) {}
 
   @Get()
+  @ApiOperation({
+    summary: 'Health check',
+    description: 'Returns service health, environment, and dependency status.',
+  })
+  @ApiOkResponse({ type: HealthResponseDto })
+  @ApiInternalServerErrorResponse({ type: ErrorResponseDto })
   async getHealth() {
     let databaseStatus = 'error';
 
