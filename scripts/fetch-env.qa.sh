@@ -21,6 +21,15 @@ KEYS=(
     "/qa/kodus-mcp-manager/API_MCP_MANAGER_PG_DB_SCHEMA"
 
     "/qa/kodus-mcp-manager/API_MCP_MANAGER_ENCRYPTION_SECRET"
+
+    "/qa/kodus-mcp-manager/API_DOCS_ENABLED"
+    "/qa/kodus-mcp-manager/API_DOCS_PATH"
+    "/qa/kodus-mcp-manager/API_DOCS_SPEC_PATH"
+    "/qa/kodus-mcp-manager/API_DOCS_IP_ALLOWLIST"
+    "/qa/kodus-mcp-manager/API_DOCS_BASIC_USER"
+    "/qa/kodus-mcp-manager/API_DOCS_BASIC_PASS"
+    "/qa/kodus-mcp-manager/API_DOCS_SERVER_URLS"
+    "/qa/kodus-mcp-manager/API_DOCS_BASE_URL"  
 )
 
 # List of all keys you need
