@@ -40,7 +40,7 @@ export class KodusMCPProvider extends BaseProvider {
     private readonly integrationDescriptionService: IntegrationDescriptionService;
     private readonly managedIntegrations: Map<
         string,
-        { config: ManagedIntegrationConfig; client: CustomClient }
+        { config: ManagedIntegrationConfig }
     > = new Map();
     statusMap: Record<string, MCPConnectionStatus> = {
         ACTIVE: MCPConnectionStatus.ACTIVE,
@@ -77,13 +77,8 @@ export class KodusMCPProvider extends BaseProvider {
             ) as ManagedIntegrationConfig[];
 
             for (const entry of managedConfigs) {
-                const client = new CustomClient(
-                    this.transformManagedIntegration(entry),
-                );
-
                 this.managedIntegrations.set(entry.id, {
                     config: entry,
-                    client,
                 });
             }
         } catch (error) {
@@ -270,7 +265,11 @@ export class KodusMCPProvider extends BaseProvider {
         try {
             const managed = this.managedIntegrations.get(config.integrationId);
             if (managed) {
-                const tools = await this.safeGetTools(managed.client);
+                const client = await this.buildManagedClient(
+                    config.organizationId,
+                    config.integrationId,
+                );
+                const tools = await this.safeGetTools(client);
                 const allToolSlugs = tools.map((tool) => tool.slug);
 
                 const allowedTools =
