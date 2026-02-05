@@ -23,6 +23,9 @@ elif [ "$ENVIRONMENT" == "prod" ]; then
     # Extract tag from GITHUB_REF
     GITHUB_TAG=${GITHUB_REF/refs\/tags\//}
     export IMAGE_NAME="${ECR_URL}:${GITHUB_TAG}"
+else
+    echo "Error: Invalid environment '$ENVIRONMENT'. Allowed values: qa, prod"
+    exit 1
 fi
 
 # Use Docker Compose to start the container

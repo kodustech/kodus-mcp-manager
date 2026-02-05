@@ -1,4 +1,6 @@
 #!/bin/bash
+set -e
+
 
 # List of all keys you need
 KEYS=(

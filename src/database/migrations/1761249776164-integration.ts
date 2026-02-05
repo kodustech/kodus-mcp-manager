@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class Integration1761249776164 implements MigrationInterface {
-    name = 'Integration1761249776164'
+    name = 'Integration1761249776164';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -42,5 +42,4 @@ export class Integration1761249776164 implements MigrationInterface {
             DROP TYPE "mcp-manager"."mcp_integrations_protocol_enum"
         `);
     }
-
 }

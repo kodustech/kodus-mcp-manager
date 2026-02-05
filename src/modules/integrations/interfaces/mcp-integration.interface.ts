@@ -13,8 +13,10 @@ export type MCPIntegrationInterface =
     | MCPIntegrationBasic
     | MCPIntegrationOAuth2;
 
-export interface MCPIntegrationBase
-    extends Omit<MCPIntegrationEntity, 'authType' | 'auth' | 'headers'> {
+export interface MCPIntegrationBase extends Omit<
+    MCPIntegrationEntity,
+    'authType' | 'auth' | 'headers'
+> {
     headers?: Record<string, string>;
 }
 

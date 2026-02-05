@@ -17,7 +17,8 @@ echo "✅ Database is available!"
 
 # Create test database (if it doesn't exist)
 echo "🗄️ Creating test database..."
-docker exec kodus-mcp-postgres psql -U kodus -d kodus_mcp -c "CREATE DATABASE kodus_mcp_test;" 2>/dev/null || echo "Test database already exists or error creating it (continuing...)"
+docker exec kodus-mcp-postgres psql -U kodus -d kodus_mcp -c "DROP DATABASE IF EXISTS kodus_mcp_test;"
+docker exec kodus-mcp-postgres psql -U kodus -d kodus_mcp -c "CREATE DATABASE kodus_mcp_test;"
 
 # Wait a bit to ensure the database is available
 sleep 2

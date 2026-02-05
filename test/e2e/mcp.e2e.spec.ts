@@ -7,8 +7,8 @@ import { ProviderFactory } from '../../src/modules/providers/provider.factory';
 import { AppModule } from '../../src/app.module';
 
 import {
-  FastifyAdapter,
-  NestFastifyApplication,
+    FastifyAdapter,
+    NestFastifyApplication,
 } from '@nestjs/platform-fastify';
 import { AuthGuard } from '../../src/common/guards/auth.guard';
 import { ValidationPipe } from '@nestjs/common';
@@ -18,276 +18,280 @@ const INTEGRATION_ID = '3617df61-f016-4064-b0b2-a4c11d3d3c97';
 const CONNECTION_ID = '442719b5-c729-483c-830c-e43ccfefbe57';
 
 describe('MCP Controller (e2e)', () => {
-  let app: NestFastifyApplication;
-  let connectionRepository: Repository<MCPConnectionEntity>;
+    let app: NestFastifyApplication;
+    let connectionRepository: Repository<MCPConnectionEntity>;
 
-  const mockConnection = {
-    id: CONNECTION_ID,
-    organizationId: ORGANIZATION_ID,
-    integrationId: INTEGRATION_ID,
-    provider: 'provider',
-    appName: 'test-app',
-    status: 'active',
-    mcpUrl: 'https://test-connection-url.com',
-    metadata: { key: 'value' },
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    deletedAt: null,
-  };
-
-  const mockIntegration = {
-    id: INTEGRATION_ID,
-    name: 'Test Integration',
-    description: 'Test Description',
-    authScheme: 'OAUTH',
-    appName: 'test-app',
-  };
-
-  // Provider mock
-  const mockProvider = {
-    statusMap: {
-      pending: 'pending',
-      active: 'active',
-      success: 'active',
-      error: 'failed',
-    },
-    getIntegrations: jest.fn().mockResolvedValue({
-      data: [mockIntegration],
-      total: 1,
-    }),
-    getIntegration: jest.fn().mockResolvedValue(mockIntegration),
-    getIntegrationRequiredParams: jest.fn().mockResolvedValue([
-      {
-        name: 'apiKey',
-        description: 'API Key',
-        type: 'string',
-        required: true,
-      },
-    ]),
-    getIntegrationTools: jest.fn().mockResolvedValue([
-      {
-        name: 'test-tool',
-        description: 'Test Tool',
-        warning: false,
-      },
-    ]),
-    installIntegration: jest.fn().mockResolvedValue({
-      connection: {
-        id: 'test-install-id',
-        status: 'active',
-        url: 'https://auth-url.com',
-      },
-      server: {
-        id: 'server-id',
+    const mockConnection = {
+        id: CONNECTION_ID,
+        organizationId: ORGANIZATION_ID,
+        integrationId: INTEGRATION_ID,
+        provider: 'provider',
         appName: 'test-app',
-        mcpUrl: 'https://mcp-url.com',
-      },
-    }),
-  };
+        status: 'active',
+        mcpUrl: 'https://test-connection-url.com',
+        metadata: { key: 'value' },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+    };
 
-  const mockProviderFactory = {
-    getProvider: jest.fn().mockReturnValue(mockProvider),
-    getProviders: jest.fn().mockReturnValue([mockProvider]),
-  };
+    const mockIntegration = {
+        id: INTEGRATION_ID,
+        name: 'Test Integration',
+        description: 'Test Description',
+        authScheme: 'OAUTH',
+        appName: 'test-app',
+    };
 
-  const mockAuthMiddleware = {
-    canActivate: jest.fn().mockImplementation((context) => {
-      const request = context.switchToHttp().getRequest();
-      request.organizationId = ORGANIZATION_ID;
-      return true;
-    }),
-  };
-
-  beforeAll(async () => {
-    AuthGuard.prototype.canActivate = mockAuthMiddleware.canActivate;
-
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    })
-      .overrideProvider(ProviderFactory)
-      .useValue(mockProviderFactory)
-      .compile();
-
-    app = moduleFixture.createNestApplication<NestFastifyApplication>(
-      new FastifyAdapter(),
-    );
-
-    connectionRepository = moduleFixture.get<Repository<MCPConnectionEntity>>(
-      getRepositoryToken(MCPConnectionEntity),
-    );
-
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        transform: true,
-        forbidNonWhitelisted: true,
-        transformOptions: {
-          enableImplicitConversion: true,
+    // Provider mock
+    const mockProvider = {
+        statusMap: {
+            pending: 'pending',
+            active: 'active',
+            success: 'active',
+            error: 'failed',
         },
-      }),
-    );
+        getIntegrations: jest.fn().mockResolvedValue({
+            data: [mockIntegration],
+            total: 1,
+        }),
+        getIntegration: jest.fn().mockResolvedValue(mockIntegration),
+        getIntegrationRequiredParams: jest.fn().mockResolvedValue([
+            {
+                name: 'apiKey',
+                description: 'API Key',
+                type: 'string',
+                required: true,
+            },
+        ]),
+        getIntegrationTools: jest.fn().mockResolvedValue([
+            {
+                name: 'test-tool',
+                description: 'Test Tool',
+                warning: false,
+            },
+        ]),
+        installIntegration: jest.fn().mockResolvedValue({
+            connection: {
+                id: 'test-install-id',
+                status: 'active',
+                url: 'https://auth-url.com',
+            },
+            server: {
+                id: 'server-id',
+                appName: 'test-app',
+                mcpUrl: 'https://mcp-url.com',
+            },
+        }),
+    };
 
-    await app.init();
-    await app.getHttpAdapter().getInstance().ready();
-  });
+    const mockProviderFactory = {
+        getProvider: jest.fn().mockReturnValue(mockProvider),
+        getProviders: jest.fn().mockReturnValue([mockProvider]),
+    };
 
-  afterAll(async () => {
-    await app.close();
-  });
+    const mockAuthMiddleware = {
+        canActivate: jest.fn().mockImplementation((context) => {
+            const request = context.switchToHttp().getRequest();
+            request.organizationId = ORGANIZATION_ID;
+            return true;
+        }),
+    };
 
-  beforeEach(async () => {
-    // Clear test data before each test
-    await connectionRepository.clear();
-    // Clear all mocks before each test
-    jest.clearAllMocks();
-  });
+    beforeAll(async () => {
+        AuthGuard.prototype.canActivate = mockAuthMiddleware.canActivate;
 
-  describe('/mcp/connections (GET)', () => {
-    it('should return connections for organization', async () => {
-      await connectionRepository.save(mockConnection);
+        const moduleFixture: TestingModule = await Test.createTestingModule({
+            imports: [AppModule],
+        })
+            .overrideProvider(ProviderFactory)
+            .useValue(mockProviderFactory)
+            .compile();
 
-      const response = await request(app.getHttpServer())
-        .get('/mcp/connections')
-        .query({ page: 1, pageSize: 10 })
-        .expect(200);
+        app = moduleFixture.createNestApplication<NestFastifyApplication>(
+            new FastifyAdapter(),
+        );
 
-      expect(response.body).toHaveProperty('items');
-      expect(response.body).toHaveProperty('total');
-      expect(response.body.items).toHaveLength(1);
-      expect(response.body.items[0]).toMatchObject({
-        id: mockConnection.id,
-        organizationId: mockConnection.organizationId,
-      });
+        connectionRepository = moduleFixture.get<
+            Repository<MCPConnectionEntity>
+        >(getRepositoryToken(MCPConnectionEntity));
+
+        app.useGlobalPipes(
+            new ValidationPipe({
+                whitelist: true,
+                transform: true,
+                forbidNonWhitelisted: true,
+                transformOptions: {
+                    enableImplicitConversion: true,
+                },
+            }),
+        );
+
+        await app.init();
+        await app.getHttpAdapter().getInstance().ready();
     });
 
-    it('should handle pagination parameters', async () => {
-      for (let i = 0; i < 4; i++) {
-        const connection = {
-          ...mockConnection,
-          integrationId: INTEGRATION_ID.slice(0, -1) + i,
-          id: CONNECTION_ID.slice(0, -1) + i,
-        };
-        await connectionRepository.save(connection);
-      }
-
-      const response = await request(app.getHttpServer())
-        .get('/mcp/connections')
-        .query({ page: 2, pageSize: 2 })
-        .expect(200);
-
-      expect(response.body).toHaveProperty('items');
-      expect(response.body).toHaveProperty('total');
-      expect(response.body.items).toHaveLength(2);
-      expect(response.body.total).toBe(4);
-    });
-  });
-
-  describe('/mcp/connections/:connectionId (GET)', () => {
-    it('should return specific connection', async () => {
-      await connectionRepository.save(mockConnection);
-
-      const response = await request(app.getHttpServer())
-        .get(`/mcp/connections/${mockConnection.id}`)
-        .expect(200);
-
-      expect(response.body).toMatchObject({
-        id: mockConnection.id,
-        organizationId: mockConnection.organizationId,
-      });
+    afterAll(async () => {
+        await app.close();
     });
 
-    it('should return null for non-existent connection', async () => {
-      await connectionRepository.save(mockConnection);
-
-      const response = await request(app.getHttpServer())
-        .get(`/mcp/connections/${INTEGRATION_ID}`) // non-existent connection id
-        .expect(200);
-
-      expect(response.body).toBeNull();
+    beforeEach(async () => {
+        // Clear test data before each test
+        await connectionRepository.clear();
+        // Clear all mocks before each test
+        jest.clearAllMocks();
     });
-  });
 
-  describe('/mcp/integrations (GET)', () => {
-    it('should return integrations with connection status', async () => {
-      await connectionRepository.save(mockConnection);
+    describe('/mcp/connections (GET)', () => {
+        it('should return connections for organization', async () => {
+            await connectionRepository.save(mockConnection);
 
-      const response = await request(app.getHttpServer())
-        .get('/mcp/integrations')
-        .query({ page: 1, pageSize: 10 })
-        .expect(200);
+            const response = await request(app.getHttpServer())
+                .get('/mcp/connections')
+                .query({ page: 1, pageSize: 10 })
+                .expect(200);
 
-      expect(Array.isArray(response.body)).toBe(true);
-      expect(response.body).toHaveLength(1);
-      expect(response.body[0]).toMatchObject({
-        data: [mockIntegration],
-        total: 1,
-        isConnected: false,
-      });
-      expect(mockProvider.getIntegrations).toHaveBeenCalledWith('1', 10, {
-        appName: undefined,
-      });
+            expect(response.body).toHaveProperty('items');
+            expect(response.body).toHaveProperty('total');
+            expect(response.body.items).toHaveLength(1);
+            expect(response.body.items[0]).toMatchObject({
+                id: mockConnection.id,
+                organizationId: mockConnection.organizationId,
+            });
+        });
+
+        it('should handle pagination parameters', async () => {
+            for (let i = 0; i < 4; i++) {
+                const connection = {
+                    ...mockConnection,
+                    integrationId: INTEGRATION_ID.slice(0, -1) + i,
+                    id: CONNECTION_ID.slice(0, -1) + i,
+                };
+                await connectionRepository.save(connection);
+            }
+
+            const response = await request(app.getHttpServer())
+                .get('/mcp/connections')
+                .query({ page: 2, pageSize: 2 })
+                .expect(200);
+
+            expect(response.body).toHaveProperty('items');
+            expect(response.body).toHaveProperty('total');
+            expect(response.body.items).toHaveLength(2);
+            expect(response.body.total).toBe(4);
+        });
     });
-  });
 
-  describe('/mcp/:provider/integrations/:integrationId (GET)', () => {
-    it('should return specific integration with connection status', async () => {
-      await connectionRepository.save(mockConnection);
+    describe('/mcp/connections/:connectionId (GET)', () => {
+        it('should return specific connection', async () => {
+            await connectionRepository.save(mockConnection);
 
-      const response = await request(app.getHttpServer())
-        .get(`/mcp/provider/integrations/${INTEGRATION_ID}`)
-        .expect(200);
+            const response = await request(app.getHttpServer())
+                .get(`/mcp/connections/${mockConnection.id}`)
+                .expect(200);
 
-      expect(response.body).toMatchObject({
-        id: mockIntegration.id,
-        name: mockIntegration.name,
-        isConnected: true,
-      });
+            expect(response.body).toMatchObject({
+                id: mockConnection.id,
+                organizationId: mockConnection.organizationId,
+            });
+        });
 
-      expect(mockProvider.getIntegration).toHaveBeenCalledWith(INTEGRATION_ID);
+        it('should return null for non-existent connection', async () => {
+            await connectionRepository.save(mockConnection);
+
+            const response = await request(app.getHttpServer())
+                .get(`/mcp/connections/${INTEGRATION_ID}`) // non-existent connection id
+                .expect(200);
+
+            expect(response.body).toBeNull();
+        });
     });
-  });
 
-  describe('/mcp/:provider/integrations/:integrationId/required-params (GET)', () => {
-    it('should return required parameters for integration', async () => {
-      const response = await request(app.getHttpServer())
-        .get(`/mcp/provider/integrations/${INTEGRATION_ID}/required-params`)
-        .expect(200);
+    describe('/mcp/integrations (GET)', () => {
+        it('should return integrations with connection status', async () => {
+            await connectionRepository.save(mockConnection);
 
-      expect(response.body).toHaveLength(1);
-      expect(response.body[0]).toMatchObject({
-        name: 'apiKey',
-        description: 'API Key',
-        type: 'string',
-        required: true,
-      });
+            const response = await request(app.getHttpServer())
+                .get('/mcp/integrations')
+                .query({ page: 1, pageSize: 10 })
+                .expect(200);
 
-      expect(mockProvider.getIntegrationRequiredParams).toHaveBeenCalledWith(
-        INTEGRATION_ID,
-      );
+            expect(Array.isArray(response.body)).toBe(true);
+            expect(response.body).toHaveLength(1);
+            expect(response.body[0]).toMatchObject({
+                data: [mockIntegration],
+                total: 1,
+                isConnected: false,
+            });
+            expect(mockProvider.getIntegrations).toHaveBeenCalledWith('1', 10, {
+                appName: undefined,
+            });
+        });
     });
-  });
 
-  describe('/mcp/:provider/integrations/:integrationId/tools (GET)', () => {
-    it('should return tools for integration', async () => {
-      const response = await request(app.getHttpServer())
-        .get(`/mcp/provider/integrations/${INTEGRATION_ID}/tools`)
-        .expect(200);
+    describe('/mcp/:provider/integrations/:integrationId (GET)', () => {
+        it('should return specific integration with connection status', async () => {
+            await connectionRepository.save(mockConnection);
 
-      expect(response.body).toHaveLength(1);
-      expect(response.body[0]).toMatchObject({
-        name: 'test-tool',
-        description: 'Test Tool',
-        warning: false,
-      });
+            const response = await request(app.getHttpServer())
+                .get(`/mcp/provider/integrations/${INTEGRATION_ID}`)
+                .expect(200);
 
-      expect(mockProvider.getIntegrationTools).toHaveBeenCalledWith(
-        INTEGRATION_ID,
-        ORGANIZATION_ID,
-      );
+            expect(response.body).toMatchObject({
+                id: mockIntegration.id,
+                name: mockIntegration.name,
+                isConnected: true,
+            });
+
+            expect(mockProvider.getIntegration).toHaveBeenCalledWith(
+                INTEGRATION_ID,
+            );
+        });
     });
-  });
 
-  /* describe('/mcp/:provider/integrations/:integrationId/install (POST)', () => {
+    describe('/mcp/:provider/integrations/:integrationId/required-params (GET)', () => {
+        it('should return required parameters for integration', async () => {
+            const response = await request(app.getHttpServer())
+                .get(
+                    `/mcp/provider/integrations/${INTEGRATION_ID}/required-params`,
+                )
+                .expect(200);
+
+            expect(response.body).toHaveLength(1);
+            expect(response.body[0]).toMatchObject({
+                name: 'apiKey',
+                description: 'API Key',
+                type: 'string',
+                required: true,
+            });
+
+            expect(
+                mockProvider.getIntegrationRequiredParams,
+            ).toHaveBeenCalledWith(INTEGRATION_ID);
+        });
+    });
+
+    describe('/mcp/:provider/integrations/:integrationId/tools (GET)', () => {
+        it('should return tools for integration', async () => {
+            const response = await request(app.getHttpServer())
+                .get(`/mcp/provider/integrations/${INTEGRATION_ID}/tools`)
+                .expect(200);
+
+            expect(response.body).toHaveLength(1);
+            expect(response.body[0]).toMatchObject({
+                name: 'test-tool',
+                description: 'Test Tool',
+                warning: false,
+            });
+
+            expect(mockProvider.getIntegrationTools).toHaveBeenCalledWith(
+                INTEGRATION_ID,
+                ORGANIZATION_ID,
+            );
+        });
+    });
+
+    /* describe('/mcp/:provider/integrations/:integrationId/install (POST)', () => {
     it('should install integration successfully', async () => {
       const installDto = {
         apiKey: 'test-api-key',
@@ -328,65 +332,71 @@ describe('MCP Controller (e2e)', () => {
     });
   }); */
 
-  describe('/mcp/connections (PATCH)', () => {
-    it('should update integration successfully', async () => {
-      await connectionRepository.save({
-        ...mockConnection,
-        status: 'pending',
-      });
+    describe('/mcp/connections (PATCH)', () => {
+        it('should update integration successfully', async () => {
+            await connectionRepository.save({
+                ...mockConnection,
+                status: 'pending',
+            });
 
-      const updateDto = {
-        integrationId: INTEGRATION_ID,
-        status: 'success',
-      };
+            const updateDto = {
+                integrationId: INTEGRATION_ID,
+                status: 'success',
+            };
 
-      await request(app.getHttpServer())
-        .patch('/mcp/connections')
-        .send(updateDto);
+            await request(app.getHttpServer())
+                .patch('/mcp/connections')
+                .send(updateDto);
 
-      const connection = await connectionRepository.findOne({
-        where: {
-          integrationId: INTEGRATION_ID,
-          organizationId: ORGANIZATION_ID,
-        },
-      });
+            const connection = await connectionRepository.findOne({
+                where: {
+                    integrationId: INTEGRATION_ID,
+                    organizationId: ORGANIZATION_ID,
+                },
+            });
 
-      expect(connection).toBeDefined();
-      expect(connection.status).toBe('active');
-    });
-  });
-
-  describe('Error handling', () => {
-    it('should handle provider errors', async () => {
-      mockProvider.getIntegrations.mockRejectedValue(
-        new Error('Provider error'),
-      );
-
-      await request(app.getHttpServer()).get('/mcp/integrations').expect(500);
-
-      // Restore the mock for other tests
-      mockProvider.getIntegrations.mockResolvedValue({
-        data: [mockIntegration],
-        total: 1,
-      });
+            expect(connection).toBeDefined();
+            expect(connection.status).toBe('active');
+        });
     });
 
-    it('should handle database errors', async () => {
-      jest
-        .spyOn(connectionRepository, 'findAndCount')
-        .mockRejectedValue(new Error('Database error'));
+    describe('Error handling', () => {
+        it('should handle provider errors', async () => {
+            mockProvider.getIntegrations.mockRejectedValue(
+                new Error('Provider error'),
+            );
 
-      await request(app.getHttpServer()).get('/mcp/connections').expect(500);
+            await request(app.getHttpServer())
+                .get('/mcp/integrations')
+                .expect(500);
+
+            // Restore the mock for other tests
+            mockProvider.getIntegrations.mockResolvedValue({
+                data: [mockIntegration],
+                total: 1,
+            });
+        });
+
+        it('should handle database errors', async () => {
+            jest.spyOn(connectionRepository, 'findAndCount').mockRejectedValue(
+                new Error('Database error'),
+            );
+
+            await request(app.getHttpServer())
+                .get('/mcp/connections')
+                .expect(500);
+        });
     });
-  });
 
-  describe('Validation', () => {
-    it('should handle invalid page parameters', async () => {
-      jest
-        .spyOn(connectionRepository, 'findAndCount')
-        .mockRejectedValue(new Error('Database error'));
+    describe('Validation', () => {
+        it('should handle invalid page parameters', async () => {
+            jest.spyOn(connectionRepository, 'findAndCount').mockRejectedValue(
+                new Error('Database error'),
+            );
 
-      await request(app.getHttpServer()).get('/mcp/connections').expect(500); // Database error because of invalid pagination
+            await request(app.getHttpServer())
+                .get('/mcp/connections')
+                .expect(500); // Database error because of invalid pagination
+        });
     });
-  });
 });

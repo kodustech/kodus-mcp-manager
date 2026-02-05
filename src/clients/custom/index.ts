@@ -94,8 +94,8 @@ export class CustomClient {
 
         if (!this.connected) return;
 
-        await this.clientInstance.disconnect();
         this.connected = false;
+        await this.clientInstance.disconnect();
     }
 
     async getTools(): Promise<MCPTool[]> {

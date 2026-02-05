@@ -8,7 +8,7 @@ module.exports = {
 
             // Memory settings
             node_args: [
-                `--max-old-space-size=512`,
+                `--max-old-space-size=1024`,
                 '--max-http-header-size=16384',
                 '--trace-warnings',
                 '--unhandled-rejections=strict',
