@@ -11,5 +11,6 @@ services:
             - API_MCP_MANAGER_DATABASE_ENV=production
         env_file:
             - .env
-        # We override the command to run migrations before starting the application
-        command: sh -c "yarn migration:run && pm2-runtime start ecosystem.config.js --env production"
+        # We recommend running migrations manually before the first start:
+        # docker-compose run --rm kodus-mcp-manager yarn migration:run
+        command: pm2-runtime start ecosystem.config.js --env production

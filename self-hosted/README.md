@@ -38,7 +38,14 @@ This directory contains everything you need to run Kodus MCP Manager on your own
     - `API_MCP_MANAGER_MCP_PROVIDERS`: Comma-separated list of enabled providers (default: `kodusmcp,custom`).
     - **Composio (Optional)**: To use Composio, add `composio` to the providers list and uncomment/set `API_MCP_MANAGER_COMPOSIO_API_KEY`.
 
-3.  **Start the Application**:
+3.  **Run Migrations (First Run Only)**:
+    Before starting the application, run the database migrations:
+
+    ```bash
+    docker compose run --rm kodus-mcp-manager yarn migration:run
+    ```
+
+4.  **Start the Application**:
     Run the following command to start the service:
 
     ```bash
@@ -47,10 +54,9 @@ This directory contains everything you need to run Kodus MCP Manager on your own
 
     The first time you run this, it will:
     - Pull the `kodus-mcp-manager` image.
-    - Run necessary database migrations on your external database.
     - Start the application.
 
-4.  **Access the Application**:
+5.  **Access the Application**:
     The application will be available at `http://localhost:3101` (or the port you configured).
 
 ## Troubleshooting
