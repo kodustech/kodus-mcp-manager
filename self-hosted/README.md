@@ -6,6 +6,7 @@ This directory contains everything you need to run Kodus MCP Manager on your own
 
 - [Docker](https://docs.docker.com/get-docker/) installed.
 - [Docker Compose](https://docs.docker.com/compose/install/) installed (usually included with Docker Desktop).
+- **External PostgreSQL Database**: You need a running PostgreSQL instance (v15+ recommended) accessible from the Docker container.
 
 ## Setup Instructions
 
@@ -20,19 +21,28 @@ This directory contains everything you need to run Kodus MCP Manager on your own
     ```
 
     Open `.env` in a text editor and fill in the required values.
-    **Important:** Change the `API_MCP_MANAGER_JWT_SECRET` and `API_MCP_MANAGER_ENCRYPTION_SECRET` to secure values.
+
+    **Database Configuration:**
+    Ensure you provide the connection details for your external PostgreSQL database:
+    - `API_PG_DB_HOST`: Hostname or IP of your Postgres server (e.g., `host.docker.internal` for localhost on Mac/Windows, or your cloud DB host).
+    - `API_PG_DB_PORT`: Port (default `5432`).
+    - `API_PG_DB_USERNAME`: Database user.
+    - `API_PG_DB_PASSWORD`: Database password.
+    - `API_PG_DB_DATABASE`: Database name (must exist).
+
+    **Security:**
+    - Change `API_MCP_MANAGER_JWT_SECRET` and `API_MCP_MANAGER_ENCRYPTION_SECRET` to secure, random values.
 
 3.  **Start the Application**:
-    Run the following command to start the services:
+    Run the following command to start the service:
 
     ```bash
     docker compose up -d
     ```
 
     The first time you run this, it will:
-    - Pull the `kodus-mcp-manager` and `postgres` images.
-    - Initialize the database.
-    - Run necessary database migrations.
+    - Pull the `kodus-mcp-manager` image.
+    - Run necessary database migrations on your external database.
     - Start the application.
 
 4.  **Access the Application**:
@@ -40,5 +50,8 @@ This directory contains everything you need to run Kodus MCP Manager on your own
 
 ## Troubleshooting
 
-- **Database Connection Issues**: Ensure the database credentials in `.env` match what the application expects.
+- **Database Connection Issues**:
+    - Ensure the database credentials in `.env` are correct.
+    - Ensure the database server is running and accessible from the container.
+    - If running Postgres on the host machine, use `host.docker.internal` as the host (on Docker Desktop for Mac/Windows) or the host's IP address (on Linux).
 - **Migration Failures**: Check the logs using `docker compose logs -f kodus-mcp-manager`.
