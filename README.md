@@ -253,7 +253,7 @@ We provide a complete self-hosted deployment kit using Docker.
 - **📋 Requirements**: Docker + Existing Postgres (or use the provided compose service).
 - **⚡ Steps**:
     1. Copy `.env.example` to `.env` and configure it.
-    2. **Important:** Set `API_MCP_MANAGER_DATABASE_ENV` to control the environment (e.g., `production`, `development`).
+    2. **Important:** Set `NODE_ENV` to control the environment (e.g., `production`, `development`).
     3. Run `docker compose up -d`.
 
 Check the [Self-Hosted Guide](./self-hosted/README.md) for detailed instructions.
