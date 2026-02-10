@@ -18,6 +18,7 @@
 - [⚙️ Configuration](#️-configuration)
 - [🚀 Installation](#-installation)
 - [🔥 Running the Application](#-running-the-application)
+- [🚀 Self-Hosted](#-self-hosted)
 - [🆕 Adding a New Provider](#-adding-a-new-provider)
 - [🧪 Testing](#-testing)
 - [📫 Postman](#-postman)
@@ -41,11 +42,11 @@
 
 ### 📊 Available Providers
 
-| Provider            | Status            | Description                                                          | Documentation                     |
-| ------------------- | ----------------- | -------------------------------------------------------------------- | --------------------------------- |
-| 🎯 **Composio**     | ✅ Active         | Automation and integration platform                                  | [Docs](https://docs.composio.dev) |
-| 🏢 **Kodus**        | ✅ Active         | Kodus-managed MCPs (Kodus MCP, Context7 MCP & Kodus Docs MCP)        | -                                 |
-| ➕ **New Provider** | 🔄 In Development | Add your own provider                                                | [Guide](#-adding-a-new-provider)  |
+| Provider            | Status            | Description                                                   | Documentation                     |
+| ------------------- | ----------------- | ------------------------------------------------------------- | --------------------------------- |
+| 🎯 **Composio**     | ✅ Active         | Automation and integration platform                           | [Docs](https://docs.composio.dev) |
+| 🏢 **Kodus**        | ✅ Active         | Kodus-managed MCPs (Kodus MCP, Context7 MCP & Kodus Docs MCP) | -                                 |
+| ➕ **New Provider** | 🔄 In Development | Add your own provider                                         | [Guide](#-adding-a-new-provider)  |
 
 ### 🔧 Composio Setup
 
@@ -243,6 +244,22 @@ docker-compose exec kodus-mcp-manager yarn migrate
 
 ---
 
+## 🚀 Self-Hosted
+
+We provide a complete self-hosted deployment kit using Docker.
+
+### ⏱️ TL;DR Summary
+
+- **📋 Requirements**: Docker + Existing Postgres (or use the provided compose service).
+- **⚡ Steps**:
+    1. Copy `.env.example` to `.env` and configure it.
+    2. **Important:** Set `NODE_ENV` to control the environment (e.g., `production`, `development`).
+    3. Run `docker compose up -d`.
+
+Check the [Self-Hosted Guide](./self-hosted/README.md) for detailed instructions.
+
+---
+
 ## 🆕 Adding a New Provider
 
 ### 📋 Step by Step
@@ -262,17 +279,17 @@ MCP_PROVIDERS=composio,new_provider
 import { BaseProvider } from '../base.provider';
 
 export class NewProviderProvider extends BaseProvider {
-  // 🔧 Provider implementation
+    // 🔧 Provider implementation
 
-  async getIntegrations() {
-    // Your logic here
-  }
+    async getIntegrations() {
+        // Your logic here
+    }
 
-  async initiateConnection() {
-    // Your logic here
-  }
+    async initiateConnection() {
+        // Your logic here
+    }
 
-  // ... other required methods
+    // ... other required methods
 }
 ```
 
@@ -282,11 +299,11 @@ export class NewProviderProvider extends BaseProvider {
 // src/clients/new_provider/index.ts
 
 export class NewProviderClient {
-  constructor(private config: any) {}
+    constructor(private config: any) {}
 
-  async makeApiCall() {
-    // External API calls
-  }
+    async makeApiCall() {
+        // External API calls
+    }
 }
 ```
 
@@ -296,7 +313,7 @@ export class NewProviderClient {
 // test/provider/new_provider.spec.ts
 
 describe('NewProviderProvider', () => {
-  // Your tests here
+    // Your tests here
 });
 ```
 
