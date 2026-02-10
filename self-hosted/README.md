@@ -33,6 +33,11 @@ This directory contains everything you need to run Kodus MCP Manager on your own
     **Security:**
     - Change `API_MCP_MANAGER_JWT_SECRET` and `API_MCP_MANAGER_ENCRYPTION_SECRET` to secure, random values.
 
+    **MCP Providers:**
+    By default, `kodusmcp` and `custom` providers are enabled.
+    - `API_MCP_MANAGER_MCP_PROVIDERS`: Comma-separated list of enabled providers (default: `kodusmcp,custom`).
+    - **Composio (Optional)**: To use Composio, add `composio` to the providers list and uncomment/set `API_MCP_MANAGER_COMPOSIO_API_KEY`.
+
 3.  **Start the Application**:
     Run the following command to start the service:
 
