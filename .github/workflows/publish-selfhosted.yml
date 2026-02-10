@@ -19,20 +19,6 @@ jobs:
             - name: Capture Release Version
               run: echo "RELEASE_VERSION=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
 
-            - name: Create .env file with required keys
-              run: |
-                  [ -f .env ] && rm .env
-
-                  echo API_MCP_MANAGER_PORT=3101 >> .env
-                  echo API_MCP_MANAGER_NODE_ENV=production >> .env
-                  echo API_MCP_MANAGER_DATABASE_ENV=production >> .env
-                  echo API_PG_DB_HOST= >> .env
-                  echo API_PG_DB_PORT= >> .env
-                  echo API_PG_DB_USERNAME= >> .env
-                  echo API_PG_DB_PASSWORD= >> .env
-                  echo API_PG_DB_DATABASE= >> .env
-                  echo API_MCP_MANAGER_LOG_LEVEL=info >> .env
-
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@v3.10.0
 
