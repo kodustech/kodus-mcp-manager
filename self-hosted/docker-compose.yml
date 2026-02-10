@@ -1,0 +1,50 @@
+services:
+    kodus-mcp-manager:
+        image: ghcr.io/kodustech/kodus-mcp-manager:latest
+        container_name: kodus-mcp-manager
+        restart: unless-stopped
+        ports:
+            - '${API_MCP_MANAGER_PORT:-3101}:3101'
+        environment:
+            - NODE_ENV=production
+            - API_MCP_MANAGER_NODE_ENV=production
+            - API_MCP_MANAGER_DATABASE_ENV=production
+        env_file:
+            - .env
+        depends_on:
+            db_postgres:
+                condition: service_healthy
+        # We override the command to run migrations before starting the application
+        command: sh -c "yarn migration:run && pm2-runtime start ecosystem.config.js --env production"
+        networks:
+            - kodus-network
+
+    db_postgres:
+        image: postgres:15-alpine
+        container_name: kodus-db-postgres
+        restart: unless-stopped
+        environment:
+            POSTGRES_USER: ${API_PG_DB_USERNAME}
+            POSTGRES_PASSWORD: ${API_PG_DB_PASSWORD}
+            POSTGRES_DB: ${API_PG_DB_DATABASE}
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+            - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+        healthcheck:
+            test:
+                [
+                    'CMD-SHELL',
+                    'pg_isready -U ${API_PG_DB_USERNAME} -d ${API_PG_DB_DATABASE}',
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        networks:
+            - kodus-network
+
+volumes:
+    postgres_data:
+
+networks:
+    kodus-network:
+        driver: bridge
