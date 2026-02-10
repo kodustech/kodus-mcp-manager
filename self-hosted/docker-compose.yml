@@ -1,15 +1,15 @@
 services:
-  kodus-mcp-manager:
-    image: ghcr.io/kodustech/kodus-mcp-manager:latest
-    container_name: kodus-mcp-manager
-    restart: unless-stopped
-    ports:
-      - '${API_MCP_MANAGER_PORT:-3101}:3101'
-    environment:
-      - NODE_ENV=production
-      - API_MCP_MANAGER_NODE_ENV=production
-      - API_MCP_MANAGER_DATABASE_ENV=production
-    env_file:
-      - .env
-    # We override the command to run migrations before starting the application
-    command: sh -c "yarn migration:run && pm2-runtime start ecosystem.config.js --env production"
+    kodus-mcp-manager:
+        image: ghcr.io/kodustech/kodus-mcp-manager:latest
+        container_name: kodus-mcp-manager
+        restart: unless-stopped
+        ports:
+            - '${API_MCP_MANAGER_PORT:-3101}:3101'
+        environment:
+            - NODE_ENV=production
+            - API_MCP_MANAGER_NODE_ENV=production
+            - API_MCP_MANAGER_DATABASE_ENV=production
+        env_file:
+            - .env
+        # We override the command to run migrations before starting the application
+        command: sh -c "yarn migration:run && pm2-runtime start ecosystem.config.js --env production"
