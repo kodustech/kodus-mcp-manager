@@ -3,6 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { IntegrationOAuthService } from '../integrations/integration-oauth.service';
+import { MCPIntegrationAuthType } from '../integrations/enums/integration.enum';
+import { MCPIntegrationInterface } from '../integrations/interfaces/mcp-integration.interface';
 import { IntegrationsService } from '../integrations/integrations.service';
 import { MCPProviderType } from '../providers/interfaces/provider.interface';
 import { ProviderFactory } from '../providers/provider.factory';
@@ -155,6 +157,12 @@ export class McpService {
         };
 
         const connection = await provider.initiateConnection(data);
+
+        if (!connection) {
+            throw new Error(
+                `Failed to initiate connection for integration ${body.integrationId}`,
+            );
+        }
 
         const existingConnection = await this.connectionRepository.findOne({
             where: { integrationId: body.integrationId, organizationId },
@@ -376,6 +384,35 @@ export class McpService {
             id: integrationId,
             active,
         });
+    }
+
+    async getCustomIntegrationConnectionConfig(
+        organizationId: string,
+        integrationId: string,
+    ): Promise<MCPIntegrationInterface & { accessToken?: string; refreshToken?: string; tokenExpiry?: number; scopes?: string[] } | null> {
+        try {
+            const { integration } =
+                await this.integrationsService.getValidAccessToken(
+                    integrationId,
+                    organizationId,
+                );
+
+            if (integration.authType !== MCPIntegrationAuthType.OAUTH2) {
+                return integration;
+            }
+
+            const { oauthScopes, tokens, ...rest } = integration as any;
+
+            return {
+                ...rest,
+                scopes: oauthScopes,
+                accessToken: tokens?.accessToken,
+                refreshToken: tokens?.refreshToken,
+                tokenExpiry: tokens?.expiresAt,
+            };
+        } catch {
+            return null;
+        }
     }
 
     async createIntegration(

@@ -466,7 +466,13 @@ export class IntegrationsService {
         const queryBuilder =
             this.integrationRepository.createQueryBuilder('mcp_integration');
 
-        const keys = ['active', 'name', 'authType', 'organizationId'] as const;
+        const keys = [
+            'id',
+            'active',
+            'name',
+            'authType',
+            'organizationId',
+        ] as const;
         for (const key of keys) {
             if (filters[key] !== undefined) {
                 queryBuilder.andWhere(`mcp_integration.${key} = :${key}`, {
@@ -498,7 +504,7 @@ export class IntegrationsService {
         try {
             const queryBuilder = this.buildQuery(filters);
 
-            const entity = await queryBuilder.getOne();
+            let entity = await queryBuilder.getOne();
 
             if (entity) {
                 await this.integrationOAuthService.refreshIntegrationOAuthIfNeeded(

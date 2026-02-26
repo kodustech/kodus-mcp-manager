@@ -1,6 +1,6 @@
 FROM node:22.22.0-slim AS development
 
-WORKDIR /app
+WORKDIR /usr/src/app
 
 # Set NODE_ENV to "development"
 ENV NODE_ENV=development

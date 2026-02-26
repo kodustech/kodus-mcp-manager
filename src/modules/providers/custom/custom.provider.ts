@@ -145,39 +145,47 @@ export class CustomProvider extends BaseProvider {
         return Promise.resolve([]);
     }
 
+    private async resolveIntegration(
+        integrationId: string,
+        organizationId: string,
+    ) {
+        const integration =
+            await this.integrationsService.getIntegrationById(
+                integrationId,
+                organizationId,
+            );
+
+        if (!integration) {
+            throw new NotFoundException('Custom integration not found');
+        }
+
+        if (integration.authType === MCPIntegrationAuthType.OAUTH2) {
+            const oauthState =
+                await this.integrationOAuthService.getOAuthState(
+                    organizationId,
+                    integrationId,
+                );
+
+            if (oauthState?.tokens) {
+                integration.tokens = oauthState.tokens;
+            }
+        }
+
+        return integration;
+    }
+
     async getIntegrationTools(
         integrationId: string,
         organizationId: string,
     ): Promise<MCPTool[]> {
         try {
-            const baseIntegration =
-                await this.integrationsService.getIntegrationById(
-                    integrationId,
-                    organizationId,
-                );
-
-            if (!baseIntegration) {
-                throw new NotFoundException('Custom integration not found');
-            }
-
-            const integration = baseIntegration;
-
-            if (integration.authType === MCPIntegrationAuthType.OAUTH2) {
-                const oauthState =
-                    await this.integrationOAuthService.getOAuthState(
-                        organizationId,
-                        integrationId,
-                    );
-
-                if (oauthState?.tokens) {
-                    integration.tokens = oauthState.tokens;
-                }
-            }
+            const integration = await this.resolveIntegration(
+                integrationId,
+                organizationId,
+            );
 
             const client = new CustomClient(integration);
-            const tools = await client.getTools();
-
-            return tools;
+            return await client.getTools();
         } catch (error) {
             console.error(
                 `Error fetching tools for custom integration ${integrationId}:`,
@@ -191,19 +199,18 @@ export class CustomProvider extends BaseProvider {
         config: MCPConnectionConfig,
     ): Promise<MCPConnection> {
         try {
-            const integration =
-                await this.integrationsService.getIntegrationById(
-                    config.integrationId,
-                    config.organizationId,
-                );
+            const integration = await this.resolveIntegration(
+                config.integrationId,
+                config.organizationId,
+            );
 
-            if (!integration) {
-                throw new NotFoundException('Custom integration not found');
+            let allowedTools = config.allowedTools;
+
+            if (!allowedTools || allowedTools.length === 0) {
+                const client = new CustomClient(integration);
+                const tools = await client.getTools();
+                allowedTools = tools.map((tool) => tool.slug);
             }
-
-            const client = new CustomClient(integration);
-            const tools = await client.getTools();
-            const allToolSlugs = tools.map((tool) => tool.slug);
 
             return {
                 id: integration.id,
@@ -211,7 +218,7 @@ export class CustomProvider extends BaseProvider {
                 authUrl: null,
                 mcpUrl: integration.baseUrl,
                 status: MCPConnectionStatus.ACTIVE,
-                allowedTools: config.allowedTools || allToolSlugs,
+                allowedTools,
             };
         } catch (error) {
             console.error(

@@ -2,7 +2,7 @@ module.exports = {
     apps: [
         {
             name: 'kodus-mcp-manager',
-            script: './dist/src/main.js',
+            script: './scripts/entrypoint.sh',
             instances: 1,
             autorestart: true,
 

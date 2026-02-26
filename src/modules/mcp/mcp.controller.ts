@@ -417,6 +417,29 @@ export class McpController {
         );
     }
 
+    @Get('integration/custom/:integrationId/connection-config')
+    @ApiOperation({
+        summary: 'Get custom integration connection config',
+        description: 'Returns full connection config for a custom integration, including auth credentials. Internal use only.',
+    })
+    @ApiParam({
+        name: 'integrationId',
+        type: String,
+        example: 'int_456',
+    })
+    @ApiUnauthorizedResponse({ type: ErrorResponseDto })
+    @ApiForbiddenResponse({ type: ErrorResponseDto })
+    @ApiInternalServerErrorResponse({ type: ErrorResponseDto })
+    getCustomIntegrationConnectionConfig(
+        @Param('integrationId') integrationId: string,
+        @Req() request: FastifyRequest,
+    ) {
+        return this.mcpService.getCustomIntegrationConnectionConfig(
+            request.organizationId,
+            integrationId,
+        );
+    }
+
     @Post('integration/:provider')
     @ApiOperation({
         summary: 'Create integration',
