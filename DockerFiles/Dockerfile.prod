@@ -9,7 +9,7 @@ COPY package.json yarn.lock ./
 COPY . .
 
 # Install production dependencies only
-RUN yarn install && yarn build
+RUN yarn install && yarn build && chmod +x ./scripts/entrypoint.sh
 
 RUN yarn global add pm2 && \
     pm2 install pm2-logrotate && \
