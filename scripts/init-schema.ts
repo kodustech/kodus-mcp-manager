@@ -17,6 +17,11 @@ async function initSchema() {
 
         // Use the schema name defined in the original config
         const schemaName = (config as any).schema || 'mcp-manager';
+
+        if (!/^[a-zA-Z0-9_-]+$/.test(schemaName)) {
+            throw new Error(`Invalid schema name: "${schemaName}"`);
+        }
+
         await dataSource.query(`CREATE SCHEMA IF NOT EXISTS "${schemaName}"`);
 
         console.log(`Schema "${schemaName}" is ready.`);
