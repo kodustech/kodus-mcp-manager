@@ -21,8 +21,11 @@ for (const envVar of requiredEnvVars) {
 const isProduction =
     process.env.API_MCP_MANAGER_NODE_ENV === 'production' ||
     process.env.API_MCP_MANAGER_DATABASE_ENV === 'production';
+const disableSSL = process.env.API_DATABASE_DISABLE_SSL === 'true';
 
-const sslConfig = isProduction ? { rejectUnauthorized: false } : false;
+const useSSL = isProduction && !disableSSL;
+
+const sslConfig = useSSL ? { rejectUnauthorized: false } : false;
 
 const dataSourceConfig: DataSourceOptions = {
     type: 'postgres',
