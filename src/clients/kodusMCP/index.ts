@@ -197,6 +197,22 @@ export class KodusMCPClient {
                 provider: MCPProviderType.KODUSMCP,
                 warning: true,
             },
+            {
+                slug: 'KODUS_CREATE_MEMORY',
+                name: 'KODUS_CREATE_MEMORY',
+                description:
+                    'Create a new memory entry in Kodus MCP. Use this to store important information, context, or notes that can be referenced later within the MCP environment.',
+                provider: MCPProviderType.KODUSMCP,
+                warning: false,
+            },
+            {
+                slug: 'KODUS_FIND_MEMORIES',
+                name: 'KODUS_FIND_MEMORIES',
+                description:
+                    'Search for memories in Kodus MCP using keywords or filters. Use this to quickly retrieve relevant information, context, or notes that have been previously stored.',
+                provider: MCPProviderType.KODUSMCP,
+                warning: false,
+            },
         ];
     }
 
