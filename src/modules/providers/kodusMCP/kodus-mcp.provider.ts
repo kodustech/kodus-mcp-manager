@@ -68,17 +68,13 @@ export class KodusMCPProvider extends BaseProvider {
                 '../../../config/managed-mcp-servers.json',
             );
 
-            // If not found, try loading from dist root (production/docker)
+            // If not found, try loading from a common production config path
             if (!fs.existsSync(configPath)) {
-                // In production (docker), the structure is simpler or flattened,
-                // or we are running from dist/src/modules/providers/kodusMCP/
-                // and need to reach dist/src/config/ or similar.
-                //
-                // Common Docker structure: /usr/src/app/dist/...
-                // Check if we can find it relative to process.cwd()
+                // In production, the config might be at the root of the dist folder,
+                // not inside a nested 'src' directory.
                 configPath = path.resolve(
                     process.cwd(),
-                    'dist/src/config/managed-mcp-servers.json',
+                    'dist/config/managed-mcp-servers.json',
                 );
             }
 
