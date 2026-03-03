@@ -36,7 +36,9 @@
             "kodus-docs-default": "Kodus Docs MCP exposes the official Kodus documentation as MCP tools, allowing Kodus to respond with official snippets, setup guides, and examples always up to date.",
             "sentry-default": "Sentry MCP allows agents to access project and team info, retrieve and update issues and events, and create releases—bringing error tracking and release management into your code reviews.",
             "exa-default": "Exa Search MCP allows agents to search for information in multiple codebases and retrieve relevant results.",
-            "kodus-osv-default": "Kodus OSV MCP allows agents to query for known package vulnerabilities in your codebase."
+            "kodus-osv-default": "Kodus OSV MCP allows agents to query for known package vulnerabilities in your codebase.",
+            "linear-default": "Create and manage Linear issues: create, update, and label tasks, add comments, fetch cycles, projects, and states, and run queries—keeping code reviews and your roadmap perfectly in sync.",
+            "atlassian-rovo-default": "Atlassian Rovo MCP enables agents to search across your Atlassian ecosystem (Jira, Confluence) and retrieve relevant knowledge and context."
         }
     }
 }

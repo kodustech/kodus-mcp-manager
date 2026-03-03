@@ -7,7 +7,7 @@
         "assets": [
             {
                 "include": "config/**",
-                "outDir": "dist"
+                "outDir": "dist/src"
             }
         ],
         "watchAssets": true
