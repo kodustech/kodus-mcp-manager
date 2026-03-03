@@ -420,7 +420,8 @@ export class McpController {
     @Get('integration/custom/:integrationId/connection-config')
     @ApiOperation({
         summary: 'Get custom integration connection config',
-        description: 'Returns full connection config for a custom integration, including auth credentials. Internal use only.',
+        description:
+            'Returns full connection config for a custom integration, including auth credentials. Internal use only.',
     })
     @ApiParam({
         name: 'integrationId',
