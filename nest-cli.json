@@ -6,8 +6,8 @@
         "deleteOutDir": true,
         "assets": [
             {
-                "include": "config/**",
-                "outDir": "dist"
+                "include": "config/*.json",
+                "outDir": "dist/src"
             }
         ],
         "watchAssets": true
