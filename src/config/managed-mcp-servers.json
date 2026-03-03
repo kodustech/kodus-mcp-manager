@@ -60,7 +60,7 @@
         "name": "Linear",
         "baseUrl": "https://mcp.linear.app/mcp",
         "protocol": "http",
-        "logoUrl": "https://avatars.githubusercontent.com/u/52230164?s=200&v=4",
+        "logoUrl": "https://static.linear.app/client/assets/newAppIcon-256x256-full.NvjGn2GI.png",
         "headers": {},
         "auth": {
             "type": "oauth2",

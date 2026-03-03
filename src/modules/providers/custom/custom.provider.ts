@@ -149,22 +149,20 @@ export class CustomProvider extends BaseProvider {
         integrationId: string,
         organizationId: string,
     ) {
-        const integration =
-            await this.integrationsService.getIntegrationById(
-                integrationId,
-                organizationId,
-            );
+        const integration = await this.integrationsService.getIntegrationById(
+            integrationId,
+            organizationId,
+        );
 
         if (!integration) {
             throw new NotFoundException('Custom integration not found');
         }
 
         if (integration.authType === MCPIntegrationAuthType.OAUTH2) {
-            const oauthState =
-                await this.integrationOAuthService.getOAuthState(
-                    organizationId,
-                    integrationId,
-                );
+            const oauthState = await this.integrationOAuthService.getOAuthState(
+                organizationId,
+                integrationId,
+            );
 
             if (oauthState?.tokens) {
                 integration.tokens = oauthState.tokens;

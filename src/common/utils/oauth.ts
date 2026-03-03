@@ -121,7 +121,10 @@ export async function registerOauthClient(
     oauthScopes: string[],
 ): Promise<{ clientId: string; clientSecret: string | undefined }> {
     const registrationBody: any = {
-        application_name: 'Kodus MCP Manager',
+        client_name: 'Kodus MCP Manager',
+        client_uri: 'https://kodus.io',
+        logo_uri:
+            'https://kodus.io/wp-content/uploads/2025/11/Kodus-AI-Logo-6.png',
         redirect_uris: [redirectUri],
         grant_types: ['authorization_code'],
         response_types: ['code'],
