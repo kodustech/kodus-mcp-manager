@@ -30,6 +30,8 @@ KEYS=(
     "/qa/kodus-mcp-manager/API_MCP_MANAGER_ENCRYPTION_SECRET"
     "/qa/kodus-orchestrator/API_DOCS_BASIC_USER"
     "/qa/kodus-orchestrator/API_DOCS_BASIC_PASS"
+
+    "/qa/kodus-mcp-manager/API_MCP_MANAGER_BACKEND_URL"
 )
 
 # List of all keys you need

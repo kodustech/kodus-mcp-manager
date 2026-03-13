@@ -19,6 +19,8 @@ KEYS=(
     "/prod/kodus-mcp-manager/API_MCP_MANAGER_PG_DB_SCHEMA"
 
     "/prod/kodus-mcp-manager/API_MCP_MANAGER_ENCRYPTION_SECRET"
+
+    "/prod/kodus-mcp-manager/API_MCP_MANAGER_BACKEND_URL"
 )
 
 # List of all keys you need
