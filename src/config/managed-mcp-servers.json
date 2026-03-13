@@ -22,6 +22,17 @@
         }
     },
     {
+        "id": "kodus-github-issues-default",
+        "name": "Github Issues by Kodus",
+        "baseUrl": "/mcp/github-issues",
+        "protocol": "http",
+        "logoUrl": "https://kodus.io/wp-content/uploads/2026/03/github_kodus.png",
+        "headers": {},
+        "auth": {
+            "type": "none"
+        }
+    },
+    {
         "id": "sentry-default",
         "name": "Sentry",
         "baseUrl": "https://mcp.sentry.dev/mcp",

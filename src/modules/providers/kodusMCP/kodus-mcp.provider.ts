@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
 import { CustomClient } from 'src/clients/custom';
@@ -8,7 +9,6 @@ import {
     MCPIntegrationProtocol,
 } from 'src/modules/integrations/enums/integration.enum';
 import { IntegrationOAuthService } from 'src/modules/integrations/integration-oauth.service';
-import { IntegrationsService } from 'src/modules/integrations/integrations.service';
 import { MCPIntegrationAllUniqueFields } from 'src/modules/integrations/interfaces/mcp-integration.interface';
 import { MCPConnectionStatus } from 'src/modules/mcp/entities/mcp-connection.entity';
 import { BaseProvider } from '../base.provider';
@@ -21,7 +21,6 @@ import {
     MCPTool,
 } from '../interfaces/provider.interface';
 import { IntegrationDescriptionService } from '../services/integration-description.service';
-import { Logger } from '@nestjs/common';
 
 interface ManagedIntegrationConfig {
     id: string;
@@ -88,6 +87,7 @@ export class KodusMCPProvider extends BaseProvider {
             ) as ManagedIntegrationConfig[];
 
             for (const entry of managedConfigs) {
+                entry.baseUrl = this.resolveManagedBaseUrl(entry.baseUrl);
                 this.managedIntegrations.set(entry.id, {
                     config: entry,
                 });
@@ -98,6 +98,21 @@ export class KodusMCPProvider extends BaseProvider {
                 { error },
             );
         }
+    }
+
+    private resolveManagedBaseUrl(baseUrl: string): string {
+        if (!baseUrl.startsWith('/')) {
+            return baseUrl;
+        }
+
+        const backendUrl = process.env.API_MCP_MANAGER_BACKEND_URL;
+        if (!backendUrl) {
+            throw new Error(
+                'API_MCP_MANAGER_BACKEND_URL environment variable is required for relative base URLs',
+            );
+        }
+
+        return `${backendUrl.replace(/\/$/, '')}${baseUrl}`;
     }
 
     private transformManagedIntegration(
