@@ -26,7 +26,7 @@
         "name": "Github Issues by Kodus",
         "baseUrl": "/mcp/github-issues",
         "protocol": "http",
-        "logoUrl": "https://kodus.io/wp-content/uploads/2025/11/Kodus-AI-Logo-6.png",
+        "logoUrl": "https://kodus.io/wp-content/uploads/2026/03/github_kodus.png",
         "headers": {},
         "auth": {
             "type": "none"
