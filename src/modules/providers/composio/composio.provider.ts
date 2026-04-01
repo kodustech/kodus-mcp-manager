@@ -169,7 +169,11 @@ export class ComposioProvider extends BaseProvider {
         });
 
         return items
-            .filter((tool) => activeMCPServer.allowed_tools.includes(tool.slug))
+            .filter((tool) =>
+                activeMCPServer?.allowed_tools
+                    ? activeMCPServer.allowed_tools.includes(tool.slug)
+                    : true,
+            )
             .map((tool) => ({
                 slug: tool.slug,
                 name: tool.name,
