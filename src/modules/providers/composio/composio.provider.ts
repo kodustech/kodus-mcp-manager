@@ -168,8 +168,20 @@ export class ComposioProvider extends BaseProvider {
             tools: integration.restrict_to_following_tools,
         });
 
+        const allowedToolsSet = activeMCPServer?.allowed_tools
+            ? new Set(activeMCPServer.allowed_tools)
+            : null;
+
         return items
-            .filter((tool) => activeMCPServer.allowed_tools.includes(tool.slug))
+            .filter((tool) => {
+                if (!activeMCPServer) {
+                    return true;
+                }
+                if (!allowedToolsSet) {
+                    return false;
+                }
+                return allowedToolsSet.has(tool.slug);
+            })
             .map((tool) => ({
                 slug: tool.slug,
                 name: tool.name,
