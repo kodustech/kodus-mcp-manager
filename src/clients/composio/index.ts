@@ -30,7 +30,7 @@ export class ComposioClient {
     }
 
     private getMCPUrl(serverId: string, connectedAccountId: string): string {
-        return `https://mcp.composio.dev/composio/server/${serverId}/mcp?connected_account_ids=${connectedAccountId}`;
+        return `https://backend.composio.dev/v3/mcp/${serverId}?connected_account_id=${connectedAccountId}`;
     }
 
     async getIntegrations(params: {
