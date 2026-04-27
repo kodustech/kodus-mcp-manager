@@ -68,7 +68,7 @@ export class ComposioProvider extends BaseProvider {
     }
 
     private getMCPUrl(serverId: string, authConfigId: string): string {
-        return `https://mcp.composio.dev/composio/server/${serverId}/mcp?connected_account_id=${authConfigId}`;
+        return `https://backend.composio.dev/v3/mcp/${serverId}?connected_account_id=${authConfigId}`;
     }
 
     private validateRequiredParams(

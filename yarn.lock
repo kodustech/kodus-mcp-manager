@@ -1543,7 +1543,7 @@
 
 "@nestjs/swagger@^11.2.6":
   version "11.2.6"
-  resolved "https://registry.npmjs.org/@nestjs/swagger/-/swagger-11.2.6.tgz#c9f2689a932bd431f5e7f8c29e6a57309f4c92bc"
+  resolved "https://registry.yarnpkg.com/@nestjs/swagger/-/swagger-11.2.6.tgz#c9f2689a932bd431f5e7f8c29e6a57309f4c92bc"
   integrity sha512-oiXOxMQqDFyv1AKAqFzSo6JPvMEs4uA36Eyz/s2aloZLxUjcLfUMELSLSNQunr61xCPTpwEOShfmO7NIufKXdA==
   dependencies:
     "@microsoft/tsdoc" "0.16.0"
